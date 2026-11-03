@@ -4,7 +4,7 @@
  *   la primera vez y después se sirven desde aquí: tienen versión fija, así que nunca cambian.
  * - No se guardan aquí Google (inicio de sesión, Drive) ni el modelo de Gemma (va aparte, en el navegador).
  */
-const APP = "atril-app-v4", LIBS = "atril-libs-v1";
+const APP = "atril-app-v5", LIBS = "atril-libs-v1";
 const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html"];
 const CORE_LIBS = [
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",

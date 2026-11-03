@@ -591,7 +591,15 @@
       out.textContent = `Conectado con ${cfg.model}: «${text.trim().slice(0, 40)}»`;
     } catch (e) {
       out.classList.add("warn");
-      out.textContent = e.code === "ollama_offline" ? `No respondió Ollama en ${ollamaBase()}. ¿Está abierto y con OLLAMA_ORIGINS=${location.origin}?` : e.code === "model_missing" ? `Falta el modelo «${cfg.model}». Instálalo con: ollama pull ${cfg.model}. ${e.message || ""}` : "Error: " + (e.message || e.code);
+      let why = "";
+      if (e.code === "ollama_offline") {
+        // ¿Ollama está corriendo pero no permite este sitio (CORS), o no está corriendo?
+        let alive = false; try { await Promise.race([fetch(ollamaBase() + "/api/version", { mode: "no-cors" }), new Promise((_, j) => setTimeout(() => j(0), 4000))]); alive = true; } catch {}
+        why = alive
+          ? `Ollama está abierto, pero no permite este sitio. Configura OLLAMA_ORIGINS=${location.origin}, cierra Ollama por completo (también desde la bandeja del sistema) y vuelve a abrirlo.`
+          : `No encontré Ollama en ${ollamaBase()}. Revisa que esté instalado y abierto (al abrir ${ollamaBase()} en el navegador debe decir «Ollama is running»). Si Chrome pregunta si este sitio puede acceder a tu red local, toca Permitir.`;
+      }
+      out.textContent = e.code === "ollama_offline" ? why : e.code === "model_missing" ? `Falta el modelo «${cfg.model}». Instálalo con: ollama pull ${cfg.model}. ${e.message || ""}` : "Error: " + (e.message || e.code);
     } finally { cfg.ollamaUrl = keep.ollamaUrl; cfg.model = keep.model; }
   }
   let pill = null;
