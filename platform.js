@@ -12,7 +12,7 @@
   const FOLDER = "application/vnd.google-apps.folder";
   const DAPI = "https://www.googleapis.com/drive/v3/", UAPI = "https://www.googleapis.com/upload/drive/v3/";
   const FIELDS = "id,name,mimeType,size,modifiedTime,parents";
-  const base = Object.assign({ googleClientId: "", ollamaUrl: "http://localhost:11434", model: "gemma4", numCtx: 16384, browseDrive: true, engine: "local", localModel: "e2b", localCtx: 4096 }, window.ATRIL_CONFIG || {});
+  const base = Object.assign({ googleClientId: "", ollamaUrl: "http://localhost:11434", model: "gemma4", numCtx: 16384, pickerKey: "", appId: "", engine: "local", localModel: "e2b", localCtx: 4096 }, window.ATRIL_CONFIG || {});
   let cfg = (() => { try { return Object.assign({}, base, JSON.parse(localStorage.getItem(CFG_KEY) || "{}")); } catch { return { ...base }; } })();
   if (!cfg.googleClientId) cfg.googleClientId = base.googleClientId;
   const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
@@ -28,8 +28,9 @@
     s.onload = () => res(); s.onerror = () => { gisP = null; rej(new Error("No se pudo cargar el inicio de sesión de Google. Revisa tu conexión.")); };
     document.head.append(s);
   });
-  const SCOPE_FILE = "https://www.googleapis.com/auth/drive.file", SCOPE_READ = "https://www.googleapis.com/auth/drive.readonly";
-  const scopes = () => ["openid", "email", "profile", SCOPE_FILE, ...(cfg.browseDrive ? [SCOPE_READ] : [])].join(" ");
+  // Solo permisos no sensibles: Atril ve únicamente los archivos que crea y los que cada persona elige en el selector de Google.
+  const SCOPE_FILE = "https://www.googleapis.com/auth/drive.file";
+  const scopes = () => ["openid", "email", "profile", SCOPE_FILE].join(" ");
   async function signIn(prompt) {
     if (!cfg.googleClientId) throw new Error("Falta el ID de cliente de Google. Ábrelo en Ajustes.");
     await loadGis();
@@ -131,6 +132,36 @@
       return { content: new Uint8Array(await r.arrayBuffer()) };
     },
   };
+  /* Selector oficial de Google Drive: cada persona elige qué PDF comparte con Atril (permiso drive.file). */
+  let gapiP = null;
+  const loadPicker = () => gapiP ??= new Promise((res, rej) => {
+    const s = document.createElement("script"); s.src = "https://apis.google.com/js/api.js"; s.async = true;
+    s.onload = () => gapi.load("picker", { callback: res, onerror: () => { gapiP = null; rej(new Error("picker")); } });
+    s.onerror = () => { gapiP = null; rej(new Error("No se pudo cargar el selector de Google Drive. Revisa tu conexión.")); };
+    document.head.append(s);
+  });
+  window.__atrilPick = async ({ multi = true } = {}) => {
+    if (!token || Date.now() > tokenExp) { showReauth(); throw { code: "needs_reauth" }; }
+    if (!cfg.pickerKey) throw { code: "no_picker", message: "Falta la clave del selector de Google Drive en config.js." };
+    await loadPicker();
+    return new Promise((res) => {
+      const P = google.picker;
+      const mine = new P.DocsView(P.ViewId.DOCS).setMimeTypes("application/pdf").setIncludeFolders(true).setSelectFolderEnabled(false).setMode(P.DocsViewMode.LIST);
+      const recent = new P.DocsView(P.ViewId.RECENTLY_PICKED);
+      const b = new P.PickerBuilder().addView(mine).addView(recent).setOAuthToken(token).setDeveloperKey(cfg.pickerKey).setLocale("es")
+        .setTitle(multi ? "Elige uno o varios PDF de tu Google Drive" : "Elige el PDF de este libro en tu Google Drive")
+        .setOrigin(location.protocol + "//" + location.host)
+        .setCallback((d) => {
+          if (d[P.Response.ACTION] === P.Action.PICKED) res((d[P.Response.DOCUMENTS] || []).map(x => ({ id: x[P.Document.ID], title: x[P.Document.NAME], mimeType: x[P.Document.MIME_TYPE], fileSize: x.sizeBytes })));
+          else if (d[P.Response.ACTION] === P.Action.CANCEL) res([]);
+        });
+      if (cfg.appId) b.setAppId(cfg.appId);
+      if (multi) b.enableFeature(P.Feature.MULTISELECT_ENABLED);
+      if (innerWidth < 640) b.setSize(innerWidth - 16, innerHeight - 40);
+      b.build().setVisible(true);
+    });
+  };
+
   const MCP = {
     async listTools() { return { fileArgs: true, tools: Object.keys(DRIVE_TOOLS) }; },
     async callTool(_server, tool, input) { const f = DRIVE_TOOLS[tool]; if (!f) throw { code: "tool_error", message: "Operación desconocida: " + tool }; return f(input || {}); },
@@ -381,7 +412,7 @@
       <section>
         <h3>Google</h3>
         <label class="pff"><span>ID de cliente OAuth</span><input id="pfCid" spellcheck="false" autocomplete="off" placeholder="1234567890-abc.apps.googleusercontent.com"></label>
-        <label class="pfchk"><input type="checkbox" id="pfBrowse"><span>Permitir abrir cualquier PDF de mi Drive (solo lectura). Si lo desactivas, Atril solo ve los archivos que él mismo creó.</span></label>
+        <p class="pfhint">Atril solo puede ver la carpeta «Atril - biblioteca» que él mismo crea y los PDF que tú eliges en «Abrir desde Drive». No puede ver el resto de tu Drive.</p>
         <p class="pfhint">Es gratis. La guía paso a paso está en el <a href="https://github.com/gavg1797/atril#configurar-google-drive-gratis" target="_blank" rel="noopener">README del proyecto</a>.</p>
       </section>
       <div class="pfrow end"><button class="pfbtn pfprimary" id="pfSave" type="button">Guardar</button></div>
@@ -456,25 +487,24 @@
     if (focus === "gemma") setTimeout(() => $("#pfGemma").scrollIntoView({ block: "start" }), 50);
     $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
     $("#pfCtx").value = String(cfg.numCtx); if (!$("#pfCtx").value) $("#pfCtx").value = "16384";
-    $("#pfBrowse").checked = !!cfg.browseDrive; $("#pfTestMsg").textContent = "";
+    $("#pfTestMsg").textContent = "";
     $("#pfAcct").hidden = !user; if (user) $("#pfWho").textContent = `${user.name ? user.name + " · " : ""}${user.email || ""}`;
     setM.hidden = false; renderLocal();
     ollamaModels().then(list => { const dl = $("#pfModels"); const have = new Set([...dl.options].map(o => o.value)); for (const n of list) if (!have.has(n)) dl.append(h("option", { value: n })); }).catch(() => {});
   }
   function closeSettings() { setM.hidden = true; }
   function saveSettings() {
-    const prevBrowse = cfg.browseDrive, prevCid = cfg.googleClientId;
+    const prevCid = cfg.googleClientId;
     cfg.ollamaUrl = $("#pfOUrl").value.trim() || "http://localhost:11434";
     cfg.model = $("#pfModel").value.trim() || "gemma4";
     cfg.numCtx = Number($("#pfCtx").value) || 16384;
     cfg.googleClientId = $("#pfCid").value.trim();
-    cfg.browseDrive = $("#pfBrowse").checked;
     const lm = $("#pfLModel").value, lc = Number($("#pfLCtx").value) || 4096;
     if (lm !== lModel() || lc !== lCtx()) closeLocal();
     cfg.engine = selEngine(); cfg.localModel = lm; cfg.localCtx = lc;
     saveCfg(); closeSettings();
     if (!user) msg(cfg.googleClientId ? "" : "Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", !cfg.googleClientId);
-    else if (prevBrowse !== cfg.browseDrive || prevCid !== cfg.googleClientId) { token = null; showReauth("Cambiaste los permisos de Google. Renueva la sesión para aplicarlos."); }
+    else if (prevCid !== cfg.googleClientId) { token = null; showReauth("Cambiaste los permisos de Google. Renueva la sesión para aplicarlos."); }
   }
   async function testOllama() {
     const out = $("#pfTestMsg"); out.classList.remove("warn"); out.textContent = "Probando…";

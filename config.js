@@ -7,7 +7,8 @@ window.ATRIL_CONFIG = {
   ollamaUrl: "http://localhost:11434",
   model: "gemma4",
   numCtx: 16384,
-  browseDrive: true,
+  pickerKey: "AIzaSyBX8RnZs2GIrILiaz3qeV7WqBvjK9SijWo", // clave pública del selector de Drive, limitada a este sitio y a la Picker API
+  appId: "578654012300",
   engine: "local",      // "local" = Gemma dentro del navegador (todos los dispositivos) · "ollama" = Ollama en la computadora
   localModel: "e2b",
   localCtx: 4096

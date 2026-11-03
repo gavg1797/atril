@@ -39,7 +39,7 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no necesitan tarjeta de crédito. Solo se configuran una vez (unos 10 minutos).
 
 1. **Crea un proyecto.** Entra a https://console.cloud.google.com/ con tu cuenta de Google y crea un proyecto llamado **Atril**.
-2. **Activa la API.** Ve a **APIs y servicios → Biblioteca**, busca **Google Drive API** y pulsa **Habilitar**.
+2. **Activa las APIs.** Ve a **APIs y servicios → Biblioteca** y habilita **Google Drive API** y **Google Picker API**. Luego, en **Credenciales → Crear credenciales → Clave de API**, crea una clave limitada a la *Google Picker API* y al sitio `https://gavg1797.github.io/*`, y pégala en `config.js` (`pickerKey`). El número del proyecto va en `appId`.
 3. **Configura la pantalla de consentimiento.** Ve a **APIs y servicios → Pantalla de consentimiento de OAuth** (en la consola nueva se llama **Google Auth Platform**):
    - Tipo de usuario: **Externo**.
    - Nombre de la app: **Atril**. Usa tu correo como correo de asistencia y de contacto.
@@ -55,10 +55,14 @@ La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no
 
 **Qué pasa al iniciar sesión:** como la app está en modo de prueba, Google muestra el aviso *"Google no verificó esta app"*. Es normal porque la app es tuya. Toca **Continuar** y acepta los permisos de Drive.
 
-**Permisos que pide Atril:**
+**Permisos que pide Atril** (todos no sensibles, sin costo):
 
-- `drive.file`: crear y actualizar solo los archivos de Atril.
-- `drive.readonly`: abrir cualquier PDF que ya tengas en Drive con **Abrir desde Drive**. Puedes quitar este permiso en **Ajustes**. Si lo quitas, Atril solo ve los archivos que creó.
+- Perfil básico (nombre y correo).
+- `drive.file`: Atril solo ve la carpeta que crea y los PDF que cada persona elige con el **selector oficial de Google Drive** («Abrir desde Drive»). No puede ver el resto del Drive.
+
+**Cualquier cuenta de Google puede entrar.** La app está publicada («En producción»); cada cuenta empieza con una biblioteca vacía guardada en su propio Drive. Mientras Google no verifique la marca, al entrar aparece «Google no verificó esta app» → **Avanzado → Ir a Atril**.
+
+**Costo:** $0. Google Drive API, Google Picker API e inicio de sesión no cobran, y el proyecto no tiene cuenta de facturación, así que no hay forma de que se cobre nada. La verificación de marca de Google para permisos no sensibles también es gratuita.
 
 ## Gemma 4 en cualquier dispositivo (gratis, desde el sitio)
 
@@ -108,5 +112,6 @@ Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Go
 | `index.html` | El lector completo: biblioteca, reproductor, marcas, cuaderno, preguntas y sincronización. |
 | `platform.js` | Inicio de sesión con Google, API de Google Drive, conexión con Ollama y descargas. |
 | `platform.css` | Pantalla de acceso y ajustes. |
-| `config.js` | ID de cliente de Google, dirección de Ollama y modelo predeterminado. |
+| `config.js` | ID de cliente de Google, clave del selector de Drive, Gemma y Ollama. |
+| `privacidad.html` | Política de privacidad (la pide la pantalla de consentimiento de Google). |
 | `sw.js`, `manifest.webmanifest` | Permiten instalar Atril como app en el celular o la computadora. |

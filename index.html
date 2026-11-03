@@ -2217,6 +2217,7 @@ function gpickErr(e) {
 }
 /* mode "add": varios PDF → se agregan a la biblioteca. mode "link": un PDF → se enlaza al libro `doc`. */
 function openDrivePicker({ mode = "add", doc = null } = {}) {
+  if (window.__atrilPick) { window.__atrilPick({ multi: mode !== "link" }).then(fs => { if (!fs?.length) return; if (mode === "link") linkDocToDrive(doc, fs[0]); else addFromDrive(fs); }).catch(e => { console.error(e); if (e?.code !== "needs_reauth") toast(e?.message && e.code === "no_picker" ? e.message : "No se pudo abrir el selector de Google Drive. Vuelve a intentarlo."); }); return; }
   const m = $("#gpModal"), list = $("#gpList"), crumbs = $("#gpCrumbs"), search = $("#gpSearch"), ok = $("#gpOk"), info = $("#gpInfo");
   let stack = [{ id: "root", name: "Mi unidad" }], sel = new Map(), token = null, query = "", seq = 0;
   $("#gpTitle").textContent = mode === "link" ? `Enlazar «${doc.name}» con un archivo de tu Drive` : "Abrir desde Google Drive";
