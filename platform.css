@@ -44,3 +44,14 @@ html:not(.pf-in) body > *:not(#pfGate):not(#pfSet):not(script){visibility:hidden
 @media (max-width:520px){#pfBar{flex-direction:column;align-items:stretch;text-align:center}.pfrow.wrap .pfbtn{flex:1 1 100%}}
 /* La copia en Drive siempre está activa en esta versión. */
 #drvOn,#drvOff{display:none!important}
+.pfseg{display:grid;gap:8px;margin-bottom:12px}
+.pfseg label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line,#D3DBD9);border-radius:12px;cursor:pointer;background:var(--surface,#F5F7F6)}
+.pfseg label:has(input:checked){border-color:var(--accent,#2B47D4);background:var(--accent-soft,#E3E8FC)}
+.pfseg input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--accent,#2B47D4)}
+.pfseg b{display:block;font-size:14.5px}
+.pfseg em{display:block;font-style:normal;font-size:12.5px;color:var(--muted,#5A6764);margin-top:2px}
+.pfdl .pfline{font-weight:500;font-size:14px;margin:4px 0 8px}
+.pfbar{height:8px;border-radius:99px;background:var(--line,#D3DBD9);overflow:hidden;margin-bottom:10px}
+.pfbar i{display:block;height:100%;width:0;background:var(--accent,#2B47D4);transition:width .3s}
+#pfPill{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));z-index:9998;font:600 13px var(--f-ui,system-ui,sans-serif);padding:8px 12px;border-radius:99px;border:1px solid var(--accent,#2B47D4);background:var(--paper,#fff);color:var(--accent,#2B47D4);box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer}
+#pfPill[hidden]{display:none!important}

@@ -7,5 +7,8 @@ window.ATRIL_CONFIG = {
   ollamaUrl: "http://localhost:11434",
   model: "gemma4",
   numCtx: 16384,
-  browseDrive: true
+  browseDrive: true,
+  engine: "local",      // "local" = Gemma dentro del navegador (todos los dispositivos) · "ollama" = Ollama en la computadora
+  localModel: "e2b",
+  localCtx: 4096
 };

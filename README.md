@@ -1,6 +1,6 @@
 # Atril · lector de PDF con audio
 
-Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar notas y hacerles preguntas. Las preguntas las responde **Gemma 4** en tu propia computadora. Tu biblioteca se guarda sola en **tu Google Drive**.
+Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar notas y hacerles preguntas. Las preguntas las responde **Gemma 4** dentro de tu propio celular, tableta o computadora. Tu biblioteca se guarda sola en **tu Google Drive**.
 
 **Abrir la app:** https://gavg1797.github.io/atril/
 
@@ -29,7 +29,7 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 - **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
 - **Dónde se guardan tus libros:** en este navegador (IndexedDB) y en la carpeta **«Atril - biblioteca»** de tu Google Drive.
 - **Quién los ve:** esa carpeta es privada. La app no tiene servidor propio y los datos van directo de tu navegador a Google.
-- **Preguntas y traducciones:** las responde Ollama en tu computadora (`localhost`). El texto no se envía a ningún otro servicio de IA.
+- **Preguntas y traducciones:** las responde Gemma 4 dentro del navegador de tu dispositivo (o, si lo eliges, Ollama en tu computadora). El texto no se envía a ningún servicio de IA.
 - **Este repositorio es público, pero solo contiene el código.** Nunca contiene tus libros.
 - **Computadoras compartidas:** en **Ajustes → Cerrar sesión y borrar de este dispositivo** quitas la copia local.
 - **Cambio de cuenta:** si alguien inicia sesión con otra cuenta en el mismo navegador, Atril borra primero la biblioteca local de la cuenta anterior.
@@ -60,7 +60,21 @@ La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no
 - `drive.file`: crear y actualizar solo los archivos de Atril.
 - `drive.readonly`: abrir cualquier PDF que ya tengas en Drive con **Abrir desde Drive**. Puedes quitar este permiso en **Ajustes**. Si lo quitas, Atril solo ve los archivos que creó.
 
-## Configurar Gemma 4 con Ollama (gratis, en tu computadora)
+## Gemma 4 en cualquier dispositivo (gratis, desde el sitio)
+
+En **Ajustes → Gemma 4 → En este dispositivo**, toca **Descargar**. Atril baja el modelo una sola vez desde Hugging Face (Google, licencia Apache 2.0) y lo guarda en ese navegador. Después funciona sin internet y las preguntas no salen del dispositivo.
+
+| Modelo | Tamaño | Para |
+| --- | --- | --- |
+| Gemma 4 E2B (recomendado) | 2,0 GB | celulares, tabletas y computadoras |
+| Gemma 4 E4B | 3,0 GB | computadoras con buena tarjeta gráfica |
+
+- Necesita **WebGPU**: Chrome o Edge actualizados (computadora y Android), Safari en iPhone o iPad con iOS 26 o más reciente.
+- Descárgalo con wifi. Si se corta, toca **Continuar descarga** y sigue donde quedó.
+- Cada dispositivo descarga su propia copia. Puedes borrarla en Ajustes.
+- En celulares con poca memoria, elige **Memoria corta**.
+
+## Opcional: Gemma 4 con Ollama (en tu computadora)
 
 1. **Instala Ollama** desde https://ollama.com/download.
 2. **Descarga el modelo.** En una terminal, ejecuta:
