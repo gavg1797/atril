@@ -1,0 +1,46 @@
+/* Pantalla de acceso, ajustes y aviso de sesión de Atril (usa los colores del lector). */
+html:not(.pf-in) body > *:not(#pfGate):not(#pfSet):not(script){visibility:hidden}
+#pfGate,#pfSet{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;font-family:var(--f-ui,system-ui,sans-serif);color:var(--ink,#18201F)}
+#pfGate{background:var(--bg,#E9EDEC)}
+#pfSet{background:rgba(10,14,13,.55);z-index:10001}
+#pfSet[hidden],#pfBar[hidden],#pfGate [hidden]{display:none!important}
+.pfcard{width:min(420px,100%);background:var(--paper,#fff);border:1px solid var(--line,#D3DBD9);border-radius:18px;padding:28px 24px 22px;box-shadow:0 18px 50px rgba(0,0,0,.12);margin:auto}
+.pfwide{width:min(560px,100%);padding:20px 22px}
+.pflogo{display:flex;justify-content:center}
+#pfTitle{font-family:var(--f-read,Georgia,serif);font-size:30px;text-align:center;margin:10px 0 2px}
+.pfsub{text-align:center;color:var(--muted,#5A6764);margin:0 0 20px}
+.pfbtn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:42px;padding:8px 16px;border-radius:12px;border:1px solid var(--line,#D3DBD9);background:var(--surface,#F5F7F6);color:var(--ink,#18201F);cursor:pointer}
+.pfbtn:hover{border-color:var(--accent,#2B47D4)}
+.pfbtn:disabled{opacity:.6;cursor:progress}
+.pfbtn:focus-visible,.pflink:focus-visible,.pfx:focus-visible{outline:2px solid var(--accent,#2B47D4);outline-offset:2px}
+.pfg{width:100%;min-height:48px;font-size:16px;background:#fff;color:#1f1f1f;border-color:#c7c7c7}
+.pfprimary{background:var(--accent,#2B47D4);color:var(--accent-ink,#fff);border-color:transparent}
+.pfdanger{color:#B42318}
+.pfmsg{min-height:20px;margin:10px 0 0;font-size:14px;color:var(--muted,#5A6764)}
+.pfmsg.warn,.pfwarn{color:var(--warn,#9A5B00)}
+.pfwarn{font-size:14px;line-height:1.5;margin:0 0 14px}
+.pfpoints{list-style:none;padding:0;margin:20px 0 6px;display:grid;gap:10px;font-size:13.5px;line-height:1.45;color:var(--muted,#5A6764)}
+.pfpoints b{color:var(--ink,#18201F)}
+.pflink{font:inherit;font-size:13.5px;background:none;border:0;color:var(--accent,#2B47D4);text-decoration:underline;cursor:pointer;padding:8px 0 0;display:block;margin:0 auto}
+.pfhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pfhead h2{margin:0;font-size:20px}
+.pfx{border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted,#5A6764);width:36px;height:36px;border-radius:10px}
+#pfSet section{border-top:1px solid var(--line,#D3DBD9);padding:14px 0 6px}
+#pfSet h3{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#5A6764)}
+.pff{display:grid;gap:5px;margin-bottom:12px;font-size:14px}
+.pff input,.pff select{font:inherit;font-size:15px;padding:9px 11px;border-radius:10px;border:1px solid var(--line,#D3DBD9);background:var(--surface,#F5F7F6);color:var(--ink,#18201F);min-width:0;width:100%}
+.pfchk{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;margin-bottom:10px}
+.pfchk input{margin-top:3px;width:18px;height:18px;flex:none}
+.pfhint{font-size:12.5px;line-height:1.5;color:var(--muted,#5A6764);margin:6px 0 8px}
+.pfhint code{font-family:var(--f-mono,monospace);font-size:12px;background:var(--surface,#F5F7F6);padding:1px 5px;border-radius:5px;word-break:break-all}
+.pfhint a{color:var(--accent,#2B47D4)}
+.pfline{margin:0 0 10px;font-weight:600;word-break:break-word}
+.pfrow{display:flex;gap:10px;align-items:center}
+.pfrow.wrap{flex-wrap:wrap}
+.pfrow.end{justify-content:flex-end;padding-top:6px}
+#pfOwner .pfrow{justify-content:flex-end}
+#pfBar{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:9999;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px);padding:8px 8px 8px 14px;border-radius:14px;background:var(--paper,#fff);border:1px solid var(--warn,#9A5B00);box-shadow:0 10px 30px rgba(0,0,0,.18);font:500 14px var(--f-ui,system-ui,sans-serif);color:var(--ink,#18201F)}
+#pfBar .pfbtn{min-height:36px;white-space:nowrap}
+@media (max-width:520px){#pfBar{flex-direction:column;align-items:stretch;text-align:center}.pfrow.wrap .pfbtn{flex:1 1 100%}}
+/* La copia en Drive siempre está activa en esta versión. */
+#drvOn,#drvOff{display:none!important}

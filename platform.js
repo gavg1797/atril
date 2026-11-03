@@ -1,0 +1,359 @@
+/* Atril · capa de plataforma
+ * - Inicio de sesión con Google obligatorio en cada arranque (Google Identity Services).
+ * - Google Drive por la API REST v3 (la biblioteca vive en la carpeta «Atril - biblioteca»).
+ * - Preguntas y traducción con Gemma 4 en Ollama, en tu propia computadora.
+ * - Descargas normales del navegador.
+ * Expone window.claude.use(nombre) con la misma forma que usa el código del lector,
+ * así el lector conserva todas sus funciones sin cambios de lógica.
+ */
+(() => {
+  "use strict";
+  const CFG_KEY = "atril-config", OWNER_KEY = "atril-owner";
+  const FOLDER = "application/vnd.google-apps.folder";
+  const DAPI = "https://www.googleapis.com/drive/v3/", UAPI = "https://www.googleapis.com/upload/drive/v3/";
+  const FIELDS = "id,name,mimeType,size,modifiedTime,parents";
+  const base = Object.assign({ googleClientId: "", ollamaUrl: "http://localhost:11434", model: "gemma4", numCtx: 16384, browseDrive: true }, window.ATRIL_CONFIG || {});
+  let cfg = (() => { try { return Object.assign({}, base, JSON.parse(localStorage.getItem(CFG_KEY) || "{}")); } catch { return { ...base }; } })();
+  if (!cfg.googleClientId) cfg.googleClientId = base.googleClientId;
+  const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
+
+  let token = null, tokenExp = 0, user = null, started = false;
+  const $ = (s, r = document) => r.querySelector(s);
+  const h = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (v == null) continue; if (k === "text") n.textContent = v; else if (k === "html") n.innerHTML = v; else n.setAttribute(k, v); } n.append(...kids.filter(Boolean)); return n; };
+
+  /* ---------------- Google: inicio de sesión ---------------- */
+  let gisP = null;
+  const loadGis = () => gisP ??= new Promise((res, rej) => {
+    const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = () => res(); s.onerror = () => { gisP = null; rej(new Error("No se pudo cargar el inicio de sesión de Google. Revisa tu conexión.")); };
+    document.head.append(s);
+  });
+  const SCOPE_FILE = "https://www.googleapis.com/auth/drive.file", SCOPE_READ = "https://www.googleapis.com/auth/drive.readonly";
+  const scopes = () => ["openid", "email", "profile", SCOPE_FILE, ...(cfg.browseDrive ? [SCOPE_READ] : [])].join(" ");
+  async function signIn(prompt) {
+    if (!cfg.googleClientId) throw new Error("Falta el ID de cliente de Google. Ábrelo en Ajustes.");
+    await loadGis();
+    return new Promise((res, rej) => {
+      const tc = google.accounts.oauth2.initTokenClient({
+        client_id: cfg.googleClientId, scope: scopes(), prompt,
+        callback: (r) => {
+          if (r.error) { rej(new Error(r.error_description || r.error)); return; }
+          if (!google.accounts.oauth2.hasGrantedAllScopes(r, SCOPE_FILE)) { rej(new Error("Para guardar tu biblioteca, marca el permiso de Google Drive al iniciar sesión.")); return; }
+          token = r.access_token; tokenExp = Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60000;
+          res(r);
+        },
+        error_callback: (e) => rej(new Error(e?.type === "popup_closed" ? "Se cerró la ventana de Google antes de terminar." : e?.type === "popup_failed_to_open" ? "El navegador bloqueó la ventana de Google. Permite las ventanas emergentes para este sitio." : (e?.message || "No se pudo iniciar sesión."))),
+      });
+      tc.requestAccessToken();
+    });
+  }
+  async function whoAmI() {
+    const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + token } });
+    if (!r.ok) throw new Error("Google no devolvió tu perfil.");
+    return r.json();
+  }
+
+  /* ---------------- Google Drive (REST v3) ---------------- */
+  const mapF = (f) => f && { id: f.id, title: f.name, mimeType: f.mimeType, fileSize: f.size, modifiedTime: f.modifiedTime, parents: f.parents };
+  async function gfetch(url, opt = {}) {
+    if (!token || Date.now() > tokenExp) { showReauth(); throw { code: "needs_reauth" }; }
+    let r;
+    try { r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + token } }); }
+    catch (e) { throw { code: "server_unavailable", message: e?.message || "sin conexión" }; }
+    if (r.status === 401) { token = null; showReauth(); throw { code: "needs_reauth" }; }
+    if (!r.ok) {
+      let j = null; try { j = await r.json(); } catch {}
+      const msg = j?.error?.message || "HTTP " + r.status, reason = j?.error?.errors?.[0]?.reason || "";
+      if (r.status === 429 || /rateLimit/i.test(reason)) throw { code: "rate_limited", message: msg };
+      if (r.status >= 500) throw { code: "upstream_error", message: msg };
+      if (r.status === 403 && /insufficient|scope/i.test(msg + " " + reason)) throw { code: "not_in_manifest", message: msg };
+      throw { code: "tool_error", message: msg + (r.status === 404 ? " (notFound)" : "") };
+    }
+    return r;
+  }
+  const json = (r) => r.json();
+  const toU8 = (d) => d instanceof Uint8Array ? d : d instanceof ArrayBuffer ? new Uint8Array(d) : null;
+  function b64u8(b) { const s = atob(b); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+  async function upload(meta, data, type) {
+    const size = data.byteLength ?? data.size ?? 0;
+    if (size > 5 * 1024 * 1024) {
+      const r = await gfetch(UAPI + "files?uploadType=resumable&fields=" + FIELDS, { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Type": type }, body: JSON.stringify(meta) });
+      const loc = r.headers.get("Location");
+      if (loc) { const p = await gfetch(loc, { method: "PUT", headers: { "Content-Type": type }, body: new Blob([data], { type }) }); return mapF(await p.json()); }
+    }
+    const b = "atril" + Math.random().toString(36).slice(2);
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${type}\r\n\r\n`, data, `\r\n--${b}--`]);
+    const r = await gfetch(UAPI + "files?uploadType=multipart&fields=" + FIELDS, { method: "POST", headers: { "Content-Type": "multipart/related; boundary=" + b }, body });
+    return mapF(await r.json());
+  }
+  const convQ = (q) => String(q || "")
+    .replace(/parentId = '((?:[^'\\]|\\.)*)'/g, "'$1' in parents")
+    .replace(/owner = 'me'/g, "'me' in owners")
+    .replace(/\btitle (=|contains) /g, "name $1 ");
+  const DRIVE_TOOLS = {
+    async search_files(i) {
+      const p = new URLSearchParams({ q: convQ(i.query), pageSize: String(Math.min(i.pageSize || 100, 1000)), fields: `nextPageToken,files(${FIELDS})`, spaces: "drive" });
+      if (i.pageToken) p.set("pageToken", i.pageToken);
+      const j = await gfetch(DAPI + "files?" + p).then(json);
+      return { files: (j.files || []).map(mapF), nextPageToken: j.nextPageToken || null };
+    },
+    async create_file(i) {
+      const meta = { name: i.title }; if (i.parentId) meta.parents = [i.parentId];
+      const mime = i.mimeType || i.contentMimeType;
+      if (mime === FOLDER) {
+        meta.mimeType = FOLDER;
+        return mapF(await gfetch(DAPI + "files?fields=" + FIELDS, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(meta) }).then(json));
+      }
+      const c = i.base64Content;
+      const data = toU8(c?.$file?.data) || (c?.$file?.data instanceof Blob ? c.$file.data : null) || (typeof c === "string" ? b64u8(c) : null) || new TextEncoder().encode(i.textContent ?? "");
+      meta.mimeType = mime || "application/octet-stream";
+      return upload(meta, data, meta.mimeType);
+    },
+    async update_content(i) {
+      const type = i.type || "application/octet-stream";
+      return mapF(await gfetch(UAPI + "files/" + encodeURIComponent(i.fileId) + "?uploadType=media&fields=" + FIELDS, { method: "PATCH", headers: { "Content-Type": type }, body: new Blob([i.data], { type }) }).then(json));
+    },
+    async update_file(i) {
+      const id = encodeURIComponent(i.fileId); let out = null;
+      if (i.parentId) {
+        const cur = await gfetch(DAPI + "files/" + id + "?fields=parents").then(json);
+        const p = new URLSearchParams({ addParents: i.parentId, fields: FIELDS }); const old = (cur.parents || []).filter(x => x !== i.parentId); if (old.length) p.set("removeParents", old.join(","));
+        out = await gfetch(DAPI + "files/" + id + "?" + p, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: "{}" }).then(json);
+      }
+      if (i.title) out = await gfetch(DAPI + "files/" + id + "?fields=" + FIELDS, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: i.title }) }).then(json);
+      return mapF(out);
+    },
+    async trash_file(i) {
+      return mapF(await gfetch(DAPI + "files/" + encodeURIComponent(i.fileId) + "?fields=" + FIELDS, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashed: true }) }).then(json));
+    },
+    async download_file_content(i) {
+      const r = await gfetch(DAPI + "files/" + encodeURIComponent(i.fileId) + "?alt=media");
+      return { content: new Uint8Array(await r.arrayBuffer()) };
+    },
+  };
+  const MCP = {
+    async listTools() { return { fileArgs: true, tools: Object.keys(DRIVE_TOOLS) }; },
+    async callTool(_server, tool, input) { const f = DRIVE_TOOLS[tool]; if (!f) throw { code: "tool_error", message: "Operación desconocida: " + tool }; return f(input || {}); },
+  };
+
+  /* ---------------- Gemma 4 en Ollama ---------------- */
+  const ollamaBase = () => String(cfg.ollamaUrl || "http://localhost:11434").replace(/\/+$/, "");
+  window.__atrilCtxChars = () => Math.max(8000, ((Number(cfg.numCtx) || 16384) - 3500) * 3);
+  async function ollamaChat(messages, { signal, onText, format, noThink = true } = {}) {
+    const msgs = messages.map((m, i) => ({ role: i === 0 && m.role === "user" && messages.length > 1 ? "system" : m.role, content: String(m.content ?? "") }));
+    const body = { model: cfg.model || "gemma4", messages: msgs, stream: true, options: { num_ctx: Number(cfg.numCtx) || 16384 } };
+    if (format) body.format = format;
+    if (noThink) body.think = false;
+    let r;
+    try { r = await fetch(ollamaBase() + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal }); }
+    catch (e) { if (signal?.aborted) throw { code: "cancelled" }; throw { code: "ollama_offline", message: e?.message }; }
+    if (!r.ok) {
+      let t = ""; try { t = (await r.json())?.error || ""; } catch {}
+      if (noThink && /think/i.test(t)) return ollamaChat(messages, { signal, onText, format, noThink: false });
+      if (r.status === 404 || /not found|pull/i.test(t)) throw { code: "model_missing", message: t };
+      throw { code: "ollama_error", message: t || "HTTP " + r.status };
+    }
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "", text = "", reason = "";
+    try {
+      for (;;) {
+        const { value, done } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let k; while ((k = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, k).trim(); buf = buf.slice(k + 1); if (!line) continue;
+          let j; try { j = JSON.parse(line); } catch { continue; }
+          if (j.error) throw { code: "ollama_error", message: j.error, text };
+          if (j.message?.content) { text += j.message.content; onText?.({ text }); }
+          if (j.done) reason = j.done_reason || "";
+        }
+      }
+    } catch (e) { if (signal?.aborted || e?.name === "AbortError") throw { code: "cancelled", text }; throw e?.code ? e : { code: "ollama_offline", message: e?.message, text }; }
+    return { text, truncated: reason === "length" };
+  }
+  const SAMPLE = async (input, opts = {}) => ollamaChat(typeof input === "string" ? [{ role: "user", content: input }] : input, opts);
+  SAMPLE.json = async (prompt, opts = {}) => {
+    const { text } = await ollamaChat([{ role: "user", content: prompt }], { signal: opts.signal, format: { type: "array", items: { type: "string" } } });
+    try {
+      const v = JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/g, ""));
+      if (Array.isArray(v)) return v;
+      const arr = v && typeof v === "object" ? Object.values(v).find(Array.isArray) : null;
+      if (arr) return arr; throw 0;
+    } catch { throw { code: "invalid_json" }; }
+  };
+  async function ollamaModels() {
+    const r = await fetch(ollamaBase() + "/api/tags"); if (!r.ok) throw new Error("HTTP " + r.status);
+    return ((await r.json()).models || []).map(m => m.name);
+  }
+
+  /* ---------------- Descargas ---------------- */
+  const DOWNLOADS = {
+    async save({ filename, data, type }) {
+      const blob = data instanceof Blob ? data : new Blob([data], { type: type || (/\.pdf$/i.test(filename) ? "application/pdf" : /\.md$/i.test(filename) ? "text/markdown" : "application/octet-stream") });
+      const url = URL.createObjectURL(blob), a = h("a", { href: url, download: filename || "archivo" });
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return { status: "saved" };
+    },
+  };
+  const PERMS = { async state() { return "granted"; }, async manage() { openSettings(); }, async request(names) { return Object.fromEntries((names || []).map(n => [n, "granted"])); } };
+  window.claude = { use: async (name) => ({ sample: SAMPLE, downloads: DOWNLOADS, permissions: PERMS, mcp: MCP })[name] || null };
+
+  /* ---------------- Interfaz: pantalla de acceso, ajustes, renovar sesión ---------------- */
+  const LOGO = '<svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2B47D4"/><path d="M18 18h12a6 6 0 0 1 6 6v24a5 5 0 0 0-5-5H18z" fill="#fff"/><path d="M46 18H38a6 6 0 0 0-2 .4V48a5 5 0 0 1 5-5h5z" fill="#C9D3FF"/><circle cx="47" cy="45" r="7" fill="#FFE36E"/><path d="M45 42v6l5-3z" fill="#18201F"/></svg>';
+  const GOOGLE_G = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+  let gate, setM, bar;
+  function buildUI() {
+    gate = h("div", { id: "pfGate", role: "dialog", "aria-modal": "true", "aria-labelledby": "pfTitle" });
+    gate.innerHTML = `<div class="pfcard">
+      <div class="pflogo">${LOGO}</div>
+      <h1 id="pfTitle">Atril</h1>
+      <p class="pfsub">Escucha tus PDF, márcalos y pregúntales.</p>
+      <div id="pfMain">
+        <button class="pfbtn pfg" id="pfLogin" type="button">${GOOGLE_G}<span>Iniciar sesión con Google</span></button>
+        <p class="pfmsg" id="pfMsg" role="status" aria-live="polite"></p>
+      </div>
+      <div id="pfOwner" hidden>
+        <p class="pfwarn" id="pfOwnerText"></p>
+        <div class="pfrow"><button class="pfbtn" id="pfOwnerNo" type="button">Cancelar</button><button class="pfbtn pfdanger" id="pfOwnerYes" type="button">Borrar y continuar</button></div>
+      </div>
+      <ul class="pfpoints">
+        <li><b>Privado.</b> Tus libros se guardan en este navegador y en la carpeta «Atril - biblioteca» de tu Google Drive. Nadie más tiene acceso.</li>
+        <li><b>Gemma 4 en tu computadora.</b> Las preguntas y traducciones las responde Ollama en tu equipo; el texto no va a otros servicios.</li>
+        <li><b>Cada vez que abres Atril</b> tienes que iniciar sesión.</li>
+      </ul>
+      <button class="pflink" id="pfOpenSet" type="button">Ajustes de Google y Gemma</button>
+    </div>`;
+    setM = h("div", { id: "pfSet", role: "dialog", "aria-modal": "true", "aria-labelledby": "pfSetTitle", hidden: "" });
+    setM.innerHTML = `<div class="pfcard pfwide">
+      <div class="pfhead"><h2 id="pfSetTitle">Ajustes</h2><button class="pfx" id="pfSetClose" type="button" aria-label="Cerrar">✕</button></div>
+      <section id="pfAcct" hidden>
+        <h3>Cuenta de Google</h3>
+        <p class="pfline" id="pfWho"></p>
+        <div class="pfrow wrap"><button class="pfbtn" id="pfSyncNow" type="button">Guardar en Drive ahora</button><button class="pfbtn" id="pfLogout" type="button">Cerrar sesión</button><button class="pfbtn pfdanger" id="pfWipe" type="button">Cerrar sesión y borrar de este dispositivo</button></div>
+        <p class="pfhint">«Borrar de este dispositivo» quita los libros guardados en este navegador. Tu copia en Google Drive no se toca.</p>
+      </section>
+      <section>
+        <h3>Gemma 4 (Ollama)</h3>
+        <label class="pff"><span>Dirección de Ollama</span><input id="pfOUrl" type="url" spellcheck="false" autocomplete="off"></label>
+        <label class="pff"><span>Modelo</span><input id="pfModel" list="pfModels" spellcheck="false" autocomplete="off" placeholder="gemma4"><datalist id="pfModels"><option value="gemma4"><option value="gemma4:e2b"><option value="gemma4:e4b"><option value="gemma4:26b"><option value="gemma4:31b"></datalist></label>
+        <label class="pff"><span>Memoria de contexto (tokens)</span><select id="pfCtx"><option value="8192">8 192 · equipos modestos</option><option value="16384">16 384 · recomendado</option><option value="32768">32 768 · documentos largos</option><option value="65536">65 536 · mucha memoria</option></select></label>
+        <div class="pfrow"><button class="pfbtn" id="pfTest" type="button">Probar conexión</button><span class="pfmsg" id="pfTestMsg" role="status" aria-live="polite"></span></div>
+        <p class="pfhint">Ollama tiene que estar abierto en esta computadora y permitir este sitio: <code>OLLAMA_ORIGINS=${location.origin}</code>. En el celular o la tableta, la lectura y Drive funcionan; las preguntas necesitan una computadora con Ollama.</p>
+      </section>
+      <section>
+        <h3>Google</h3>
+        <label class="pff"><span>ID de cliente OAuth</span><input id="pfCid" spellcheck="false" autocomplete="off" placeholder="1234567890-abc.apps.googleusercontent.com"></label>
+        <label class="pfchk"><input type="checkbox" id="pfBrowse"><span>Permitir abrir cualquier PDF de mi Drive (solo lectura). Si lo desactivas, Atril solo ve los archivos que él mismo creó.</span></label>
+        <p class="pfhint">Es gratis. La guía paso a paso está en el <a href="https://github.com/gavg1797/atril#configurar-google-drive-gratis" target="_blank" rel="noopener">README del proyecto</a>.</p>
+      </section>
+      <div class="pfrow end"><button class="pfbtn pfprimary" id="pfSave" type="button">Guardar</button></div>
+    </div>`;
+    bar = h("div", { id: "pfBar", hidden: "" });
+    bar.innerHTML = `<span>Tu sesión de Google venció. Los cambios esperan para guardarse en Drive.</span><button class="pfbtn pfprimary" id="pfRenew" type="button">Renovar sesión</button>`;
+    document.body.append(gate, setM, bar);
+
+    $("#pfLogin").addEventListener("click", login);
+    $("#pfOpenSet").addEventListener("click", openSettings);
+    $("#pfSetClose").addEventListener("click", closeSettings);
+    setM.addEventListener("click", (e) => { if (e.target === setM) closeSettings(); });
+    addEventListener("keydown", (e) => { if (e.key === "Escape" && !setM.hidden) closeSettings(); });
+    $("#pfSave").addEventListener("click", saveSettings);
+    $("#pfTest").addEventListener("click", testOllama);
+    $("#pfRenew").addEventListener("click", renew);
+    $("#pfLogout").addEventListener("click", () => logout(false));
+    $("#pfWipe").addEventListener("click", () => logout(true));
+    $("#pfSyncNow").addEventListener("click", async () => { const b = $("#pfSyncNow"); b.disabled = true; b.textContent = "Guardando…"; try { await window.__atrilSyncNow?.(); } finally { b.disabled = false; b.textContent = "Guardar en Drive ahora"; } });
+    if (!cfg.googleClientId) msg("Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", true);
+  }
+  const msg = (t, warn) => { const m = $("#pfMsg"); m.textContent = t || ""; m.classList.toggle("warn", !!warn); };
+
+  function openSettings() {
+    $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
+    $("#pfCtx").value = String(cfg.numCtx); if (!$("#pfCtx").value) $("#pfCtx").value = "16384";
+    $("#pfBrowse").checked = !!cfg.browseDrive; $("#pfTestMsg").textContent = "";
+    $("#pfAcct").hidden = !user; if (user) $("#pfWho").textContent = `${user.name ? user.name + " · " : ""}${user.email || ""}`;
+    setM.hidden = false;
+    ollamaModels().then(list => { const dl = $("#pfModels"); const have = new Set([...dl.options].map(o => o.value)); for (const n of list) if (!have.has(n)) dl.append(h("option", { value: n })); }).catch(() => {});
+  }
+  function closeSettings() { setM.hidden = true; }
+  function saveSettings() {
+    const prevBrowse = cfg.browseDrive, prevCid = cfg.googleClientId;
+    cfg.ollamaUrl = $("#pfOUrl").value.trim() || "http://localhost:11434";
+    cfg.model = $("#pfModel").value.trim() || "gemma4";
+    cfg.numCtx = Number($("#pfCtx").value) || 16384;
+    cfg.googleClientId = $("#pfCid").value.trim();
+    cfg.browseDrive = $("#pfBrowse").checked;
+    saveCfg(); closeSettings();
+    if (!user) msg(cfg.googleClientId ? "" : "Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", !cfg.googleClientId);
+    else if (prevBrowse !== cfg.browseDrive || prevCid !== cfg.googleClientId) { token = null; showReauth("Cambiaste los permisos de Google. Renueva la sesión para aplicarlos."); }
+  }
+  async function testOllama() {
+    const out = $("#pfTestMsg"); out.classList.remove("warn"); out.textContent = "Probando…";
+    const keep = { ...cfg }; cfg.ollamaUrl = $("#pfOUrl").value.trim() || cfg.ollamaUrl; cfg.model = $("#pfModel").value.trim() || cfg.model;
+    try {
+      const list = await ollamaModels().catch(() => { throw { code: "ollama_offline" }; });
+      if (!list.some(n => n === cfg.model || n === cfg.model + ":latest")) throw { code: "model_missing", message: list.length ? "Modelos instalados: " + list.join(", ") : "No hay modelos instalados." };
+      const { text } = await ollamaChat([{ role: "user", content: "Responde solo: listo" }]);
+      out.textContent = `Conectado con ${cfg.model}: «${text.trim().slice(0, 40)}»`;
+    } catch (e) {
+      out.classList.add("warn");
+      out.textContent = e.code === "ollama_offline" ? `No respondió Ollama en ${ollamaBase()}. ¿Está abierto y con OLLAMA_ORIGINS=${location.origin}?` : e.code === "model_missing" ? `Falta el modelo «${cfg.model}». Instálalo con: ollama pull ${cfg.model}. ${e.message || ""}` : "Error: " + (e.message || e.code);
+    } finally { cfg.ollamaUrl = keep.ollamaUrl; cfg.model = keep.model; }
+  }
+  function showReauth(text) { if (!started || !bar) return; if (text) bar.firstElementChild.textContent = text; bar.hidden = false; }
+  async function renew() {
+    const b = $("#pfRenew"); b.disabled = true;
+    try {
+      await signIn("");
+      const me = await whoAmI();
+      if (me.sub !== user.sub) { location.reload(); return; }
+      bar.hidden = true; bar.firstElementChild.textContent = "Tu sesión de Google venció. Los cambios esperan para guardarse en Drive.";
+      window.__atrilDriveResume?.();
+    } catch (e) { bar.firstElementChild.textContent = e.message || "No se pudo renovar la sesión."; }
+    finally { b.disabled = false; }
+  }
+  async function wipeDevice() {
+    await new Promise((res) => { try { const r = indexedDB.deleteDatabase("atril"); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith("atril-") && k !== CFG_KEY) localStorage.removeItem(k); } catch {}
+    try { for (const k of await caches.keys()) if (k.startsWith("atril-data")) await caches.delete(k); } catch {}
+  }
+  async function logout(wipe) {
+    const pending = window.__atrilPending?.();
+    if (pending && token) { try { await window.__atrilSyncNow?.(); } catch {} }
+    if (wipe) await wipeDevice();
+    try { if (token) google.accounts.oauth2.revoke(token, () => {}); } catch {}
+    token = null; user = null;
+    location.reload();
+  }
+
+  async function login() {
+    const b = $("#pfLogin"); b.disabled = true; msg("Abriendo Google…");
+    try {
+      await signIn("select_account");
+      msg("Comprobando tu cuenta…");
+      const me = await whoAmI();
+      const owner = (() => { try { return JSON.parse(localStorage.getItem(OWNER_KEY) || "null"); } catch { return null; } })();
+      if (owner && owner.sub !== me.sub) {
+        $("#pfMain").hidden = true; $("#pfOwner").hidden = false;
+        $("#pfOwnerText").textContent = `Este navegador guarda la biblioteca de otra cuenta (${owner.email || "otra persona"}). Para proteger su privacidad, se borrará de este dispositivo antes de abrir la tuya. Su copia en Google Drive no se toca.`;
+        const ok = await new Promise((res) => { $("#pfOwnerYes").onclick = () => res(true); $("#pfOwnerNo").onclick = () => res(false); });
+        if (!ok) { try { google.accounts.oauth2.revoke(token, () => {}); } catch {} token = null; $("#pfOwner").hidden = true; $("#pfMain").hidden = false; msg(""); b.disabled = false; return; }
+        await wipeDevice();
+      }
+      user = me;
+      try { localStorage.setItem(OWNER_KEY, JSON.stringify({ sub: me.sub, email: me.email })); } catch {}
+      start();
+    } catch (e) { msg(e.message || "No se pudo iniciar sesión.", true); b.disabled = false; }
+  }
+  function start() {
+    if (started) return; started = true;
+    try { const st = JSON.parse(localStorage.getItem("atril-drive") || "{}"); st.on = true; localStorage.setItem("atril-drive", JSON.stringify(st)); } catch {}
+    gate.remove();
+    document.documentElement.classList.add("pf-in");
+    const src = document.getElementById("atrilMain");
+    const s = document.createElement("script"); s.textContent = src.textContent; document.body.append(s);
+    setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
+  }
+  addEventListener("beforeunload", (e) => { if (started && window.__atrilPending?.()) { e.preventDefault(); e.returnValue = ""; } });
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildUI); else buildUI();
+  if ("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+})();

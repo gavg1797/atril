@@ -1,0 +1,16 @@
+{
+  "name": "Atril · lector de PDF con audio",
+  "short_name": "Atril",
+  "description": "Escucha tus PDF en voz alta, márcalos y pregúntales con Gemma. Tu biblioteca se guarda en tu Google Drive.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#E9EDEC",
+  "theme_color": "#2B47D4",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

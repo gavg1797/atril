@@ -1,0 +1,98 @@
+# Atril · lector de PDF con audio
+
+Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar notas y hacerles preguntas. Las preguntas las responde **Gemma 4** en tu propia computadora. Tu biblioteca se guarda sola en **tu Google Drive**.
+
+**Abrir la app:** https://gavg1797.github.io/atril/
+
+## Funciones
+
+- Lectura en voz alta en español e inglés, con voz y velocidad a elegir.
+- Doble clic o doble toque en una frase para empezar a leer desde ahí.
+- Resaltado amarillo mientras suena el audio.
+- Punto verde donde quedó la lectura, con un botón para volver a él.
+- Vista de la página original con sus imágenes, o vista de solo texto. Incluye zoom, pantalla completa y modo TV.
+- Marcas de resaltado, subrayado (3 tipos) y tachado, con barra movible. El PDF se descarga con tus marcas.
+- Avance en porcentaje, estado leído o pendiente, y reinicio del avance.
+- Carpetas y subcarpetas en la biblioteca.
+- Cuaderno estilo OneNote con lienzo infinito o tamaño de hoja (A4, A3, carta…):
+  - texto con negrita, cursiva y subrayado, fuentes y tamaños;
+  - dibujo e imágenes;
+  - exportación a PDF;
+  - vista dividida PDF + cuaderno.
+- Crear un PDF desde cero: títulos, texto, imágenes y enlaces.
+- Preguntas sobre el documento con citas de página. Las respuestas se pueden escuchar y descargar en PDF, Word o Markdown.
+- Traducción de la lectura entre español e inglés.
+- Exportar e importar la biblioteca en un .zip, con contraseña opcional.
+
+## Privacidad
+
+- **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
+- **Dónde se guardan tus libros:** en este navegador (IndexedDB) y en la carpeta **«Atril - biblioteca»** de tu Google Drive.
+- **Quién los ve:** esa carpeta es privada. La app no tiene servidor propio y los datos van directo de tu navegador a Google.
+- **Preguntas y traducciones:** las responde Ollama en tu computadora (`localhost`). El texto no se envía a ningún otro servicio de IA.
+- **Este repositorio es público, pero solo contiene el código.** Nunca contiene tus libros.
+- **Computadoras compartidas:** en **Ajustes → Cerrar sesión y borrar de este dispositivo** quitas la copia local.
+- **Cambio de cuenta:** si alguien inicia sesión con otra cuenta en el mismo navegador, Atril borra primero la biblioteca local de la cuenta anterior.
+
+## Configurar Google Drive gratis
+
+La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no necesitan tarjeta de crédito. Solo se configuran una vez (unos 10 minutos).
+
+1. **Crea un proyecto.** Entra a https://console.cloud.google.com/ con tu cuenta de Google y crea un proyecto llamado **Atril**.
+2. **Activa la API.** Ve a **APIs y servicios → Biblioteca**, busca **Google Drive API** y pulsa **Habilitar**.
+3. **Configura la pantalla de consentimiento.** Ve a **APIs y servicios → Pantalla de consentimiento de OAuth** (en la consola nueva se llama **Google Auth Platform**):
+   - Tipo de usuario: **Externo**.
+   - Nombre de la app: **Atril**. Usa tu correo como correo de asistencia y de contacto.
+   - En **Público / Usuarios de prueba**, agrega tu correo (y el de cualquier otra persona que vaya a usar la app, hasta 100).
+   - Deja la app en **modo de prueba ("Testing")**. Así no hace falta que Google la verifique.
+4. **Crea las credenciales.** Ve a **Credenciales → Crear credenciales → ID de cliente de OAuth**:
+   - Tipo: **Aplicación web**.
+   - Orígenes autorizados de JavaScript: `https://gavg1797.github.io`. Para probar en tu computadora, agrega también `http://localhost:8000`.
+   - Copia el **ID de cliente**. Termina en `.apps.googleusercontent.com`.
+5. **Pon el ID en Atril.** Hay dos formas:
+   - En la app: toca **Ajustes de Google y Gemma** en la pantalla de inicio y pégalo. Queda guardado en ese navegador.
+   - Para todos tus dispositivos a la vez: escríbelo en `config.js`, en `googleClientId`. El ID de cliente no es secreto y puede estar en un repositorio público.
+
+**Qué pasa al iniciar sesión:** como la app está en modo de prueba, Google muestra el aviso *"Google no verificó esta app"*. Es normal porque la app es tuya. Toca **Continuar** y acepta los permisos de Drive.
+
+**Permisos que pide Atril:**
+
+- `drive.file`: crear y actualizar solo los archivos de Atril.
+- `drive.readonly`: abrir cualquier PDF que ya tengas en Drive con **Abrir desde Drive**. Puedes quitar este permiso en **Ajustes**. Si lo quitas, Atril solo ve los archivos que creó.
+
+## Configurar Gemma 4 con Ollama (gratis, en tu computadora)
+
+1. **Instala Ollama** desde https://ollama.com/download.
+2. **Descarga el modelo.** En una terminal, ejecuta:
+   ```
+   ollama pull gemma4
+   ```
+   Si tu equipo tiene poca memoria, usa `gemma4:e2b`.
+3. **Permite que Atril se conecte a Ollama.** Por seguridad, Ollama solo acepta páginas que tú autorizas.
+   - **Windows:** abre *Configuración → Sistema → Acerca de → Configuración avanzada del sistema → Variables de entorno*. Crea la variable de usuario `OLLAMA_ORIGINS` con el valor `https://gavg1797.github.io`. Después cierra Ollama desde la bandeja del sistema y vuelve a abrirlo.
+   - **macOS:** ejecuta `launchctl setenv OLLAMA_ORIGINS "https://gavg1797.github.io"` y reinicia Ollama.
+   - **Linux (systemd):** ejecuta `sudo systemctl edit ollama`, agrega `Environment="OLLAMA_ORIGINS=https://gavg1797.github.io"` bajo `[Service]` y luego ejecuta `sudo systemctl restart ollama`.
+4. **Comprueba la conexión.** En Atril, abre **Ajustes → Probar conexión**. Si Chrome pregunta si el sitio puede acceder a dispositivos de tu red local, acepta.
+
+**Límites de las preguntas:**
+
+- Solo funcionan en la computadora donde corre Ollama, con Chrome, Edge o Firefox. Safari bloquea la conexión con `localhost`.
+- En el celular y la tableta funcionan la lectura, las marcas, el cuaderno y Google Drive.
+
+## Ejecutar en tu computadora
+
+```
+python3 -m http.server 8000
+```
+
+Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Google y en `OLLAMA_ORIGINS`.
+
+## Archivos
+
+| Archivo | Para qué sirve |
+| --- | --- |
+| `index.html` | El lector completo: biblioteca, reproductor, marcas, cuaderno, preguntas y sincronización. |
+| `platform.js` | Inicio de sesión con Google, API de Google Drive, conexión con Ollama y descargas. |
+| `platform.css` | Pantalla de acceso y ajustes. |
+| `config.js` | ID de cliente de Google, dirección de Ollama y modelo predeterminado. |
+| `sw.js`, `manifest.webmanifest` | Permiten instalar Atril como app en el celular o la computadora. |
