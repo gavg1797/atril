@@ -17,7 +17,8 @@
   if (!cfg.googleClientId) cfg.googleClientId = base.googleClientId;
   const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
 
-  let token = null, tokenExp = 0, user = null, started = false;
+  let token = null, tokenExp = 0, user = null, started = false, offlineMode = false;
+  const OFF_KEY = "atril-offline";
   const $ = (s, r = document) => r.querySelector(s);
   const h = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (v == null) continue; if (k === "text") n.textContent = v; else if (k === "html") n.innerHTML = v; else n.setAttribute(k, v); } n.append(...kids.filter(Boolean)); return n; };
 
@@ -57,10 +58,11 @@
   /* ---------------- Google Drive (REST v3) ---------------- */
   const mapF = (f) => f && { id: f.id, title: f.name, mimeType: f.mimeType, fileSize: f.size, modifiedTime: f.modifiedTime, parents: f.parents };
   async function gfetch(url, opt = {}) {
-    if (!token || Date.now() > tokenExp) { showReauth(); throw { code: "needs_reauth" }; }
+    if (!navigator.onLine) throw { code: "offline" };
+    if (!token || Date.now() > tokenExp) { if (offlineMode && !navigator.onLine) throw { code: "offline" }; showReauth(offlineMode ? "Volviste a tener internet. Inicia sesión para guardar tus cambios en Drive." : ""); throw { code: "needs_reauth" }; }
     let r;
     try { r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + token } }); }
-    catch (e) { throw { code: "server_unavailable", message: e?.message || "sin conexión" }; }
+    catch (e) { throw { code: navigator.onLine ? "server_unavailable" : "offline", message: e?.message || "sin conexión" }; }
     if (r.status === 401) { token = null; showReauth(); throw { code: "needs_reauth" }; }
     if (!r.ok) {
       let j = null; try { j = await r.json(); } catch {}
@@ -267,6 +269,11 @@
     } finally { DL = null; dlEmit(); }
   }
   const pauseDownload = () => DL?.ctl.abort();
+  /* Guarda el motor de Gemma (MediaPipe) para que funcione sin internet; el modelo ya está en el navegador. */
+  async function cacheGemmaRuntime() {
+    if (!navigator.onLine) return;
+    for (const f of ["/genai_bundle.mjs", "/wasm/genai_wasm_internal.js", "/wasm/genai_wasm_internal.wasm"]) { try { await fetch(GENAI + f); } catch {} }
+  }
 
   let llm = null, llmSig = "", llmP = null;
   function closeLocal() { try { llm?.close(); } catch {} llm = null; llmSig = ""; }
@@ -367,6 +374,14 @@
         <button class="pfbtn pfg" id="pfLogin" type="button">${GOOGLE_G}<span>Iniciar sesión con Google</span></button>
         <p class="pfmsg" id="pfMsg" role="status" aria-live="polite"></p>
       </div>
+      <div id="pfOff" hidden>
+        <p class="pfwarn" id="pfOffText"></p>
+        <div id="pfOffForm" hidden>
+          <label class="pff"><span>PIN de Atril</span><input id="pfOffPin" type="password" inputmode="numeric" autocomplete="off" maxlength="12"></label>
+          <button class="pfbtn pfprimary" id="pfOffGo" type="button" style="width:100%">Entrar sin conexión</button>
+          <p class="pfmsg" id="pfOffMsg" role="status" aria-live="polite"></p>
+        </div>
+      </div>
       <div id="pfOwner" hidden>
         <p class="pfwarn" id="pfOwnerText"></p>
         <div class="pfrow"><button class="pfbtn" id="pfOwnerNo" type="button">Cancelar</button><button class="pfbtn pfdanger" id="pfOwnerYes" type="button">Borrar y continuar</button></div>
@@ -386,6 +401,13 @@
         <p class="pfline" id="pfWho"></p>
         <div class="pfrow wrap"><button class="pfbtn" id="pfSyncNow" type="button">Guardar en Drive ahora</button><button class="pfbtn" id="pfLogout" type="button">Cerrar sesión</button><button class="pfbtn pfdanger" id="pfWipe" type="button">Cerrar sesión y borrar de este dispositivo</button></div>
         <p class="pfhint">«Borrar de este dispositivo» quita los libros guardados en este navegador. Tu copia en Google Drive no se toca.</p>
+      </section>
+      <section id="pfOffSet" hidden>
+        <h3>Sin conexión</h3>
+        <p class="pfline" id="pfOffState"></p>
+        <label class="pff"><span>PIN para entrar sin internet (4 a 12 números)</span><input id="pfPinNew" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12" placeholder="••••"></label>
+        <div class="pfrow wrap"><button class="pfbtn pfprimary" id="pfPinSave" type="button">Guardar PIN</button><button class="pfbtn" id="pfPinDel" type="button" hidden>Quitar acceso sin conexión</button></div>
+        <p class="pfhint">Con internet siempre se entra con Google. Sin internet, Atril pide este PIN y abre tu biblioteca guardada en este dispositivo; los cambios se suben a Drive cuando vuelvas a iniciar sesión con conexión. Gemma funciona sin internet si ya la descargaste aquí.</p>
       </section>
       <section id="pfGemma">
         <h3>Gemma 4</h3>
@@ -422,6 +444,24 @@
     document.body.append(gate, setM, bar);
 
     $("#pfLogin").addEventListener("click", login);
+    $("#pfOffGo").addEventListener("click", offlineEnter);
+    $("#pfOffPin").addEventListener("keydown", (e) => { if (e.key === "Enter") offlineEnter(); });
+    $("#pfPinSave").addEventListener("click", async () => {
+      const pin = $("#pfPinNew").value.trim();
+      if (!/^\d{4,12}$/.test(pin)) { toast("El PIN debe tener de 4 a 12 números."); return; }
+      const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
+      localStorage.setItem(OFF_KEY, JSON.stringify({ sub: user.sub, salt, hash: await pinHash(pin, salt) }));
+      renderOffSet(); toast("Listo: podrás entrar a Atril sin internet con ese PIN.");
+    });
+    $("#pfPinDel").addEventListener("click", () => { localStorage.removeItem(OFF_KEY); renderOffSet(); toast("Se quitó el acceso sin conexión."); });
+    addEventListener("offline", renderOffGate);
+    addEventListener("online", () => {
+      renderOffGate();
+      if (!started) return;
+      if (token && Date.now() < tokenExp) window.__atrilSyncNow?.();
+      else showReauth("Volviste a tener internet. Inicia sesión para guardar tus cambios en Drive.");
+    });
+    renderOffGate();
     $("#pfOpenSet").addEventListener("click", openSettings);
     $("#pfSetClose").addEventListener("click", closeSettings);
     setM.addEventListener("click", (e) => { if (e.target === setM) closeSettings(); });
@@ -433,7 +473,7 @@
     $("#pfDlBtn").addEventListener("click", async () => {
       const key = $("#pfLModel").value; lMsg("");
       if (!(await webgpuOK())) lMsg(localErr({ code: "no_webgpu" }) + " Puedes descargarlo igual, pero aquí no funcionará.", true);
-      try { await downloadModel(key); toast(`${MODELS[key].label} quedó descargado en este dispositivo.`); cfg.localModel = key; cfg.engine = "local"; saveCfg(); }
+      try { await downloadModel(key); cacheGemmaRuntime(); toast(`${MODELS[key].label} quedó descargado en este dispositivo.`); cfg.localModel = key; cfg.engine = "local"; saveCfg(); }
       catch (e) { lMsg(localErr(e), e?.code !== "paused"); if (e?.code !== "paused") toast(localErr(e)); }
       renderLocal();
     });
@@ -453,6 +493,41 @@
     $("#pfWipe").addEventListener("click", () => logout(true));
     $("#pfSyncNow").addEventListener("click", async () => { const b = $("#pfSyncNow"); b.disabled = true; b.textContent = "Guardando…"; try { await window.__atrilSyncNow?.(); } finally { b.disabled = false; b.textContent = "Guardar en Drive ahora"; } });
     if (!cfg.googleClientId) msg("Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", true);
+  }
+  const b64 = (u8) => btoa(String.fromCharCode(...u8));
+  async function pinHash(pin, salt) {
+    const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: Uint8Array.from(atob(salt), c => c.charCodeAt(0)), iterations: 250000 }, k, 256);
+    return b64(new Uint8Array(bits));
+  }
+  const offRec = () => { try { return JSON.parse(localStorage.getItem(OFF_KEY) || "null"); } catch { return null; } };
+  const ownerRec = () => { try { return JSON.parse(localStorage.getItem(OWNER_KEY) || "null"); } catch { return null; } };
+  function renderOffGate() {
+    if (!gate || started) return;
+    const off = !navigator.onLine || gate.dataset.gisFail === "1", rec = offRec(), own = ownerRec();
+    $("#pfOff").hidden = !off;
+    if (!off) return;
+    const ok = rec && own && rec.sub === own.sub;
+    $("#pfOffText").textContent = ok ? `Sin internet. Puedes abrir la biblioteca de ${own.email} guardada en este dispositivo con tu PIN de Atril.` : "Sin internet. Para usar Atril sin conexión, activa un PIN en Ajustes → Sin conexión la próxima vez que entres con internet.";
+    $("#pfOffForm").hidden = !ok;
+  }
+  async function offlineEnter() {
+    const rec = offRec(), own = ownerRec(), pin = $("#pfOffPin").value.trim(), out = $("#pfOffMsg");
+    if (!rec || !own || rec.sub !== own.sub) return;
+    const wait = (rec.fails || 0) >= 5 ? Math.min(300, 15 * 2 ** ((rec.fails || 0) - 5)) * 1000 - (Date.now() - (rec.last || 0)) : 0;
+    if (wait > 0) { out.textContent = `Demasiados intentos. Espera ${Math.ceil(wait / 1000)} s.`; out.classList.add("warn"); return; }
+    if ((await pinHash(pin, rec.salt)) !== rec.hash) {
+      rec.fails = (rec.fails || 0) + 1; rec.last = Date.now(); localStorage.setItem(OFF_KEY, JSON.stringify(rec));
+      out.textContent = "PIN incorrecto."; out.classList.add("warn"); return;
+    }
+    rec.fails = 0; localStorage.setItem(OFF_KEY, JSON.stringify(rec));
+    user = { sub: own.sub, email: own.email, name: "" }; offlineMode = true; start();
+  }
+  function renderOffSet() {
+    const sec = $("#pfOffSet"); sec.hidden = !user; if (!user) return;
+    const rec = offRec(), on = rec && rec.sub === user.sub;
+    $("#pfOffState").textContent = on ? "Acceso sin conexión activado en este dispositivo." : "Acceso sin conexión desactivado.";
+    $("#pfPinDel").hidden = !on; $("#pfPinSave").textContent = on ? "Cambiar PIN" : "Guardar PIN"; $("#pfPinNew").value = "";
   }
   const msg = (t, warn) => { const m = $("#pfMsg"); m.textContent = t || ""; m.classList.toggle("warn", !!warn); };
 
@@ -488,7 +563,7 @@
     $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
     $("#pfCtx").value = String(cfg.numCtx); if (!$("#pfCtx").value) $("#pfCtx").value = "16384";
     $("#pfTestMsg").textContent = "";
-    $("#pfAcct").hidden = !user; if (user) $("#pfWho").textContent = `${user.name ? user.name + " · " : ""}${user.email || ""}`;
+    renderOffSet(); $("#pfAcct").hidden = !user; if (user) $("#pfWho").textContent = `${user.name ? user.name + " · " : ""}${user.email || ""}`;
     setM.hidden = false; renderLocal();
     ollamaModels().then(list => { const dl = $("#pfModels"); const have = new Set([...dl.options].map(o => o.value)); for (const n of list) if (!have.has(n)) dl.append(h("option", { value: n })); }).catch(() => {});
   }
@@ -533,6 +608,7 @@
       await signIn("");
       const me = await whoAmI();
       if (me.sub !== user.sub) { location.reload(); return; }
+      offlineMode = false; user = { ...user, ...me };
       bar.hidden = true; bar.firstElementChild.textContent = "Tu sesión de Google venció. Los cambios esperan para guardarse en Drive.";
       window.__atrilDriveResume?.();
     } catch (e) { bar.firstElementChild.textContent = e.message || "No se pudo renovar la sesión."; }
@@ -569,7 +645,10 @@
       user = me;
       try { localStorage.setItem(OWNER_KEY, JSON.stringify({ sub: me.sub, email: me.email })); } catch {}
       start();
-    } catch (e) { msg(e.message || "No se pudo iniciar sesión.", true); b.disabled = false; }
+    } catch (e) {
+      msg(e.message || "No se pudo iniciar sesión.", true); b.disabled = false;
+      if (!navigator.onLine || /cargar el inicio de sesión/.test(e.message || "")) { gate.dataset.gisFail = "1"; renderOffGate(); }
+    }
   }
   function start() {
     if (started) return; started = true;
@@ -579,9 +658,12 @@
     const src = document.getElementById("atrilMain");
     const s = document.createElement("script"); s.textContent = src.textContent; document.body.append(s);
     setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
+    try { navigator.storage?.persist?.(); } catch {}
+    modelInfo().then(i => { if (i.complete) cacheGemmaRuntime(); }).catch(() => {});
+    if (offlineMode) setTimeout(() => toast(navigator.onLine ? "Entraste sin sesión de Google: inicia sesión para guardar en Drive." : "Modo sin conexión: tus cambios se guardan en este dispositivo y se subirán a Drive cuando vuelvas a tener internet."), 800);
   }
   addEventListener("beforeunload", (e) => { if (started && window.__atrilPending?.()) { e.preventDefault(); e.returnValue = ""; } });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildUI); else buildUI();
-  if ("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  if ("serviceWorker" in navigator && window.isSecureContext) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 })();

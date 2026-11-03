@@ -2087,6 +2087,7 @@ function driveErrText(e) {
     case "not_in_manifest": case "approval_required": case "consent_required": return "Atril necesita tu permiso para usar Google Drive. Cierra sesión y vuelve a entrar marcando todos los permisos.";
     case "blocked_by_policy": return "Tu organización no permite que Atril use Google Drive.";
     case "server_unavailable": case "upstream_error": case "rate_limited": return "Google Drive no respondió. Toca «Sincronizar ahora» para volver a intentarlo.";
+    case "offline": return "Sin conexión: tus cambios quedan guardados en este dispositivo y se subirán a Drive cuando vuelvas a tener internet.";
     case "too_big_man": return "Tus notas y marcas ocupan demasiado para guardarlas en Drive desde esta app.";
     case "tool_error": return "Google Drive rechazó una operación" + (e.message && e.message.length < 160 ? `: ${e.message}` : ".");
     default: return `No se pudo sincronizar con Google Drive (código: ${e?.code || "desconocido"}${e?.message ? " · " + String(e.message).slice(0, 120) : ""}). Toca «Sincronizar ahora» para volver a intentarlo.`;

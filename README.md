@@ -78,6 +78,22 @@ En **Ajustes → Gemma 4 → En este dispositivo**, toca **Descargar**. Atril ba
 - Cada dispositivo descarga su propia copia. Puedes borrarla en Ajustes.
 - En celulares con poca memoria, elige **Memoria corta**.
 
+## Usar Atril sin internet
+
+1. Con internet, entra con Google y ve a **Ajustes → Sin conexión** para crear un **PIN** de 4 a 12 números.
+2. En **Ajustes → Gemma 4**, descarga el modelo en ese dispositivo.
+3. Abre una vez cada libro que quieras tener a mano. Los libros de tu Drive ya se descargan solos al iniciar sesión.
+
+Sin internet, Atril abre desde la copia guardada en el dispositivo. Pide tu PIN y funcionan:
+
+- la lectura en voz alta;
+- las marcas y el cuaderno;
+- las preguntas y la traducción con Gemma.
+
+Los cambios que hagas sin internet se suben a Drive la próxima vez que inicies sesión con conexión.
+
+**Voces sin internet:** la voz depende del sistema. Las voces del dispositivo (Windows, macOS, iOS, Android) funcionan sin internet; las voces «Google…» de Chrome en computadora necesitan conexión.
+
 ## Opcional: Gemma 4 con Ollama (en tu computadora)
 
 1. **Instala Ollama** desde https://ollama.com/download.
