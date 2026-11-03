@@ -203,128 +203,194 @@
   }
   /* ---------------- Gemma 4 dentro del navegador (WebGPU, todos los dispositivos) ---------------- */
   const GENAI = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.29";
+  const WLL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm";
   const HF = "https://huggingface.co/litert-community/";
+  // Modo procesador (sin WebGPU): Gemma 4 E2B QAT Q4_0 de Unsloth en formato GGUF, dividido en partes (revisión fija).
+  const CPU_REPO = "https://huggingface.co/znasif/gemma-4-E2B-it-qat-Q4_K_XL-split/resolve/57ca239d91056961768dde77efbae958d15af770/";
+  const cpuParts = [[1, 23532320], [2, 1321205952], [3, 508734272], [4, 510543744], [5, 256355264]].map(([n, size]) => { const file = `e2b-q4-0000${n}-of-00005.gguf`; return { file, url: CPU_REPO + file, size }; });
   const MODELS = {
-    e2b: { label: "Gemma 4 E2B", file: "gemma-4-E2B-it-web.litertlm", url: HF + "gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-web.litertlm", size: 2008432640 },
-    e4b: { label: "Gemma 4 E4B", file: "gemma-4-E4B-it-web.litertlm", url: HF + "gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it-web.litertlm", size: 2969059328 },
+    e2b: { label: "Gemma 4 E2B", kind: "webgpu", parts: [{ file: "gemma-4-E2B-it-web.litertlm", url: HF + "gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-web.litertlm", size: 2008432640 }] },
+    e4b: { label: "Gemma 4 E4B", kind: "webgpu", parts: [{ file: "gemma-4-E4B-it-web.litertlm", url: HF + "gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it-web.litertlm", size: 2969059328 }] },
+    cpu: { label: "Gemma 4 E2B (modo procesador)", kind: "cpu", parts: cpuParts },
   };
-  try { for (const [k, v] of Object.entries(window.ATRIL_MODELS || {})) MODELS[k] = { ...MODELS[k], ...v }; } catch {}
+  try { for (const [k, v] of Object.entries(window.ATRIL_MODELS || {})) { MODELS[k] = { ...MODELS[k], ...v }; if (v.size && MODELS[k].parts.length === 1) MODELS[k].parts = [{ ...MODELS[k].parts[0], size: v.size }]; } } catch {}
+  for (const m of Object.values(MODELS)) m.size = m.parts.reduce((a, p) => a + p.size, 0);
   const engine = () => cfg.engine === "ollama" ? "ollama" : "local";
   const lModel = () => MODELS[cfg.localModel] ? cfg.localModel : "e2b";
   const lCtx = () => Number(cfg.localCtx) || 4096;
   const hasOPFS = () => !!(navigator.storage?.getDirectory && window.FileSystemFileHandle && "createWritable" in FileSystemFileHandle.prototype);
   const CACHE_M = "atril-models";
   async function opfsDir() { return (await navigator.storage.getDirectory()).getDirectoryHandle("atril-models", { create: true }); }
-  async function modelInfo(key = lModel()) {
-    const m = MODELS[key];
-    if (hasOPFS()) { try { const f = await (await (await opfsDir()).getFileHandle(m.file)).getFile(); return { size: f.size, complete: f.size === m.size }; } catch { return { size: 0, complete: false }; } }
-    try { const r = await (await caches.open(CACHE_M)).match(m.url); return r ? { size: m.size, complete: true } : { size: 0, complete: false }; } catch { return { size: 0, complete: false }; }
+  async function partSize(p) {
+    if (hasOPFS()) { try { return (await (await (await opfsDir()).getFileHandle(p.file)).getFile()).size; } catch { return 0; } }
+    try { return (await (await caches.open(CACHE_M)).match(p.url)) ? p.size : 0; } catch { return 0; }
   }
-  async function modelReader(key = lModel()) {
-    const m = MODELS[key];
-    if (hasOPFS()) { try { const f = await (await (await opfsDir()).getFileHandle(m.file)).getFile(); if (f.size === m.size) return f.stream().getReader(); } catch {} return null; }
-    try { const r = await (await caches.open(CACHE_M)).match(m.url); return r ? r.body.getReader() : null; } catch { return null; }
+  async function modelInfo(key = lModel()) {
+    const m = MODELS[key]; let size = 0, complete = true;
+    for (const p of m.parts) { const s = Math.min(await partSize(p), p.size); size += s; if (s !== p.size) complete = false; }
+    return { size, complete };
+  }
+  async function modelFiles(key = lModel()) {
+    const out = [];
+    for (const p of MODELS[key].parts) {
+      if (hasOPFS()) { try { const f = await (await (await opfsDir()).getFileHandle(p.file)).getFile(); if (f.size !== p.size) return null; out.push(f); continue; } catch { return null; } }
+      try { const r = await (await caches.open(CACHE_M)).match(p.url); if (!r) return null; out.push(new File([await r.blob()], p.file)); } catch { return null; }
+    }
+    return out;
   }
   async function deleteModel(key = lModel()) {
-    closeLocal();
-    try { await (await opfsDir()).removeEntry(MODELS[key].file); } catch {}
-    try { await (await caches.open(CACHE_M)).delete(MODELS[key].url); } catch {}
+    await closeLocal();
+    for (const p of MODELS[key].parts) {
+      try { await (await opfsDir()).removeEntry(p.file); } catch {}
+      try { await (await caches.open(CACHE_M)).delete(p.url); } catch {}
+    }
+    if (key === "cpu") setIsolation(false);
   }
   let DL = null; // descarga en curso { key, ctl, got, total }
   const dlSubs = new Set(); const dlEmit = () => dlSubs.forEach(f => { try { f(DL); } catch {} });
+  async function downloadPart(p, base, ctl) {
+    let have = hasOPFS() ? Math.min(await partSize(p), p.size) : 0;
+    if (have === p.size) { DL.got = base + have; dlEmit(); return; }
+    const r = await fetch(p.url, { headers: have ? { Range: `bytes=${have}-` } : {}, signal: ctl.signal });
+    if (!r.ok) throw { code: "download", message: "HTTP " + r.status };
+    if (have && r.status !== 206) have = 0;
+    DL.got = base + have; dlEmit();
+    if (hasOPFS()) {
+      const h = await (await opfsDir()).getFileHandle(p.file, { create: true });
+      let w = await h.createWritable({ keepExistingData: have > 0 }); if (have) await w.seek(have); else await w.truncate(0);
+      const rd = r.body.getReader(); let sinceCommit = 0, pos = have;
+      try {
+        for (;;) {
+          const { value, done } = await rd.read(); if (done) break;
+          await w.write(value); pos += value.byteLength; DL.got = base + pos; sinceCommit += value.byteLength; dlEmit();
+          if (sinceCommit > 64 * 1024 * 1024) { await w.close(); w = await h.createWritable({ keepExistingData: true }); await w.seek(pos); sinceCommit = 0; }
+        }
+        await w.close();
+      } catch (e) { try { await w.close(); } catch {} throw e; }
+      if ((await h.getFile()).size !== p.size) throw { code: "download", message: "El archivo quedó incompleto. Toca Descargar para continuar." };
+    } else {
+      const prog = new TransformStream({ transform(c, ctrl) { DL.got += c.byteLength; dlEmit(); ctrl.enqueue(c); } });
+      await (await caches.open(CACHE_M)).put(p.url, new Response(r.body.pipeThrough(prog), { headers: { "Content-Type": "application/octet-stream", "Content-Length": String(p.size) } }));
+    }
+  }
   async function downloadModel(key = lModel()) {
     if (DL) return;
     const m = MODELS[key];
     if (!navigator.storage) throw { code: "no_storage" };
     try { await navigator.storage.persist?.(); } catch {}
     const info = await modelInfo(key); if (info.complete) return;
-    let have = hasOPFS() ? info.size : 0;
-    try { const est = await navigator.storage.estimate(); if (est.quota && est.quota - (est.usage || 0) < (m.size - have) + 80e6) throw { code: "no_space", need: m.size - have }; } catch (e) { if (e?.code) throw e; }
-    const ctl = new AbortController(); DL = { key, ctl, got: have, total: m.size }; dlEmit();
+    try { const est = await navigator.storage.estimate(); if (est.quota && est.quota - (est.usage || 0) < (m.size - info.size) + 80e6) throw { code: "no_space", need: m.size - info.size }; } catch (e) { if (e?.code) throw e; }
+    const ctl = new AbortController(); DL = { key, ctl, got: info.size, total: m.size }; dlEmit();
     try {
-      const r = await fetch(m.url, { headers: have ? { Range: `bytes=${have}-` } : {}, signal: ctl.signal });
-      if (!r.ok) throw { code: "download", message: "HTTP " + r.status };
-      if (have && r.status !== 206) have = 0;
-      DL.got = have; dlEmit();
-      if (hasOPFS()) {
-        const h = await (await opfsDir()).getFileHandle(m.file, { create: true });
-        let w = await h.createWritable({ keepExistingData: have > 0 }); if (have) await w.seek(have); else await w.truncate(0);
-        const rd = r.body.getReader(); let sinceCommit = 0;
-        try {
-          for (;;) {
-            const { value, done } = await rd.read(); if (done) break;
-            await w.write(value); DL.got += value.byteLength; sinceCommit += value.byteLength; dlEmit();
-            if (sinceCommit > 64 * 1024 * 1024) { await w.close(); w = await h.createWritable({ keepExistingData: true }); await w.seek(DL.got); sinceCommit = 0; }
-          }
-          await w.close();
-        } catch (e) { try { await w.close(); } catch {} throw e; }
-        if ((await h.getFile()).size !== m.size) throw { code: "download", message: "El archivo quedó incompleto. Toca Descargar para continuar." };
-      } else {
-        const total = m.size; const prog = new TransformStream({ transform(c, ctrl) { DL.got += c.byteLength; dlEmit(); ctrl.enqueue(c); } });
-        await (await caches.open(CACHE_M)).put(m.url, new Response(r.body.pipeThrough(prog), { headers: { "Content-Type": "application/octet-stream", "Content-Length": String(total) } }));
-      }
+      let base = 0;
+      for (const p of m.parts) { await downloadPart(p, base, ctl); base += p.size; }
     } catch (e) {
       if (ctl.signal.aborted) throw { code: "paused" };
       throw e?.code ? e : { code: "download", message: e?.message || "sin conexión" };
     } finally { DL = null; dlEmit(); }
+    if (key === "cpu") setIsolation(true);
   }
   const pauseDownload = () => DL?.ctl.abort();
-  /* Guarda el motor de Gemma (MediaPipe) para que funcione sin internet; el modelo ya está en el navegador. */
-  async function cacheGemmaRuntime() {
+  /* Guarda el motor de Gemma para que funcione sin internet; el modelo ya está en el navegador. */
+  async function cacheGemmaRuntime(key = lModel()) {
     if (!navigator.onLine) return;
-    for (const f of ["/genai_bundle.mjs", "/wasm/genai_wasm_internal.js", "/wasm/genai_wasm_internal.wasm"]) { try { await fetch(GENAI + f); } catch {} }
+    const list = MODELS[key]?.kind === "cpu" ? [WLL + "/index.js", WLL + "/wasm/wllama.wasm"] : ["/genai_bundle.mjs", "/wasm/genai_wasm_internal.js", "/wasm/genai_wasm_internal.wasm"].map(f => GENAI + f);
+    for (const u of list) { try { await fetch(u); } catch {} }
+  }
+  /* Modo procesador: con aislamiento de documento (lo agrega sw.js) Gemma puede usar varios núcleos. */
+  async function setIsolation(on) {
+    try { const c = await caches.open("atril-flags"); if (on) await c.put("/__isolate", new Response("1")); else await c.delete("/__isolate"); } catch {}
   }
 
   let llm = null, llmSig = "", llmP = null;
-  function closeLocal() { try { llm?.close(); } catch {} llm = null; llmSig = ""; }
+  async function closeLocal() { const x = llm; llm = null; llmSig = ""; try { await x?.close(); } catch {} }
   async function webgpuOK() { try { return !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch { return false; } }
+  const cleanOut = (t) => String(t).replace(/<\|channel>[\s\S]*?(<channel\|>|$)/g, "").replace(/<\|?turn\|?>(model|user|system)?\n?/g, "").replace(/<turn\|>/g, "").replace(/^\s+/, "");
+  const ROLE = { user: "user", assistant: "model", model: "model", system: "system" };
+  function render(msgs) { return msgs.map(x => `<|turn>${ROLE[x.role] || "user"}\n${x.content}<turn|>\n`).join("") + "<|turn>model\n"; }
+  function trimChars(msgs, maxChars) {
+    for (let k = 0; k < 8; k++) {
+      const n = msgs.reduce((a, m) => a + m.content.length, 0); if (n <= maxChars) break;
+      if (msgs.length > 2) { msgs.splice(1, 1); continue; }
+      const big = msgs.reduce((a, b) => (b.content.length > a.content.length ? b : a));
+      big.content = big.content.slice(0, Math.max(500, big.content.length - (n - maxChars) - 200)) + "\n[…recortado para que quepa en la memoria del modelo]";
+    }
+    return msgs;
+  }
+  async function loadMediaPipe(key) {
+    if (!(await webgpuOK())) throw { code: "no_webgpu" };
+    const files = await modelFiles(key); if (!files) throw { code: "model_not_downloaded" };
+    const { FilesetResolver, LlmInference } = await import(GENAI + "/genai_bundle.mjs");
+    const fs = await FilesetResolver.forGenAiTasks(GENAI + "/wasm");
+    const m = await LlmInference.createFromOptions(fs, { baseOptions: { modelAssetBuffer: files[0].stream().getReader() }, maxTokens: lCtx(), topK: 40, temperature: 0.6 });
+    return {
+      close: () => m.close(),
+      async gen(msgs, onText, signal) {
+        const budget = lCtx() - 700;
+        for (let k = 0; k < 6; k++) {
+          let n; try { n = m.sizeInTokens(render(msgs)); } catch { break; }
+          if (!n || n <= budget) break;
+          if (msgs.length > 2) { msgs.splice(1, 1); continue; }
+          const big = msgs.reduce((a, b) => (b.content.length > a.content.length ? b : a));
+          big.content = big.content.slice(0, Math.floor(big.content.length * Math.max(0.3, (budget / n) * 0.92))) + "\n[…recortado para que quepa en la memoria del modelo]";
+        }
+        let raw = ""; const onAbort = () => { try { m.cancelProcessing(); } catch {} };
+        signal?.addEventListener("abort", onAbort);
+        try { await m.generateResponse(render(msgs), (part) => { raw += part; onText(cleanOut(raw)); }); }
+        catch (e) { if (signal?.aborted) throw { code: "cancelled", text: cleanOut(raw) }; throw { code: "local_error", message: e?.message || String(e), text: cleanOut(raw) }; }
+        finally { signal?.removeEventListener("abort", onAbort); try { m.clearCancelSignals?.(); } catch {} }
+        return raw;
+      },
+    };
+  }
+  async function loadCpu(key) {
+    const files = await modelFiles(key); if (!files) throw { code: "model_not_downloaded" };
+    const { Wllama } = await import(WLL + "/index.js");
+    const w = new Wllama({ default: WLL + "/wasm/wllama.wasm" }, { suppressNativeLog: true });
+    await w.loadModel(files, { n_ctx: lCtx(), n_gpu_layers: 0, n_batch: 256, warmup: false, default_template_kwargs: { enable_thinking: false } });
+    return {
+      threads: (() => { try { return w.getNumThreads(); } catch { return 1; } })(),
+      close: () => w.exit(),
+      async gen(msgs, onText, signal) {
+        trimChars(msgs, Math.max(2500, (lCtx() - 1000) * 3));
+        let raw = "";
+        try {
+          await w.createChatCompletion({ messages: msgs, stream: true, max_tokens: 700, temperature: 0.6, abortSignal: signal,
+            onData: (c) => { const d = c?.choices?.[0]?.delta?.content; if (d) { raw += d; onText(cleanOut(raw)); } } });
+        } catch (e) { if (signal?.aborted) throw { code: "cancelled", text: cleanOut(raw) }; throw { code: "local_error", message: e?.message || String(e), text: cleanOut(raw) }; }
+        return raw;
+      },
+    };
+  }
   async function loadLocal() {
-    const sig = lModel() + "|" + lCtx();
+    const key = lModel(), sig = key + "|" + lCtx();
     if (llm && llmSig === sig) return llm;
     if (llmP) return llmP;
     llmP = (async () => {
-      if (!(await webgpuOK())) throw { code: "no_webgpu" };
-      const src = await modelReader(); if (!src) throw { code: "model_not_downloaded" };
-      closeLocal();
-      const { FilesetResolver, LlmInference } = await import(GENAI + "/genai_bundle.mjs");
-      const files = await FilesetResolver.forGenAiTasks(GENAI + "/wasm");
-      llm = await LlmInference.createFromOptions(files, { baseOptions: { modelAssetBuffer: src }, maxTokens: lCtx(), topK: 40, temperature: 0.6 });
+      await closeLocal();
+      llm = MODELS[key].kind === "cpu" ? await loadCpu(key) : await loadMediaPipe(key);
       llmSig = sig; return llm;
     })().catch(e => { throw e?.code ? e : { code: "local_load", message: e?.message || String(e) }; }).finally(() => { llmP = null; });
     return llmP;
   }
   let gate0 = Promise.resolve();
   const exclusive = (fn) => { const p = gate0.then(fn, fn); gate0 = p.catch(() => {}); return p; };
-  const cleanOut = (t) => String(t).replace(/<\|channel>[\s\S]*?(<channel\|>|$)/g, "").replace(/<\|?turn\|?>(model|user|system)?\n?/g, "").replace(/<turn\|>/g, "").replace(/^\s+/, "");
-  const ROLE = { user: "user", assistant: "model", model: "model", system: "system" };
-  function render(msgs) { return msgs.map(x => `<|turn>${ROLE[x.role] || "user"}\n${x.content}<turn|>\n`).join("") + "<|turn>model\n"; }
   async function localChat(messages, { signal, onText } = {}) {
     return exclusive(async () => {
       if (signal?.aborted) throw { code: "cancelled" };
+      const cpu = MODELS[lModel()].kind === "cpu";
       let shown = false;
-      if (!llm || llmSig !== lModel() + "|" + lCtx()) { onText?.({ text: "_Cargando Gemma en este dispositivo… La primera vez de cada sesión tarda un poco._" }); shown = true; }
+      if (!llm || llmSig !== lModel() + "|" + lCtx()) { onText?.({ text: cpu ? "_Cargando Gemma en modo procesador… puede tardar uno o dos minutos la primera vez de cada sesión._" : "_Cargando Gemma en este dispositivo… La primera vez de cada sesión tarda un poco._" }); shown = true; }
       const m = await loadLocal();
-      let msgs = messages.map((x, i) => ({ role: i === 0 && x.role === "user" && messages.length > 1 ? "system" : x.role, content: String(x.content ?? "") }));
-      const budget = lCtx() - 700;
-      for (let k = 0; k < 6; k++) {
-        let n; try { n = m.sizeInTokens(render(msgs)); } catch { break; }
-        if (!n || n <= budget) break;
-        if (msgs.length > 2) { msgs.splice(1, 1); continue; }
-        const big = msgs.reduce((a, b) => (b.content.length > a.content.length ? b : a));
-        big.content = big.content.slice(0, Math.floor(big.content.length * Math.max(0.3, (budget / n) * 0.92))) + "\n[…recortado para que quepa en la memoria del modelo]";
-      }
-      let raw = "";
-      const onAbort = () => { try { m.cancelProcessing(); } catch {} };
-      signal?.addEventListener("abort", onAbort);
-      try {
-        await m.generateResponse(render(msgs), (part) => { raw += part; const t = cleanOut(raw); if (t || shown) onText?.({ text: t || "…" }); });
-      } catch (e) { if (signal?.aborted) throw { code: "cancelled", text: cleanOut(raw) }; throw { code: "local_error", message: e?.message || String(e), text: cleanOut(raw) }; }
-      finally { signal?.removeEventListener("abort", onAbort); try { m.clearCancelSignals?.(); } catch {} }
+      if (cpu && !shown) onText?.({ text: "_Gemma está leyendo el documento… (en modo procesador tarda un poco antes de empezar a escribir)_" });
+      else if (cpu) onText?.({ text: "_Gemma está leyendo el documento…_" });
+      const msgs = messages.map((x, i) => ({ role: i === 0 && x.role === "user" && messages.length > 1 ? "system" : x.role, content: String(x.content ?? "") }));
+      const raw = await m.gen(msgs, (t) => { if (t || shown) onText?.({ text: t || "…" }); }, signal);
       if (signal?.aborted) throw { code: "cancelled", text: cleanOut(raw) };
       return { text: cleanOut(raw).trim(), truncated: false };
     });
   }
-  window.__atrilCtxChars = () => engine() === "local" ? Math.max(3000, (lCtx() - 1600) * 3) : Math.max(8000, ((Number(cfg.numCtx) || 16384) - 3500) * 3);
+  window.__atrilCtxChars = () => engine() === "local" ? Math.max(2500, (lCtx() - (MODELS[lModel()].kind === "cpu" ? 1400 : 1600)) * 3) : Math.max(8000, ((Number(cfg.numCtx) || 16384) - 3500) * 3);
 
   const chat = (msgs, opts) => engine() === "local" ? localChat(msgs, opts) : ollamaChat(msgs, opts);
   const SAMPLE = async (input, opts = {}) => {
@@ -416,7 +482,8 @@
           <label><input type="radio" name="pfEng" value="ollama"><span><b>Ollama en mi computadora</b><em>Solo en la computadora donde está instalado Ollama.</em></span></label>
         </div>
         <div id="pfLocal">
-          <label class="pff"><span>Modelo</span><select id="pfLModel"><option value="e2b">Gemma 4 E2B · 2,0 GB · recomendado</option><option value="e4b">Gemma 4 E4B · 3,0 GB · computadoras potentes</option></select></label>
+          <label class="pff"><span>Modelo</span><select id="pfLModel"><option value="e2b">Gemma 4 E2B · 2,0 GB · recomendado</option><option value="e4b">Gemma 4 E4B · 3,0 GB · computadoras potentes</option><option value="cpu">Gemma 4 E2B · 2,6 GB · modo procesador (sin WebGPU, más lento)</option></select></label>
+          <p class="pfhint pfwarn" id="pfGpuNote" hidden></p>
           <label class="pff"><span>Memoria para cada pregunta</span><select id="pfLCtx"><option value="2048">Corta · equipos con poca memoria</option><option value="4096">Normal · recomendada</option><option value="8192">Larga · computadoras</option></select></label>
           <div class="pfdl" id="pfDl"><p class="pfline" id="pfDlText"></p><div class="pfbar" id="pfDlBarW" hidden><i id="pfDlBar"></i></div></div>
           <div class="pfrow wrap"><button class="pfbtn pfprimary" id="pfDlBtn" type="button">Descargar</button><button class="pfbtn" id="pfDlPause" type="button" hidden>Pausar</button><button class="pfbtn" id="pfLTest" type="button">Probar</button><button class="pfbtn pfdanger" id="pfDlDel" type="button" hidden>Borrar de este dispositivo</button></div>
@@ -472,8 +539,12 @@
     $("#pfLModel").addEventListener("change", () => { lMsg(""); renderLocal(); });
     $("#pfDlBtn").addEventListener("click", async () => {
       const key = $("#pfLModel").value; lMsg("");
-      if (!(await webgpuOK())) lMsg(localErr({ code: "no_webgpu" }) + " Puedes descargarlo igual, pero aquí no funcionará.", true);
-      try { await downloadModel(key); cacheGemmaRuntime(); toast(`${MODELS[key].label} quedó descargado en este dispositivo.`); cfg.localModel = key; cfg.engine = "local"; saveCfg(); }
+      if (MODELS[key].kind !== "cpu" && !(await webgpuOK())) { lMsg(localErr({ code: "no_webgpu" }), true); return; }
+      try {
+        await downloadModel(key); cacheGemmaRuntime(key); cfg.localModel = key; cfg.engine = "local"; saveCfg();
+        toast(`${MODELS[key].label} quedó descargado en este dispositivo.`);
+        if (key === "cpu" && !self.crossOriginIsolated) lMsg("Listo. Recarga Atril una vez para que Gemma use todos los núcleos del procesador (responde más rápido).");
+      }
       catch (e) { lMsg(localErr(e), e?.code !== "paused"); if (e?.code !== "paused") toast(localErr(e)); }
       renderLocal();
     });
@@ -483,7 +554,7 @@
       const b = $("#pfLTest"); b.disabled = true; const keep = { m: cfg.localModel, c: cfg.localCtx };
       cfg.localModel = $("#pfLModel").value; cfg.localCtx = Number($("#pfLCtx").value) || 4096;
       lMsg("Cargando Gemma… (puede tardar hasta un minuto la primera vez)");
-      try { const t0 = Date.now(); const { text } = await localChat([{ role: "user", content: "Responde solo con la palabra: listo" }]); lMsg(`Funciona: «${text.slice(0, 40)}» (${((Date.now() - t0) / 1000).toFixed(1)} s).`); }
+      try { const t0 = Date.now(); const { text } = await localChat([{ role: "user", content: "Responde solo con la palabra: listo" }]); lMsg(`Funciona: «${text.slice(0, 40)}» (${((Date.now() - t0) / 1000).toFixed(1)} s${llm?.threads ? `, ${llm.threads} ${llm.threads === 1 ? "núcleo" : "núcleos"}` : ""}).`); }
       catch (e) { lMsg(localErr(e), true); }
       finally { cfg.localModel = keep.m; cfg.localCtx = keep.c; b.disabled = false; renderLocal(); }
     });
@@ -549,16 +620,23 @@
   const selEngine = () => (setM.querySelector('input[name="pfEng"]:checked') || {}).value || engine();
   const lMsg = (t, warn) => { const n = $("#pfLMsg"); n.textContent = t; n.classList.toggle("warn", !!warn); n.dataset.keep = t ? "1" : ""; };
   const localErr = (e) => ({
-    no_webgpu: "Este navegador no tiene WebGPU, que Gemma necesita. Usa Chrome o Edge actualizados (en Android también) o Safari con iOS 26 o más reciente.",
+    no_webgpu: "Este navegador no tiene WebGPU. Elige «modo procesador» en Modelo: funciona sin tarjeta gráfica, aunque más lento.",
     model_not_downloaded: "Primero descarga el modelo con el botón «Descargar».",
     no_space: `No hay espacio suficiente en este dispositivo (faltan unos ${mb(e?.need || 0)}). Libera espacio e inténtalo de nuevo.`,
     no_storage: "Este navegador no permite guardar archivos grandes. Prueba con Chrome, Edge o Safari actualizados.",
     paused: "Descarga en pausa. Puedes continuarla cuando quieras.",
-    local_load: "No se pudo cargar Gemma en este dispositivo. Puede que no tenga memoria suficiente: prueba E2B y «Memoria corta». " + (e?.message ? "(" + String(e.message).slice(0, 120) + ")" : ""),
+    local_load: "No se pudo cargar Gemma en este dispositivo. Puede que no tenga memoria suficiente: cierra otras apps y pestañas y elige «Memoria corta». " + (e?.message ? "(" + String(e.message).slice(0, 120) + ")" : ""),
   }[e?.code] || ("Error: " + (e?.message || e?.code || "desconocido")));
   function openSettings(focus) {
     setM.querySelectorAll('input[name="pfEng"]').forEach(r => { r.checked = r.value === engine(); });
     $("#pfLModel").value = lModel(); $("#pfLCtx").value = String(lCtx()); lMsg("");
+    webgpuOK().then(async ok => {
+      const note = $("#pfGpuNote"); note.hidden = ok;
+      if (ok) return;
+      note.textContent = "Este navegador no tiene WebGPU (pasa en algunos teléfonos, como los Samsung con procesador Exynos). Usa el «modo procesador»: funciona sin tarjeta gráfica, aunque cada respuesta tarda más.";
+      for (const o of $("#pfLModel").options) o.disabled = o.value !== "cpu";
+      if ($("#pfLModel").value !== "cpu") { $("#pfLModel").value = "cpu"; renderLocal(); }
+    });
     if (focus === "gemma") setTimeout(() => $("#pfGemma").scrollIntoView({ block: "start" }), 50);
     $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
     $("#pfCtx").value = String(cfg.numCtx); if (!$("#pfCtx").value) $("#pfCtx").value = "16384";
@@ -667,7 +745,7 @@
     const s = document.createElement("script"); s.textContent = src.textContent; document.body.append(s);
     setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
     try { navigator.storage?.persist?.(); } catch {}
-    modelInfo().then(i => { if (i.complete) cacheGemmaRuntime(); }).catch(() => {});
+    modelInfo().then(i => { if (i.complete) { cacheGemmaRuntime(); if (MODELS[lModel()].kind === "cpu") setIsolation(true); } }).catch(() => {});
     if (offlineMode) setTimeout(() => toast(navigator.onLine ? "Entraste sin sesión de Google: inicia sesión para guardar en Drive." : "Modo sin conexión: tus cambios se guardan en este dispositivo y se subirán a Drive cuando vuelvas a tener internet."), 800);
   }
   addEventListener("beforeunload", (e) => { if (started && window.__atrilPending?.()) { e.preventDefault(); e.returnValue = ""; } });

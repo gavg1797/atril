@@ -4,7 +4,7 @@
  *   la primera vez y después se sirven desde aquí: tienen versión fija, así que nunca cambian.
  * - No se guardan aquí Google (inicio de sesión, Drive) ni el modelo de Gemma (va aparte, en el navegador).
  */
-const APP = "atril-app-v5", LIBS = "atril-libs-v1";
+const APP = "atril-app-v6", LIBS = "atril-libs-v1";
 const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html"];
 const CORE_LIBS = [
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
@@ -30,6 +30,13 @@ self.addEventListener("activate", (e) => {
     await self.clients.claim();
   })());
 });
+/* Modo procesador de Gemma: con Document-Isolation-Policy la página queda aislada y Gemma puede usar
+   varios núcleos (SharedArrayBuffer), sin romper el inicio de sesión de Google ni el selector de Drive. */
+async function isolate(r) {
+  try { if (!(await (await caches.open("atril-flags")).match("/__isolate"))) return r; } catch { return r; }
+  const h = new Headers(r.headers); h.set("Document-Isolation-Policy", "isolate-and-credentialless");
+  return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+}
 const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
 self.addEventListener("fetch", (e) => {
   const req = e.request; if (req.method !== "GET") return;
@@ -37,13 +44,15 @@ self.addEventListener("fetch", (e) => {
   if (u.origin === location.origin) {
     e.respondWith((async () => {
       const app = await caches.open(APP);
+      let r;
       try {
-        const r = await Promise.race([fetch(req), timeout(req.mode === "navigate" ? 6000 : 8000)]);
+        r = await Promise.race([fetch(req), timeout(req.mode === "navigate" ? 6000 : 8000)]);
         if (r.ok) app.put(req.mode === "navigate" ? "index.html" : req, r.clone());
-        return r;
       } catch {
-        return (await app.match(req, { ignoreSearch: true })) || (req.mode === "navigate" ? await app.match("index.html") : null) || Response.error();
+        r = (await app.match(req, { ignoreSearch: true })) || (req.mode === "navigate" ? await app.match("index.html") : null);
+        if (!r) return Response.error();
       }
+      return req.mode === "navigate" ? isolate(r) : r;
     })());
     return;
   }

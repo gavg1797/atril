@@ -77,6 +77,7 @@ En **Ajustes → Gemma 4 → En este dispositivo**, toca **Descargar**. Atril ba
 - Descárgalo con wifi. Si se corta, toca **Continuar descarga** y sigue donde quedó.
 - Cada dispositivo descarga su propia copia. Puedes borrarla en Ajustes.
 - En celulares con poca memoria, elige **Memoria corta**.
+- **Sin WebGPU** (por ejemplo, Samsung con procesador Exynos como el Galaxy S24 FE): elige **Gemma 4 E2B · modo procesador** (2,6 GB). Corre en el procesador con [wllama](https://github.com/ngxson/wllama) (llama.cpp), sin tarjeta gráfica. Es más lento: cuenta con 30 segundos a unos minutos por respuesta. Después de descargarlo, recarga Atril una vez para que use varios núcleos.
 
 ## Usar Atril sin internet
 
