@@ -12,7 +12,7 @@
   const FOLDER = "application/vnd.google-apps.folder";
   const DAPI = "https://www.googleapis.com/drive/v3/", UAPI = "https://www.googleapis.com/upload/drive/v3/";
   const FIELDS = "id,name,mimeType,size,modifiedTime,parents";
-  const base = Object.assign({ googleClientId: "", ollamaUrl: "http://localhost:11434", model: "gemma4", numCtx: 16384, pickerKey: "", appId: "", engine: "local", localModel: "e2b", localCtx: 4096 }, window.ATRIL_CONFIG || {});
+  const base = Object.assign({ googleClientId: "", ollamaUrl: "http://localhost:11434", model: "gemma4", numCtx: 16384, pickerKey: "", appId: "", engine: "local", localModel: "e2b", localCtx: 4096, edgeUrl: "http://localhost:8080", edgeModel: "" }, window.ATRIL_CONFIG || {});
   let cfg = (() => { try { return Object.assign({}, base, JSON.parse(localStorage.getItem(CFG_KEY) || "{}")); } catch { return { ...base }; } })();
   if (!cfg.googleClientId) cfg.googleClientId = base.googleClientId;
   const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
@@ -215,7 +215,7 @@
   };
   try { for (const [k, v] of Object.entries(window.ATRIL_MODELS || {})) { MODELS[k] = { ...MODELS[k], ...v }; if (v.size && MODELS[k].parts.length === 1) MODELS[k].parts = [{ ...MODELS[k].parts[0], size: v.size }]; } } catch {}
   for (const m of Object.values(MODELS)) m.size = m.parts.reduce((a, p) => a + p.size, 0);
-  const engine = () => cfg.engine === "ollama" ? "ollama" : "local";
+  const engine = () => ["ollama", "edge"].includes(cfg.engine) ? cfg.engine : "local";
   const lModel = () => MODELS[cfg.localModel] ? cfg.localModel : "e2b";
   const lCtx = () => Number(cfg.localCtx) || 4096;
   const hasOPFS = () => !!(navigator.storage?.getDirectory && window.FileSystemFileHandle && "createWritable" in FileSystemFileHandle.prototype);
@@ -390,15 +390,58 @@
       return { text: cleanOut(raw).trim(), truncated: false };
     });
   }
-  window.__atrilCtxChars = () => engine() === "local" ? Math.max(2500, (lCtx() - (MODELS[lModel()].kind === "cpu" ? 1400 : 1600)) * 3) : Math.max(8000, ((Number(cfg.numCtx) || 16384) - 3500) * 3);
+  /* ---------------- Gemma en la app Edge Gallery modificada (Mobile Server) en el mismo teléfono ---------------- */
+  const edgeBase = () => String(cfg.edgeUrl || "http://localhost:8080").replace(/\/+$/, "");
+  async function edgeModels() {
+    const r = await fetch(edgeBase() + "/v1/models"); if (!r.ok) throw new Error("HTTP " + r.status);
+    return ((await r.json()).data || []).map(m => m.id);
+  }
+  async function edgeChat(messages, { signal, onText } = {}) {
+    // Mobile Server solo lee el último mensaje: se envía todo (instrucciones, historial y pregunta) en uno.
+    const msgs = messages.map((x, i) => ({ role: i === 0 && x.role === "user" && messages.length > 1 ? "system" : x.role, content: String(x.content ?? "") }));
+    trimChars(msgs, 9000);
+    const label = { system: "", user: "Usuario", assistant: "Asistente", model: "Asistente" };
+    const content = msgs.length === 1 ? msgs[0].content : msgs.map(m => m.role === "system" ? m.content : `${label[m.role] || "Usuario"}: ${m.content}`).join("\n\n");
+    let model = cfg.edgeModel;
+    let r;
+    try {
+      if (!model) { const list = await edgeModels(); model = list.find(n => /gemma/i.test(n)) || list[0]; if (!model) throw { code: "edge_model" }; }
+      r = await fetch(edgeBase() + "/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json" }, signal,
+        body: JSON.stringify({ model, messages: [{ role: "user", content }], stream: true, temperature: 0.6 }) });
+    } catch (e) { if (signal?.aborted) throw { code: "cancelled" }; throw e?.code ? e : { code: "edge_offline", message: e?.message }; }
+    if (r.status === 404) throw { code: "edge_model", message: model };
+    if (r.status === 429) throw { code: "edge_busy" };
+    if (!r.ok) { let t = ""; try { t = (await r.json())?.error || ""; } catch {} throw { code: "edge_error", message: t || "HTTP " + r.status }; }
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "", raw = "";
+    try {
+      for (;;) {
+        const { value, done } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let k; while ((k = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, k).trim(); buf = buf.slice(k + 1);
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim(); if (data === "[DONE]") continue;
+          let j; try { j = JSON.parse(data); } catch { continue; }
+          if (j.error) throw { code: "edge_error", message: String(j.error), text: cleanOut(raw) };
+          const d = j.choices?.[0]?.delta?.content ?? j.choices?.[0]?.message?.content;
+          if (d) { raw += d; onText?.({ text: cleanOut(raw) }); }
+        }
+      }
+    } catch (e) { if (signal?.aborted || e?.name === "AbortError") throw { code: "cancelled", text: cleanOut(raw) }; throw e?.code ? e : { code: "edge_offline", message: e?.message, text: cleanOut(raw) }; }
+    return { text: cleanOut(raw).trim(), truncated: false };
+  }
 
-  const chat = (msgs, opts) => engine() === "local" ? localChat(msgs, opts) : ollamaChat(msgs, opts);
+  window.__atrilCtxChars = () => engine() === "edge" ? 7000 : engine() === "local" ? Math.max(2500, (lCtx() - (MODELS[lModel()].kind === "cpu" ? 1400 : 1600)) * 3) : Math.max(8000, ((Number(cfg.numCtx) || 16384) - 3500) * 3);
+
+  const chat = (msgs, opts) => engine() === "local" ? localChat(msgs, opts) : engine() === "edge" ? edgeChat(msgs, opts) : ollamaChat(msgs, opts);
   const SAMPLE = async (input, opts = {}) => {
     try { return await chat(typeof input === "string" ? [{ role: "user", content: input }] : input, opts); }
     catch (e) { if (e?.code === "model_not_downloaded" || e?.code === "no_webgpu") setTimeout(() => openSettings("gemma"), 400); throw e; }
   };
   SAMPLE.json = async (prompt, opts = {}) => {
-    const { text } = engine() === "local"
+    const { text } = engine() === "edge"
+      ? await edgeChat([{ role: "user", content: prompt + "\n\nResponde únicamente con el arreglo JSON, sin texto adicional ni bloques de código." }], { signal: opts.signal })
+      : engine() === "local"
       ? await localChat([{ role: "user", content: prompt + "\n\nResponde únicamente con el arreglo JSON, sin texto adicional ni bloques de código." }], { signal: opts.signal })
       : await ollamaChat([{ role: "user", content: prompt }], { signal: opts.signal, format: { type: "array", items: { type: "string" } } });
     try {
@@ -479,6 +522,7 @@
         <h3>Gemma 4</h3>
         <div class="pfseg" role="radiogroup" aria-label="Dónde funciona Gemma">
           <label><input type="radio" name="pfEng" value="local"><span><b>En este dispositivo</b><em>Celular, tableta o computadora. Se descarga una vez desde este sitio.</em></span></label>
+          <label><input type="radio" name="pfEng" value="edge"><span><b>App Edge Gallery modificada (Mobile Server)</b><em>Usa la Gemma de esa app en este mismo teléfono, con su tarjeta gráfica. Rápido.</em></span></label>
           <label><input type="radio" name="pfEng" value="ollama"><span><b>Ollama en mi computadora</b><em>Solo en la computadora donde está instalado Ollama.</em></span></label>
         </div>
         <div id="pfLocal">
@@ -489,6 +533,12 @@
           <div class="pfrow wrap"><button class="pfbtn pfprimary" id="pfDlBtn" type="button">Descargar</button><button class="pfbtn" id="pfDlPause" type="button" hidden>Pausar</button><button class="pfbtn" id="pfLTest" type="button">Probar</button><button class="pfbtn pfdanger" id="pfDlDel" type="button" hidden>Borrar de este dispositivo</button></div>
           <p class="pfmsg" id="pfLMsg" role="status" aria-live="polite"></p>
           <p class="pfhint">El modelo viene de Google (Hugging Face, licencia Apache 2.0) y se guarda en este navegador; después funciona sin internet y tus preguntas no salen del dispositivo. Necesita un navegador con WebGPU: Chrome o Edge en computadora y Android, Safari en iPhone y iPad con iOS 26 o más reciente. Conviene descargarlo con wifi.</p>
+        </div>
+        <div id="pfEdge">
+          <label class="pff"><span>Dirección del servidor</span><input id="pfEUrl" type="url" spellcheck="false" autocomplete="off" placeholder="http://localhost:8080"></label>
+          <label class="pff"><span>Modelo (vacío = el primero que esté cargado)</span><input id="pfEModel" list="pfEModels" spellcheck="false" autocomplete="off" placeholder="automático"><datalist id="pfEModels"></datalist></label>
+          <div class="pfrow"><button class="pfbtn" id="pfETest" type="button">Probar conexión</button><span class="pfmsg" id="pfETestMsg" role="status" aria-live="polite"></span></div>
+          <p class="pfhint">En la app <b>Mobile Server</b>: descarga Gemma 4 E2B, ábrelo una vez en el chat para que quede cargado y activa el servidor (puerto 8080). Deja la app abierta en segundo plano. Si Chrome pregunta si este sitio puede acceder a otras apps y servicios del dispositivo, toca <b>Permitir</b>.</p>
         </div>
         <div id="pfOll">
           <label class="pff"><span>Dirección de Ollama</span><input id="pfOUrl" type="url" spellcheck="false" autocomplete="off"></label>
@@ -535,6 +585,21 @@
     addEventListener("keydown", (e) => { if (e.key === "Escape" && !setM.hidden) closeSettings(); });
     $("#pfSave").addEventListener("click", saveSettings);
     $("#pfTest").addEventListener("click", testOllama);
+    $("#pfETest").addEventListener("click", async () => {
+      const out = $("#pfETestMsg"), b = $("#pfETest"); out.classList.remove("warn"); out.textContent = "Probando…"; b.disabled = true;
+      const keep = { u: cfg.edgeUrl, m: cfg.edgeModel }; cfg.edgeUrl = $("#pfEUrl").value.trim() || "http://localhost:8080"; cfg.edgeModel = $("#pfEModel").value.trim();
+      try {
+        const list = await edgeModels().catch(() => { throw { code: "edge_offline" }; });
+        if (!list.length) throw { code: "edge_model" };
+        const t0 = Date.now(); const { text } = await edgeChat([{ role: "user", content: "Responde solo con la palabra: listo" }]);
+        out.textContent = `Conectado con ${cfg.edgeModel || list.find(n => /gemma/i.test(n)) || list[0]}: «${text.trim().slice(0, 40)}» (${((Date.now() - t0) / 1000).toFixed(1)} s).`;
+      } catch (e) {
+        out.classList.add("warn");
+        out.textContent = e.code === "edge_offline" ? `No respondió el servidor en ${edgeBase()}. Abre Mobile Server, activa el servidor y vuelve a probar. Si Chrome pidió permiso para acceder a otras apps del dispositivo, acéptalo.`
+          : e.code === "edge_model" ? "El servidor responde, pero no hay ningún modelo cargado. En Mobile Server, abre Gemma en el chat una vez para cargarlo."
+          : e.code === "edge_busy" ? "Gemma está ocupada respondiendo otra cosa. Espera y vuelve a probar." : "Error: " + (e.message || e.code);
+      } finally { cfg.edgeUrl = keep.u; cfg.edgeModel = keep.m; b.disabled = false; }
+    });
     setM.querySelectorAll('input[name="pfEng"]').forEach(r => r.addEventListener("change", () => { lMsg(""); renderLocal(); }));
     $("#pfLModel").addEventListener("change", () => { lMsg(""); renderLocal(); });
     $("#pfDlBtn").addEventListener("click", async () => {
@@ -606,7 +671,7 @@
   async function renderLocal() {
     if (!setM || setM.hidden) return;
     const key = $("#pfLModel").value, m = MODELS[key], info = await modelInfo(key), busy = DL && DL.key === key;
-    $("#pfLocal").hidden = selEngine() !== "local"; $("#pfOll").hidden = selEngine() !== "ollama";
+    $("#pfLocal").hidden = selEngine() !== "local"; $("#pfOll").hidden = selEngine() !== "ollama"; $("#pfEdge").hidden = selEngine() !== "edge";
     $("#pfDlBarW").hidden = !(busy || (info.size && !info.complete));
     const got = busy ? DL.got : info.size; $("#pfDlBar").style.width = (got / m.size * 100).toFixed(1) + "%";
     $("#pfDlText").textContent = busy ? `Descargando ${m.label}: ${mb(got)} de ${mb(m.size)} (${Math.floor(got / m.size * 100)}%). Puedes seguir usando Atril.`
@@ -638,6 +703,8 @@
       if ($("#pfLModel").value !== "cpu") { $("#pfLModel").value = "cpu"; renderLocal(); }
     });
     if (focus === "gemma") setTimeout(() => $("#pfGemma").scrollIntoView({ block: "start" }), 50);
+    $("#pfEUrl").value = cfg.edgeUrl || "http://localhost:8080"; $("#pfEModel").value = cfg.edgeModel || ""; $("#pfETestMsg").textContent = "";
+    edgeModels().then(list => { const dl = $("#pfEModels"); dl.replaceChildren(...list.map(n => h("option", { value: n }))); }).catch(() => {});
     $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
     $("#pfCtx").value = String(cfg.numCtx); if (!$("#pfCtx").value) $("#pfCtx").value = "16384";
     $("#pfTestMsg").textContent = "";
@@ -655,6 +722,7 @@
     const lm = $("#pfLModel").value, lc = Number($("#pfLCtx").value) || 4096;
     if (lm !== lModel() || lc !== lCtx()) closeLocal();
     cfg.engine = selEngine(); cfg.localModel = lm; cfg.localCtx = lc;
+    cfg.edgeUrl = $("#pfEUrl").value.trim() || "http://localhost:8080"; cfg.edgeModel = $("#pfEModel").value.trim();
     saveCfg(); closeSettings();
     if (!user) msg(cfg.googleClientId ? "" : "Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", !cfg.googleClientId);
     else if (prevCid !== cfg.googleClientId) { token = null; showReauth("Cambiaste los permisos de Google. Renueva la sesión para aplicarlos."); }

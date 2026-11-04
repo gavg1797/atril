@@ -95,6 +95,19 @@ Los cambios que hagas sin internet se suben a Drive la próxima vez que inicies 
 
 **Voces sin internet:** la voz depende del sistema. Las voces del dispositivo (Windows, macOS, iOS, Android) funcionan sin internet; las voces «Google…» de Chrome en computadora necesitan conexión.
 
+## Gemma con la app Mobile Server (Android)
+
+En teléfonos donde el navegador no tiene WebGPU (por ejemplo, Samsung con Exynos), Atril puede usar la Gemma de [Mobile Server](https://github.com/techjarves/mobile-server). Es una versión modificada y no oficial de Google AI Edge Gallery (licencia Apache 2.0) que corre Gemma con la tarjeta gráfica del teléfono y la ofrece en `http://localhost:8080` como API compatible con OpenAI.
+
+1. Descarga `app-arm64-v8a-release.apk` de sus [Releases](https://github.com/techjarves/mobile-server/releases) e instálalo; Android pedirá permitir apps de origen desconocido para Chrome.
+2. En Mobile Server, descarga **Gemma 4 E2B**, ábrelo una vez en el chat para que quede cargado y activa el servidor. No hace falta activar túneles: Atril se conecta dentro del mismo teléfono.
+3. En Atril, ve a **Ajustes → Gemma 4 → App Edge Gallery modificada** y toca **Probar conexión**. Si Chrome pide acceso a otras apps del dispositivo, toca **Permitir**.
+
+**Ten en cuenta:**
+
+- Deja Mobile Server abierta en segundo plano.
+- El servidor también escucha en tu red wifi, sin contraseña. Otros dispositivos de la misma red podrían usar tu Gemma, pero no ven tus documentos.
+
 ## Opcional: Gemma 4 con Ollama (en tu computadora)
 
 1. **Instala Ollama** desde https://ollama.com/download.
