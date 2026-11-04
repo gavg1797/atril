@@ -212,9 +212,15 @@
     e2b: { label: "Gemma 4 E2B", kind: "webgpu", parts: [{ file: "gemma-4-E2B-it-web.litertlm", url: HF + "gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-web.litertlm", size: 2008432640 }] },
     e4b: { label: "Gemma 4 E4B", kind: "webgpu", parts: [{ file: "gemma-4-E4B-it-web.litertlm", url: HF + "gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it-web.litertlm", size: 2969059328 }] },
     cpu: { label: "Gemma 4 E2B (modo procesador)", kind: "cpu", parts: cpuParts },
+    // Ligero para teléfonos con poca memoria disponible: Gemma 3 1B (llama.cpp oficial, GGUF Q4_K_M ≈ 0,8 GB).
+    lite: { label: "Gemma 3 1B (ligero)", kind: "cpu", approx: 806e6, parts: [{ file: "gemma-3-1b-it-Q4_K_M.gguf", url: "https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf", size: 0 }] },
   };
+  const SIZES_KEY = "atril-model-sizes";
+  const learned = (() => { try { return JSON.parse(localStorage.getItem(SIZES_KEY) || "{}"); } catch { return {}; } })();
+  for (const m of Object.values(MODELS)) for (const p of m.parts) if (!p.size && learned[p.file]) p.size = learned[p.file];
   try { for (const [k, v] of Object.entries(window.ATRIL_MODELS || {})) { MODELS[k] = { ...MODELS[k], ...v }; if (v.size && MODELS[k].parts.length === 1) MODELS[k].parts = [{ ...MODELS[k].parts[0], size: v.size }]; } } catch {}
-  for (const m of Object.values(MODELS)) m.size = m.parts.reduce((a, p) => a + p.size, 0);
+  const sumSize = (m) => { m.size = m.parts.every(p => p.size) ? m.parts.reduce((a, p) => a + p.size, 0) : 0; return m.size || m.approx || 0; };
+  for (const m of Object.values(MODELS)) sumSize(m);
   const engine = () => cfg.engine === "ollama" ? "ollama" : "local";
   const lModel = () => MODELS[cfg.localModel] ? cfg.localModel : "e2b";
   const lCtx = () => Number(cfg.localCtx) || 4096;
@@ -227,13 +233,13 @@
   }
   async function modelInfo(key = lModel()) {
     const m = MODELS[key]; let size = 0, complete = true;
-    for (const p of m.parts) { const s = Math.min(await partSize(p), p.size); size += s; if (s !== p.size) complete = false; }
+    for (const p of m.parts) { const raw = await partSize(p); const s = p.size ? Math.min(raw, p.size) : raw; size += s; if (!p.size || s !== p.size) complete = false; }
     return { size, complete };
   }
   async function modelFiles(key = lModel()) {
     const out = [];
     for (const p of MODELS[key].parts) {
-      if (hasOPFS()) { try { const f = await (await (await opfsDir()).getFileHandle(p.file)).getFile(); if (f.size !== p.size) return null; out.push(f); continue; } catch { return null; } }
+      if (hasOPFS()) { try { const f = await (await (await opfsDir()).getFileHandle(p.file)).getFile(); if (!p.size || f.size !== p.size) return null; out.push(f); continue; } catch { return null; } }
       try { const r = await (await caches.open(CACHE_M)).match(p.url); if (!r) return null; out.push(new File([await r.blob()], p.file)); } catch { return null; }
     }
     return out;
@@ -244,16 +250,21 @@
       try { await (await opfsDir()).removeEntry(p.file); } catch {}
       try { await (await caches.open(CACHE_M)).delete(p.url); } catch {}
     }
-    if (key === "cpu") setIsolation(false);
+    if (MODELS[key].kind === "cpu" && !Object.entries(MODELS).some(([k, x]) => k !== key && x.kind === "cpu" && x.parts.every(p => learned[p.file] || p.size))) setIsolation(false);
   }
   let DL = null; // descarga en curso { key, ctl, got, total }
   const dlSubs = new Set(); const dlEmit = () => dlSubs.forEach(f => { try { f(DL); } catch {} });
   async function downloadPart(p, base, ctl) {
-    let have = hasOPFS() ? Math.min(await partSize(p), p.size) : 0;
-    if (have === p.size) { DL.got = base + have; dlEmit(); return; }
+    let have = hasOPFS() ? await partSize(p) : 0; if (p.size) have = Math.min(have, p.size);
+    if (p.size && have === p.size) { DL.got = base + have; dlEmit(); return; }
     const r = await fetch(p.url, { headers: have ? { Range: `bytes=${have}-` } : {}, signal: ctl.signal });
-    if (!r.ok) throw { code: "download", message: "HTTP " + r.status };
+    if (r.status === 416 && have && !p.size) { p.size = have; learned[p.file] = have; try { localStorage.setItem(SIZES_KEY, JSON.stringify(learned)); } catch {} return; }
+    if (!r.ok) throw { code: "download", message: "HTTP " + r.status + (r.status === 401 || r.status === 403 ? " (el archivo pide permiso en Hugging Face)" : "") };
     if (have && r.status !== 206) have = 0;
+    if (!p.size) {
+      const total = Number((r.headers.get("Content-Range") || "").split("/")[1]) || (Number(r.headers.get("Content-Length")) + (r.status === 206 ? have : 0));
+      if (total) { p.size = total; learned[p.file] = total; try { localStorage.setItem(SIZES_KEY, JSON.stringify(learned)); } catch {} }
+    }
     DL.got = base + have; dlEmit();
     if (hasOPFS()) {
       const h = await (await opfsDir()).getFileHandle(p.file, { create: true });
@@ -279,16 +290,17 @@
     if (!navigator.storage) throw { code: "no_storage" };
     try { await navigator.storage.persist?.(); } catch {}
     const info = await modelInfo(key); if (info.complete) return;
-    try { const est = await navigator.storage.estimate(); if (est.quota && est.quota - (est.usage || 0) < (m.size - info.size) + 80e6) throw { code: "no_space", need: m.size - info.size }; } catch (e) { if (e?.code) throw e; }
-    const ctl = new AbortController(); DL = { key, ctl, got: info.size, total: m.size }; dlEmit();
+    const need = sumSize(m) - info.size;
+    try { const est = await navigator.storage.estimate(); if (est.quota && est.quota - (est.usage || 0) < need + 80e6) throw { code: "no_space", need }; } catch (e) { if (e?.code) throw e; }
+    const ctl = new AbortController(); DL = { key, ctl, got: info.size, total: sumSize(m) }; dlEmit();
     try {
       let base = 0;
-      for (const p of m.parts) { await downloadPart(p, base, ctl); base += p.size; }
+      for (const p of m.parts) { await downloadPart(p, base, ctl); base += p.size; DL.total = sumSize(m); }
     } catch (e) {
       if (ctl.signal.aborted) throw { code: "paused" };
       throw e?.code ? e : { code: "download", message: e?.message || "sin conexión" };
     } finally { DL = null; dlEmit(); }
-    if (key === "cpu") setIsolation(true);
+    if (MODELS[key].kind === "cpu") setIsolation(true);
   }
   const pauseDownload = () => DL?.ctl.abort();
   /* Guarda el motor de Gemma para que funcione sin internet; el modelo ya está en el navegador. */
@@ -375,7 +387,14 @@
   }
   let gate0 = Promise.resolve();
   const exclusive = (fn) => { const p = gate0.then(fn, fn); gate0 = p.catch(() => {}); return p; };
-  async function localChat(messages, { signal, onText } = {}) {
+  const GUARD = "atril-llm-guard";
+  const guardOn = () => { try { localStorage.setItem(GUARD, JSON.stringify({ key: lModel(), ctx: lCtx(), at: Date.now() })); } catch {} };
+  const guardOff = () => { try { localStorage.removeItem(GUARD); } catch {} };
+  async function localChat(messages, opts = {}) {
+    guardOn();
+    try { return await localChat0(messages, opts); } finally { guardOff(); }
+  }
+  async function localChat0(messages, { signal, onText } = {}) {
     return exclusive(async () => {
       if (signal?.aborted) throw { code: "cancelled" };
       const cpu = MODELS[lModel()].kind === "cpu";
@@ -482,7 +501,7 @@
           <label><input type="radio" name="pfEng" value="ollama"><span><b>Ollama en mi computadora</b><em>Solo en la computadora donde está instalado Ollama.</em></span></label>
         </div>
         <div id="pfLocal">
-          <label class="pff"><span>Modelo</span><select id="pfLModel"><option value="e2b">Gemma 4 E2B · 2,0 GB · recomendado</option><option value="e4b">Gemma 4 E4B · 3,0 GB · computadoras potentes</option><option value="cpu">Gemma 4 E2B · 2,6 GB · modo procesador (sin WebGPU, más lento)</option></select></label>
+          <label class="pff"><span>Modelo</span><select id="pfLModel"><option value="e2b">Gemma 4 E2B · 2,0 GB · recomendado</option><option value="e4b">Gemma 4 E4B · 3,0 GB · computadoras potentes</option><option value="cpu">Gemma 4 E2B · 2,6 GB · modo procesador (sin WebGPU, más lento)</option><option value="lite">Gemma 3 1B · 0,8 GB · ligero, modo procesador (para celulares)</option></select></label>
           <p class="pfhint pfwarn" id="pfGpuNote" hidden></p>
           <label class="pff"><span>Memoria para cada pregunta</span><select id="pfLCtx"><option value="2048">Corta · equipos con poca memoria</option><option value="4096">Normal · recomendada</option><option value="8192">Larga · computadoras</option></select></label>
           <div class="pfdl" id="pfDl"><p class="pfline" id="pfDlText"></p><div class="pfbar" id="pfDlBarW" hidden><i id="pfDlBar"></i></div></div>
@@ -605,14 +624,14 @@
   const mb = (n) => (n / 1e9).toLocaleString("es", { maximumFractionDigits: 2 }) + " GB";
   async function renderLocal() {
     if (!setM || setM.hidden) return;
-    const key = $("#pfLModel").value, m = MODELS[key], info = await modelInfo(key), busy = DL && DL.key === key;
+    const key = $("#pfLModel").value, m = MODELS[key], msz = sumSize(m), info = await modelInfo(key), busy = DL && DL.key === key;
     $("#pfLocal").hidden = selEngine() !== "local"; $("#pfOll").hidden = selEngine() !== "ollama";
     $("#pfDlBarW").hidden = !(busy || (info.size && !info.complete));
-    const got = busy ? DL.got : info.size; $("#pfDlBar").style.width = (got / m.size * 100).toFixed(1) + "%";
-    $("#pfDlText").textContent = busy ? `Descargando ${m.label}: ${mb(got)} de ${mb(m.size)} (${Math.floor(got / m.size * 100)}%). Puedes seguir usando Atril.`
-      : info.complete ? `${m.label} está listo en este dispositivo (${mb(m.size)}).` + (llm && llmSig.startsWith(key) ? " Cargado en memoria." : "")
-      : info.size ? `Descarga pausada: ${mb(info.size)} de ${mb(m.size)}. Toca «Continuar» para seguir donde quedó.`
-      : `${m.label} aún no está en este dispositivo. Ocupa ${mb(m.size)}.`;
+    const got = busy ? DL.got : info.size; $("#pfDlBar").style.width = (got / msz * 100).toFixed(1) + "%";
+    $("#pfDlText").textContent = busy ? `Descargando ${m.label}: ${mb(got)} de ${mb(msz)} (${Math.floor(got / msz * 100)}%). Puedes seguir usando Atril.`
+      : info.complete ? `${m.label} está listo en este dispositivo (${mb(msz)}).` + (llm && llmSig.startsWith(key) ? " Cargado en memoria." : "")
+      : info.size ? `Descarga pausada: ${mb(info.size)} de ${mb(msz)}. Toca «Continuar» para seguir donde quedó.`
+      : `${m.label} aún no está en este dispositivo. Ocupa ${mb(msz)}.`;
     $("#pfDlBtn").hidden = busy || info.complete; $("#pfDlBtn").textContent = info.size ? "Continuar descarga" : "Descargar";
     $("#pfDlPause").hidden = !busy; $("#pfDlDel").hidden = busy || !info.size; $("#pfLTest").hidden = !info.complete || busy;
     if (!$("#pfLMsg").dataset.keep) { $("#pfLMsg").textContent = ""; $("#pfLMsg").classList.remove("warn"); }
@@ -627,15 +646,19 @@
     paused: "Descarga en pausa. Puedes continuarla cuando quieras.",
     local_load: "No se pudo cargar Gemma en este dispositivo. Puede que no tenga memoria suficiente: cierra otras apps y pestañas y elige «Memoria corta». " + (e?.message ? "(" + String(e.message).slice(0, 120) + ")" : ""),
   }[e?.code] || ("Error: " + (e?.message || e?.code || "desconocido")));
+  let crashed = null;
+  try { crashed = JSON.parse(localStorage.getItem("atril-llm-guard") || "null"); } catch {}
+  try { localStorage.removeItem("atril-llm-guard"); } catch {}
   function openSettings(focus) {
     setM.querySelectorAll('input[name="pfEng"]').forEach(r => { r.checked = r.value === engine(); });
     $("#pfLModel").value = lModel(); $("#pfLCtx").value = String(lCtx()); lMsg("");
+    if (crashed) lMsg(`La última vez, la página se cerró mientras Gemma (${MODELS[crashed.key]?.label || crashed.key}) trabajaba: probablemente al dispositivo le faltó memoria. Prueba «Gemma 3 1B · ligero» y «Memoria corta».`, true);
     webgpuOK().then(async ok => {
       const note = $("#pfGpuNote"); note.hidden = ok;
       if (ok) return;
       note.textContent = "Este navegador no tiene WebGPU (pasa en algunos teléfonos, como los Samsung con procesador Exynos). Usa el «modo procesador»: funciona sin tarjeta gráfica, aunque cada respuesta tarda más.";
-      for (const o of $("#pfLModel").options) o.disabled = o.value !== "cpu";
-      if ($("#pfLModel").value !== "cpu") { $("#pfLModel").value = "cpu"; renderLocal(); }
+      for (const o of $("#pfLModel").options) o.disabled = MODELS[o.value].kind !== "cpu";
+      if (MODELS[$("#pfLModel").value].kind !== "cpu") { $("#pfLModel").value = crashed ? "lite" : "cpu"; renderLocal(); }
     });
     if (focus === "gemma") setTimeout(() => $("#pfGemma").scrollIntoView({ block: "start" }), 50);
     $("#pfOUrl").value = cfg.ollamaUrl; $("#pfModel").value = cfg.model; $("#pfCid").value = cfg.googleClientId || "";
@@ -746,6 +769,7 @@
     setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
     try { navigator.storage?.persist?.(); } catch {}
     modelInfo().then(i => { if (i.complete) { cacheGemmaRuntime(); if (MODELS[lModel()].kind === "cpu") setIsolation(true); } }).catch(() => {});
+    if (crashed && engine() === "local") setTimeout(() => openSettings("gemma"), 1200);
     if (offlineMode) setTimeout(() => toast(navigator.onLine ? "Entraste sin sesión de Google: inicia sesión para guardar en Drive." : "Modo sin conexión: tus cambios se guardan en este dispositivo y se subirán a Drive cuando vuelvas a tener internet."), 800);
   }
   addEventListener("beforeunload", (e) => { if (started && window.__atrilPending?.()) { e.preventDefault(); e.returnValue = ""; } });
