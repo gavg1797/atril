@@ -863,7 +863,24 @@ body.bottomhide .fplay{display:grid}
 body.libfull .fplay,body.pdfedit .fplay{display:none!important}
 @media (prefers-reduced-motion: reduce){.fplay.on{animation:none}}
 /* Punto verde: dónde quedó la lectura */
-.resdot{position:absolute;z-index:2;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#1FA463;box-shadow:0 0 0 2px #fff,0 1px 4px rgba(0,0,0,.35);pointer-events:none}
+.resdot{position:absolute;z-index:2;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#1FA463;box-shadow:0 0 0 2px #fff,0 1px 4px rgba(0,0,0,.35);cursor:pointer}
+.resdot::after{content:"";position:absolute;inset:-10px}
+.resdot.bm,.para.resume.bm::before{width:13px;height:13px;margin-top:-6px;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(31,164,99,.35),0 1px 4px rgba(0,0,0,.35)}
+.para.resume::before{cursor:pointer}
+body.placingbm #sheets{cursor:crosshair}
+body.placingbm #sheets .para:hover{outline:2px dashed #1FA463;outline-offset:3px;border-radius:4px}
+.bmbanner{position:fixed;z-index:9500;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:var(--paper);color:var(--ink);border:2px solid #1FA463;border-radius:14px;padding:8px 8px 8px 14px;box-shadow:0 10px 30px rgba(0,0,0,.2);font-size:.92rem;max-width:calc(100vw - 20px)}
+.bmask{position:fixed;z-index:9400;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-left:4px solid #1FA463;border-radius:14px;padding:12px 14px;box-shadow:0 14px 36px rgba(0,0,0,.22);width:min(560px,calc(100vw - 20px))}
+.bmask > div:first-of-type{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.bmask small{color:var(--muted);font-size:.82rem;overflow:hidden;text-overflow:ellipsis}
+.bmask-b{display:flex;gap:8px;margin-left:auto}
+.bmpop{position:fixed;z-index:9450;display:flex;flex-direction:column;gap:2px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 16px 40px rgba(0,0,0,.2);min-width:240px}
+.bmpop b{font-size:.8rem;color:var(--muted);padding:2px 8px 6px;text-transform:uppercase;letter-spacing:.04em}
+.bmpop .btn{justify-content:flex-start;border:0;background:transparent;width:100%}
+.bmpop .btn:hover{background:var(--surface)}
+.bmbtn .gdot{flex:0 0 auto}
+.selbar #selBm .gdot{width:9px;height:9px;margin-right:2px}
+[hidden].bmbanner,[hidden].bmask,[hidden].bmpop{display:none!important}
 .para{position:relative}
 .para.resume::before{content:"";position:absolute;left:-16px;top:.62em;width:9px;height:9px;border-radius:50%;background:#1FA463;box-shadow:0 0 0 2px var(--paper)}
 @media (max-width:560px){.para.resume::before{left:-12px;width:8px;height:8px}}
@@ -941,6 +958,7 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
       <button class="btn permbtn" id="permBtn" type="button" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 3l7 3v6c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Ajustes</span></button>
       <button class="btn castbtn" id="castBtn" type="button" aria-haspopup="dialog"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8M3 16a4 4 0 0 1 4 4"/><circle cx="3.5" cy="19.5" r="1" fill="currentColor"/></svg><span>Transmitir</span></button>
       <button class="btn dlbtn" id="dlBtn" type="button" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="dlLabel">Descargar PDF</span><em id="dlCount" hidden></em></button>
+      <button class="btn bmbtn" id="bmPlaceBtn" type="button" title="Elige el párrafo donde quieres dejar tu marca de lectura"><span class="gdot" aria-hidden="true"></span><span>Poner marca de lectura</span></button>
       <button class="btn resetbtn" id="resetBtn" type="button" title="Volver al inicio y borrar el avance"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg><span>Reiniciar progreso</span></button>
       <button class="btn donebtn" id="doneBtn" type="button" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Marcar como leído</span></button>
       <div class="zoom" id="zoomCtl"><button type="button" class="zout" aria-label="Alejar">−</button><button type="button" class="zval" title="Volver a 100%">100%</button><button type="button" class="zin" aria-label="Acercar">+</button></div>
@@ -1119,6 +1137,7 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
   <button type="button" class="mkbtn" data-type="ul" title="Subrayar con línea"><span class="ico ico-ul">ab</span>Subrayar</button>
   <button type="button" class="mkbtn" data-type="st" title="Tachar"><span class="ico ico-st">ab</span>Tachar</button>
   <span class="sep"></span>
+  <button type="button" class="nbsend" id="selBm" title="Dejar la marca de lectura en este párrafo"><span class="gdot" aria-hidden="true"></span>Marca aquí</button>
   <button type="button" class="nbsend" id="selNb" title="Copiar el texto seleccionado al cuaderno"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/></svg>Al cuaderno</button>
   <button type="button" class="askbtn" id="selAsk" title="El texto ya está en el cuadro de pregunta">Preguntar</button>
   <button type="button" class="selpin" id="selPin" hidden title="Soltar: volver a la barra que aparece junto a la selección" aria-label="Soltar barra">✕</button>
@@ -1255,6 +1274,9 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
   </div>
 </div>
 <button class="tvexit" id="tvExit" type="button" hidden>Salir del Modo TV</button>
+<div class="bmbanner" id="bmBanner" hidden role="status"><span class="gdot" aria-hidden="true"></span><span>Toca el párrafo donde quieres dejar tu marca de lectura</span><button type="button" class="btn" id="bmCancel">Cancelar</button></div>
+<div class="bmask" id="bmAsk" hidden role="dialog" aria-label="Guardar marca de lectura"><span class="gdot" aria-hidden="true"></span><div><b>¿Guardar la marca de lectura en este párrafo?</b><small id="bmAskText"></small></div><div class="bmask-b"><button type="button" class="btn" id="bmAskNo">Ahora no</button><button type="button" class="btn primary" id="bmAskYes">Guardar marca</button></div></div>
+<div class="bmpop" id="bmPop" hidden role="menu"><b id="bmPopTitle">Tu marca de lectura</b><button type="button" class="btn" id="bmPopRead">▶ Leer desde aquí</button><button type="button" class="btn" id="bmPopMove">↕ Mover la marca a otro párrafo</button><button type="button" class="btn" id="bmPopSave">📌 Guardar como marca de lectura</button><button type="button" class="btn" id="bmPopClear">✕ Quitar la marca</button></div>
 <button class="fgo" id="fGo" type="button" aria-label="Ir a donde quedó la lectura" title="Ir a donde quedó la lectura" hidden><span class="gdot" aria-hidden="true"></span></button>
 <button class="fplay" id="fPlay" type="button" aria-label="Reproducir" title="Reproducir o pausar"><svg id="fpIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg></button>
 <button class="bhandle" id="bHandle" type="button" hidden aria-label="Mostrar controles"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>Controles</button>
@@ -1297,10 +1319,10 @@ const SAMPLE = {
 
 /* ---------- Estado ---------- */
 const prefs = (() => { try { return JSON.parse(localStorage.getItem("atril-prefs") || "{}"); } catch { return {}; } })();
-const savePrefs = () => { try { localStorage.setItem("atril-prefs", JSON.stringify({ rate: S.rate, voice: S.voice, mode: S.mode, zoomI: S.zoomI, last: S.doc?.id, pos: S.posByDoc, pct: S.pct, done: S.done, filter: S.filter, cwd: S.cwd })); } catch {} try { scheduleSync(20000); } catch {} };
+const savePrefs = () => { try { localStorage.setItem("atril-prefs", JSON.stringify({ rate: S.rate, voice: S.voice, mode: S.mode, zoomI: S.zoomI, last: S.doc?.id, pos: S.posByDoc, bm: S.bm, pct: S.pct, done: S.done, filter: S.filter, cwd: S.cwd })); } catch {} try { scheduleSync(20000); } catch {} };
 const S = {
   docs: [SAMPLE], doc: null, readLang: "es", translate: false,
-  mode: prefs.mode === "text" ? "text" : "page", zoomI: Number.isInteger(prefs.zoomI) && prefs.zoomI >= 0 && prefs.zoomI < 12 ? prefs.zoomI : 4, rate: Number(prefs.rate) || 1, voice: prefs.voice || {}, posByDoc: prefs.pos || {}, pct: prefs.pct || {}, done: prefs.done || {}, filter: ["todos", "pendientes", "leidos"].includes(prefs.filter) ? prefs.filter : "todos", cwd: typeof prefs.cwd === "string" ? prefs.cwd : "",
+  mode: prefs.mode === "text" ? "text" : "page", zoomI: Number.isInteger(prefs.zoomI) && prefs.zoomI >= 0 && prefs.zoomI < 12 ? prefs.zoomI : 4, rate: Number(prefs.rate) || 1, voice: prefs.voice || {}, posByDoc: prefs.pos || {}, bm: prefs.bm || {}, pct: prefs.pct || {}, done: prefs.done || {}, filter: ["todos", "pendientes", "leidos"].includes(prefs.filter) ? prefs.filter : "todos", cwd: typeof prefs.cwd === "string" ? prefs.cwd : "",
   pos: { pi: 0, ai: 0, si: 0 }, playing: false, token: 0,
 };
 let sample = null;
@@ -1687,7 +1709,7 @@ async function removeDoc(id) {
   if (gone?.gid && !gone.linked) DS.trash.push(gone.gid);
   for (const x of gone?.gparts || []) if (x?.gid) DS.trash.push(x.gid);
   saveDS();
-  S.docs = S.docs.filter(d => d.id !== id); delete S.posByDoc[id]; delete S.pct[id]; delete S.done[id]; savePrefs();
+  S.docs = S.docs.filter(d => d.id !== id); delete S.posByDoc[id]; delete S.bm[id]; delete S.pct[id]; delete S.done[id]; savePrefs();
   await idbDel(id);
   if (S.doc?.id === id) openDoc(S.docs[0].id);
   renderDocs(); toast(inDrive ? "Documento eliminado. Su copia en Google Drive pasó a la papelera de Drive." : "Documento eliminado de este dispositivo.");
@@ -2019,7 +2041,7 @@ function buildManifest() {
   if (REMOTE) for (const rf of REMOTE.folders || []) if (rf?.id && !dels.has(rf.id) && !fById(rf.id)) folders.push(rf);
   const docs = S.docs.filter(d => !d.sample).map(d => ({ id: d.id, name: d.name, lang: d.lang, added: d.added, updatedAt: d.updatedAt || 0, folder: docFolder(d) || undefined, gid: d.gid || undefined, linked: d.linked || undefined, split: d.split || undefined, gparts: d.gparts ? d.gparts.map(x => x ? { gid: x.gid, from: x.from, to: x.to } : null) : undefined,
     draft: d.draft || undefined, src: d.draft ? d.src : undefined, marks: d.marks || [], notebook: d.notebook || null, chat: (d.chat || []).filter(m => !m.example),
-    prog: { pct: S.pct[d.id] || 0, done: !!S.done[d.id], pos: S.posByDoc[d.id] || null } }));
+    prog: { pct: S.pct[d.id] || 0, done: !!S.done[d.id], pos: S.posByDoc[d.id] || null, bm: S.bm[d.id] || null } }));
   if (REMOTE) for (const rd of REMOTE.docs || []) if (rd?.id && !dels.has(rd.id) && !S.docs.some(d => d.id === rd.id)) docs.push(rd);
   return { app: "Atril", v: 2, folders, docs };
 }
@@ -2061,7 +2083,7 @@ async function drivePull(force, live) {
   const row = $("#upProg"); let i = 0; const todo = (best.docs || []).filter(x => x?.id && !dels.has(x.id));
   for (const rd of todo) {
     i++; let local = S.docs.find(d => d.id === rd.id);
-    if (rd.prog) { if ((rd.prog.pct || 0) > (S.pct[rd.id] || 0)) S.pct[rd.id] = rd.prog.pct; if (rd.prog.done) S.done[rd.id] = true; if (rd.prog.pos && (!S.posByDoc[rd.id] || (rd.updatedAt || 0) > (local?.updatedAt || 0))) S.posByDoc[rd.id] = rd.prog.pos; }
+    if (rd.prog) { if ((rd.prog.pct || 0) > (S.pct[rd.id] || 0)) S.pct[rd.id] = rd.prog.pct; if (rd.prog.done) S.done[rd.id] = true; if (rd.prog.pos && (!S.posByDoc[rd.id] || (rd.updatedAt || 0) > (local?.updatedAt || 0))) S.posByDoc[rd.id] = rd.prog.pos; if (rd.prog.bm && (rd.prog.bm.at || 0) > (S.bm[rd.id]?.at || 0)) S.bm[rd.id] = rd.prog.bm; }
     if (!local) {
       if (!force && failedSession.has(rd.id)) continue;
       let doc = { id: rd.id, name: rd.name, lang: rd.lang || "es", added: rd.added || Date.now(), pages: [], chat: rd.chat || [], tr: {}, marks: rd.marks || [], notebook: rd.notebook || undefined, updatedAt: rd.updatedAt || 0 };
@@ -3244,7 +3266,7 @@ $("#expGo").addEventListener("click", async () => {
       docs.push({ id, name: d.name, lang: d.lang, added: d.added, updatedAt: d.updatedAt || 0, file, folder: docFolder(d) || undefined,
         marks: inc.marks ? d.marks || [] : undefined, notebook: inc.nb ? d.notebook || null : undefined,
         chat: inc.chat ? (d.chat || []).filter(m => !m.example) : undefined, tr: inc.tr ? d.tr || {} : undefined,
-        prog: inc.prog ? { pct: S.pct[id] || 0, done: !!S.done[id], pos: S.posByDoc[id] || null } : undefined });
+        prog: inc.prog ? { pct: S.pct[id] || 0, done: !!S.done[id], pos: S.posByDoc[id] || null, bm: S.bm[id] || null } : undefined });
     }
     zip.file("manifest.json", JSON.stringify({ app: "Atril", v: 1, exported: Date.now(), folders: FOLDERS, docs }), { compression: "DEFLATE" });
     zip.file("LEEME.txt", "Biblioteca exportada desde Atril. Para abrirla, usa «Importar biblioteca» en Atril.\n", { compression: "DEFLATE" });
@@ -3304,7 +3326,7 @@ async function importLib(file) {
         doc.updatedAt = it.updatedAt || Date.now();
         local ? updated++ : added++;
       } else kept++;
-      if (it.prog) { if ((it.prog.pct || 0) > (S.pct[it.id] || 0)) S.pct[it.id] = it.prog.pct; if (it.prog.done) S.done[it.id] = true; if (it.prog.pos && (newer || !S.posByDoc[it.id])) S.posByDoc[it.id] = it.prog.pos; }
+      if (it.prog) { if ((it.prog.pct || 0) > (S.pct[it.id] || 0)) S.pct[it.id] = it.prog.pct; if (it.prog.done) S.done[it.id] = true; if (it.prog.pos && (newer || !S.posByDoc[it.id])) S.posByDoc[it.id] = it.prog.pos; if (it.prog.bm && (it.prog.bm.at || 0) > (S.bm[it.id]?.at || 0)) S.bm[it.id] = it.prog.bm; }
       window.__importing = true; try { await idbPut(doc); } finally { window.__importing = false; }
     }
     savePrefs(); renderDocs();
@@ -3519,7 +3541,7 @@ $("#resetBtn").addEventListener("click", () => {
   if (!b.classList.contains("armed")) { b.classList.add("armed"); lab.textContent = "¿Reiniciar? Toca otra vez"; resetT = setTimeout(() => { b.classList.remove("armed"); lab.textContent = "Reiniciar progreso"; }, 3500); return; }
   clearTimeout(resetT); b.classList.remove("armed"); lab.textContent = "Reiniciar progreso";
   const d = S.doc; stop();
-  S.pos = { pi: 0, ai: 0, si: 0 }; delete S.pct[d.id]; delete S.done[d.id]; S.posByDoc[d.id] = { ...S.pos };
+  S.pos = { pi: 0, ai: 0, si: 0 }; delete S.pct[d.id]; delete S.done[d.id]; delete S.bm[d.id]; S.posByDoc[d.id] = { ...S.pos };
   savePrefs(); highlight(); updateProgress(); renderDocs(); renderDoneUI();
   $("#readerScroll").scrollTo({ top: 0, left: 0, behavior: "smooth" });
   toast("Progreso reiniciado. La lectura empezará desde el principio.");
@@ -3623,8 +3645,9 @@ function pageClick(e, pi, pbox) {
   if (mid) { e.stopPropagation(); showMarkPop(mid, e.clientX, e.clientY); return; }
   /* un solo clic no reproduce: la lectura empieza con doble clic */
 }
-function pagePlayAt(cx, cy, pi, pbox) {
-  const pg = S.doc.pages[pi]; if (!pg.boxes?.length) return false;
+function pagePlayAt(cx, cy, pi, pbox) { const p = pagePosAt(cx, cy, pi, pbox); if (!p) return false; S.pos = p; play(); return true; }
+function pagePosAt(cx, cy, pi, pbox) {
+  const pg = S.doc.pages[pi]; if (!pg.boxes?.length) return null;
   const r = pbox.getBoundingClientRect();
   const x = (cx - r.left) / r.width * pg.W, y = (cy - r.top) / r.height * pg.H;
   let best = -1, bd = 1e9;
@@ -3633,13 +3656,13 @@ function pagePlayAt(cx, cy, pi, pbox) {
     const dy = y < by ? by - y : y > by + bh ? y - by - bh : 0;
     const dd = dx * dx + dy * dy * 4; if (dd < bd) { bd = dd; best = i; }
   });
-  if (best < 0 || bd > 40 * 40) return false;
+  if (best < 0 || bd > 40 * 40) return null;
   let ai = -1, off = 0;
   pg.parts.forEach((ps, a) => { for (const [b, s, en] of ps) if (b === best && ai < 0) { ai = a; const [bx, , bw] = pg.boxes[b]; off = s + Math.round(Math.min(1, Math.max(0, (x - bx) / (bw || 1))) * (en - s)); } });
-  if (ai < 0) return false;
+  if (ai < 0) return null;
   let si = 0;
   if (!trActive()) { const rg = sentRanges(pi, ai); si = Math.max(0, rg.findIndex(([s, en]) => off >= s && off <= en)); }
-  S.pos = { pi, ai, si }; play(); return true;
+  return { pi, ai, si };
 }
 $("#sheets").addEventListener("click", (e) => {
   if (hasSel()) return;
@@ -3678,7 +3701,7 @@ $("#sheets").addEventListener("pointerup", (e) => {
   lastTap = { t: now, x: e.clientX, y: e.clientY };
 });
 const showMark = () => S.playing;
-const hasResume = () => !!S.doc && (S.playing || S.pos.pi || S.pos.ai || S.pos.si || (S.pct[S.doc.id] || 0) > 0);
+const hasResume = () => !!S.doc && (!!bmOf() || S.playing || S.pos.pi || S.pos.ai || S.pos.si || (S.pct[S.doc.id] || 0) > 0);
 /* punto verde en el párrafo donde quedó la lectura */
 function goToResume() {
   if (!S.doc) return;
@@ -3686,7 +3709,7 @@ function goToResume() {
   if (isNarrow()) setTab("read");
   renderResumeDot();
   requestAnimationFrame(() => {
-    const sc = $("#readerScroll"), { pi, ai } = S.pos;
+    const sc = $("#readerScroll"), { pi, ai } = dotPos();
     const n = pageMode() ? (document.querySelector(`#pg-${pi} .resdot`) || $("#pg-" + pi)) : (document.querySelector(`.para[data-pi="${pi}"][data-ai="${ai}"]`) || $("#pg-" + pi));
     if (!n) return;
     const r = n.getBoundingClientRect(), b = sc.getBoundingClientRect();
@@ -3701,15 +3724,18 @@ $("#fGo").addEventListener("click", goToResume);
 function renderResumeDot() {
   $$(".resdot").forEach(n => n.remove()); $$(".para.resume").forEach(n => n.classList.remove("resume", "flash"));
   const has = hasResume(); $("#goDot").hidden = !has; $("#fGo").hidden = !has;
+  const tip = bmOf() ? "Ir a tu marca de lectura" : "Ir a donde quedó la lectura";
+  for (const b of [$("#goDot"), $("#fGo")]) { b.title = tip; b.setAttribute("aria-label", tip); }
   if (!has) return;
-  const { pi, ai } = S.pos;
+  const { pi, ai } = dotPos();
   if (pageMode()) {
     const pg = S.doc.pages[pi], box = document.querySelector(`#pg-${pi} .pbox`); if (!pg || !box || !pg.parts?.[ai]) return;
     const r = segRects(pg, ai, 0, Infinity)[0]; if (!r) return;
     const [x, y, , h] = r;
-    box.append(el("i", { class: "resdot", title: "Aquí quedó la lectura", style: `left:max(4px, calc(${x / pg.W * 100}% - 14px));top:${(y + h / 2) / pg.H * 100}%` }));
+    box.append(el("i", { class: "resdot" + (bmOf() ? " bm" : ""), title: bmOf() ? "Tu marca de lectura (toca para opciones)" : "Aquí quedó la lectura (toca para opciones)", style: `left:max(4px, calc(${x / pg.W * 100}% - 14px));top:${(y + h / 2) / pg.H * 100}%` }));
   } else {
     document.querySelector(`.para[data-pi="${pi}"][data-ai="${ai}"]`)?.classList.add("resume");
+    document.querySelector(".para.resume")?.classList.toggle("bm", !!bmOf());
   }
 }
 function segRects(pg, ai, rs, re) {
@@ -3731,6 +3757,92 @@ function segRects(pg, ai, rs, re) {
   }
   return merged;
 }
+
+/* ---------- Marca de lectura (punto verde que tú decides) ----------
+   1) Se puede poner a mano en cualquier párrafo (menú «Más», la barra de selección o tocando el punto verde).
+   2) Al pausar la lectura en voz alta, Atril pregunta si guardas la marca en ese párrafo. */
+const bmOf = (id = S.doc?.id) => (id && S.bm[id]) || null;
+const dotPos = () => bmOf() || S.pos;
+function setBookmark(pos, quiet) {
+  if (!S.doc) return;
+  S.bm[S.doc.id] = { pi: pos.pi, ai: pos.ai, si: pos.si || 0, at: Date.now() };
+  savePrefs(); try { scheduleSync(600); } catch {}
+  renderResumeDot();
+  requestAnimationFrame(() => { const t = pageMode() ? document.querySelector(".resdot") : document.querySelector(".para.resume"); if (t) { t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash"); } });
+  if (!quiet) toast("Marca de lectura guardada en la página " + (pos.pi + 1) + ".");
+}
+function clearBookmark() { if (!S.doc) return; delete S.bm[S.doc.id]; savePrefs(); try { scheduleSync(600); } catch {} renderResumeDot(); toast("Marca de lectura quitada."); }
+// posición del documento en un punto de la pantalla (sin reproducir)
+function posAtPoint(cx, cy, target) {
+  const pbox = target?.closest?.(".pbox");
+  if (pbox) return pagePosAt(cx, cy, +pbox.closest(".sheet").dataset.pi, pbox);
+  const P = target?.closest?.(".para"); if (!P) return null;
+  const sEl = target.closest(".s");
+  return { pi: +P.dataset.pi, ai: +P.dataset.ai, si: sEl ? +sEl.dataset.si : 0 };
+}
+/* modo «colocar marca»: el siguiente toque sobre el texto deja la marca ahí */
+let placingBm = false;
+function startPlaceBm() {
+  if (!S.doc) return;
+  if (document.body.classList.contains("libfull")) setLibFull(false);
+  if (isNarrow()) setTab("read");
+  placingBm = true; document.body.classList.add("placingbm"); $("#bmBanner").hidden = false;
+}
+function endPlaceBm() { placingBm = false; document.body.classList.remove("placingbm"); $("#bmBanner").hidden = true; }
+$("#bmCancel").addEventListener("click", endPlaceBm);
+$("#sheets").addEventListener("click", (e) => {
+  if (!placingBm) return;
+  e.preventDefault(); e.stopPropagation();
+  const p = posAtPoint(e.clientX, e.clientY, e.target);
+  if (!p) { toast("Toca sobre el texto para poner la marca."); return; }
+  endPlaceBm(); setBookmark(p);
+}, true);
+$("#bmPlaceBtn").addEventListener("click", startPlaceBm);
+$("#selBm").addEventListener("click", () => {
+  const s = getSelection(); if (!s.rangeCount) return;
+  const r = s.getRangeAt(0).getClientRects()[0] || s.getRangeAt(0).getBoundingClientRect();
+  const x = r.left + Math.min(6, r.width / 2), y = r.top + r.height / 2;
+  const p = posAtPoint(x, y, document.elementFromPoint(x, y));
+  try { s.removeAllRanges(); } catch {}
+  hideSelBar(true);
+  if (p) setBookmark(p); else toast("No se pudo ubicar el párrafo seleccionado.");
+});
+/* tocar el punto verde del texto: opciones */
+function showBmPop(x, y) {
+  const pop = $("#bmPop"), has = !!bmOf();
+  $("#bmPopTitle").textContent = has ? "Tu marca de lectura" : "Aquí quedó la lectura";
+  $("#bmPopSave").hidden = has; $("#bmPopClear").hidden = !has;
+  pop.hidden = false;
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + "px";
+  pop.style.top = (y + 14 + h < innerHeight ? y + 14 : Math.max(8, y - h - 14)) + "px";
+}
+const hideBmPop = () => { $("#bmPop").hidden = true; };
+$("#sheets").addEventListener("click", (e) => {
+  const d = e.target.closest(".resdot") || (e.target.classList?.contains("para") && e.target.classList.contains("resume") && e.offsetX < 0 ? e.target : null);
+  if (!d || placingBm) return;
+  e.stopPropagation(); showBmPop(e.clientX, e.clientY);
+});
+$("#bmPopRead").addEventListener("click", () => { hideBmPop(); S.pos = { ...dotPos() }; play(); });
+$("#bmPopMove").addEventListener("click", () => { hideBmPop(); startPlaceBm(); });
+$("#bmPopSave").addEventListener("click", () => { hideBmPop(); setBookmark(S.pos); });
+$("#bmPopClear").addEventListener("click", () => { hideBmPop(); clearBookmark(); });
+document.addEventListener("pointerdown", (e) => { if (!$("#bmPop").hidden && !e.target.closest("#bmPop") && !e.target.closest(".resdot")) hideBmPop(); });
+/* al pausar: ¿guardar la marca en este párrafo? */
+let bmAskT = null, bmAskFor = null;
+function askBookmark() {
+  if (!S.doc) return;
+  const p = { ...S.pos }, b = bmOf();
+  if (b && b.pi === p.pi && b.ai === p.ai) return;
+  const txt = String((viewParas(p.pi) || [])[p.ai] || "").replace(/\s+/g, " ").trim();
+  bmAskFor = { doc: S.doc.id, pos: p };
+  $("#bmAskText").textContent = txt ? "«" + (txt.length > 90 ? txt.slice(0, 90) + "…" : txt) + "» · página " + (p.pi + 1) : "Página " + (p.pi + 1);
+  $("#bmAsk").hidden = false;
+  clearTimeout(bmAskT); bmAskT = setTimeout(() => { $("#bmAsk").hidden = true; }, 15000);
+}
+$("#bmAskYes").addEventListener("click", () => { $("#bmAsk").hidden = true; if (bmAskFor && S.doc?.id === bmAskFor.doc) setBookmark(bmAskFor.pos); bmAskFor = null; });
+$("#bmAskNo").addEventListener("click", () => { $("#bmAsk").hidden = true; bmAskFor = null; });
+const pauseByUser = () => { if (S.playing) { stop(); askBookmark(); } else { $("#bmAsk").hidden = true; play(); } };
 
 /* ---------- Marcas: marcador, subrayado, tachado ---------- */
 const COLORS = {
@@ -4098,7 +4210,7 @@ async function speakNext(tok) {
   currentUtter = u;
   speechSynthesis.speak(u);
 }
-$("#playBtn").addEventListener("click", () => S.playing ? stop() : play());
+$("#playBtn").addEventListener("click", pauseByUser);
 function step(dir) {
   const was = S.playing; stop();
   let { pi, ai } = S.pos; const d = S.doc;
@@ -4110,12 +4222,12 @@ function step(dir) {
 $("#prevBtn").addEventListener("click", () => step(-1));
 $("#mpPrev").addEventListener("click", () => step(-1));
 $("#mpNext").addEventListener("click", () => step(1));
-$("#mpPlay").addEventListener("click", () => S.playing ? stop() : play());
-$("#fPlay").addEventListener("click", () => S.playing ? stop() : play());
+$("#mpPlay").addEventListener("click", pauseByUser);
+$("#fPlay").addEventListener("click", pauseByUser);
 $("#nextBtn").addEventListener("click", () => step(1));
 addEventListener("keydown", (e) => {
   if (e.target.closest("textarea,input,select,[contenteditable]")) return;
-  if (e.code === "Space" && !e.target.closest("button")) { e.preventDefault(); S.playing ? stop() : play(); }
+  if (e.code === "Space" && !e.target.closest("button")) { e.preventDefault(); pauseByUser(); }
   if (e.key === "ArrowRight" && e.altKey) step(1);
   if (e.key === "ArrowLeft" && e.altKey) step(-1);
 });

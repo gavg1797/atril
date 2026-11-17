@@ -888,7 +888,7 @@
     const more = document.getElementById("moreBtn");
     if (more && !document.getElementById("moreMenu")) {
       const menu = h("div", { id: "moreMenu", class: "moremenu", role: "menu", hidden: "" });
-      for (const id of ["newPdfBtn", "editDocBtn", "splitBtn", "castBtn", "dlBtn", "resetBtn", "permBtn"]) { const el = document.getElementById(id); if (el) menu.append(el); }
+      for (const id of ["bmPlaceBtn", "newPdfBtn", "editDocBtn", "splitBtn", "castBtn", "dlBtn", "resetBtn", "permBtn"]) { const el = document.getElementById(id); if (el) menu.append(el); }
       document.body.append(menu);
       const close = () => { menu.hidden = true; more.setAttribute("aria-expanded", "false"); };
       const open = () => {
@@ -933,6 +933,7 @@
       { sel: ["#playBtn", "#mpPlay"], before: reader, title:"Escucha el documento", text: "Toca ▶ para que Atril lea en voz alta. Puedes cambiar la voz y la velocidad en las opciones de audio." },
       { sel: "#readModeBtn", before: reader, title:"Modo lectura", text: "Cambia a colores de libro (papel cálido y letra oscura). Cansa menos la vista al leer mucho rato. Tócalo de nuevo para volver a los colores normales." },
       { sel: "#moreBtn", before: reader, title:"Más opciones", text: "Aquí están las demás herramientas: crear un PDF, editarlo, dividir la pantalla con el cuaderno, transmitir a la TV, descargar y reiniciar el avance." },
+      { sel: "#moreBtn", before: reader, title:"Marca de lectura", text: "El punto verde marca por dónde vas. En «Más» → «Poner marca de lectura» lo colocas en cualquier párrafo; al pausar la lectura, Atril te pregunta si guardas la marca ahí. Toca el botón verde para volver a ella." },
       { sel: "#askBtn", before: reader, title:"Pregúntale al PDF", text: "Haz preguntas o pide resúmenes del documento. Gemma responde dentro de tu dispositivo." },
       { sel: "#pfWhoChip", title: "Tu cuenta", text: "Aquí ves con qué cuenta de Google entraste. Cada cuenta ve solo su propia biblioteca." },
       { sel: "#pfOutBtn", title: "Cerrar sesión", text: "Al terminar, cierra sesión: tus cambios se guardan en Drive y no queda nada en este dispositivo." },
