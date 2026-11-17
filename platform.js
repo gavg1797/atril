@@ -888,10 +888,38 @@
     const more = document.getElementById("moreBtn");
     if (more && !document.getElementById("moreMenu")) {
       const menu = h("div", { id: "moreMenu", class: "moremenu", role: "menu", hidden: "" });
-      for (const id of ["bmPlaceBtn", "newPdfBtn", "editDocBtn", "splitBtn", "castBtn", "dlBtn", "resetBtn", "permBtn"]) { const el = document.getElementById(id); if (el) menu.append(el); }
+      for (const id of ["followBtn", "bmPlaceBtn", "newPdfBtn", "editDocBtn", "splitBtn", "castBtn", "dlBtn", "resetBtn", "permBtn"]) { const el = document.getElementById(id); if (el) menu.append(el); }
       document.body.append(menu);
       const close = () => { menu.hidden = true; more.setAttribute("aria-expanded", "false"); };
+      // Las acciones de la barra (que ahí solo muestran el ícono) aparecen aquí con su nombre
+      const PROXY = ["readModeBtn", "nbBtn", "pdfFullMenu", "doneBtn"];
+      const shown = (el) => el && !el.hidden && el.offsetParent !== null;
+      const buildProxies = () => {
+        menu.querySelectorAll(".mproxy,.msep").forEach(n => n.remove());
+        const first = menu.firstChild, frag = document.createDocumentFragment();
+        for (const id of PROXY) {
+          const src = document.getElementById(id); if (!shown(src)) continue;
+          const lab = (src.querySelector(":scope > span:not(.gdot)")?.textContent || src.title || "").trim();
+          const b = h("button", { type: "button", class: "btn mproxy", role: "menuitem" });
+          const ico = src.querySelector("svg"); if (ico) b.append(ico.cloneNode(true));
+          b.append(h("span", {}, lab));
+          if (src.hasAttribute("aria-pressed")) b.setAttribute("aria-pressed", src.getAttribute("aria-pressed"));
+          b.addEventListener("click", () => src.click());
+          frag.append(b);
+        }
+        const seg = document.getElementById("modeSeg");
+        if (seg && !seg.hidden && shown(seg)) for (const sb of seg.querySelectorAll("button")) {
+          const b = h("button", { type: "button", class: "btn mproxy", role: "menuitemradio" });
+          const ico = sb.querySelector("svg"); if (ico) b.append(ico.cloneNode(true));
+          b.append(h("span", {}, "Ver: " + (sb.querySelector("span")?.textContent || sb.textContent).trim()));
+          b.setAttribute("aria-pressed", sb.getAttribute("aria-pressed") || "false");
+          b.addEventListener("click", () => sb.click());
+          frag.append(b);
+        }
+        if (frag.childNodes.length) { frag.append(h("div", { class: "msep", role: "separator" })); menu.insertBefore(frag, first); }
+      };
       const open = () => {
+        buildProxies();
         menu.hidden = false; more.setAttribute("aria-expanded", "true");
         const r = more.getBoundingClientRect(), w = menu.offsetWidth, hgt = menu.offsetHeight;
         menu.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
@@ -901,6 +929,12 @@
       menu.addEventListener("click", (e) => { if (e.target.closest("button")) setTimeout(close, 0); });
       document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== more && !more.contains(e.target)) close(); });
       addEventListener("resize", close);
+    }
+    // En la barra solo se ven íconos: el nombre del botón queda como texto emergente (y se actualiza si cambia)
+    const rt = document.querySelector(".rtools");
+    if (rt) {
+      const sync = () => { for (const b of rt.querySelectorAll(":scope > .btn")) { const sp = b.querySelector(":scope > span:not(.gdot)"); const t = sp?.textContent.trim(); if (t && (b.dataset.autoTitle || !b.title)) { b.title = t; b.setAttribute("aria-label", t); b.dataset.autoTitle = "1"; } } };
+      sync(); new MutationObserver(sync).observe(rt, { subtree: true, characterData: true, childList: true });
     }
     // Botón de ayuda en la barra superior
     const top = document.querySelector("header.top");

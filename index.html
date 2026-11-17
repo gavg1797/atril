@@ -186,7 +186,10 @@ body.wordmode .hl i.sent{border-bottom-color:transparent}
 .quote blockquote{margin:2px 0 0;font-family:var(--f-read);font-size:.9rem;line-height:1.45;max-height:4.4em;overflow-y:auto;border-left:3px solid var(--accent);padding-left:9px;white-space:pre-wrap}
 .m.user .uq{font-family:var(--f-read);font-size:.86rem;opacity:.85;border-left:2px solid currentColor;padding-left:8px;margin-bottom:6px;max-height:6em;overflow:hidden}
 .tl{position:absolute;inset:0;line-height:1;user-select:text;-webkit-user-select:text}
-.tl span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0;cursor:text}
+.tl span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0;cursor:text;z-index:1}
+/* capa invisible para que la selección no salte de renglón al pasar por los espacios en blanco (como en pdf.js) */
+.tl .eoc{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none;-webkit-user-select:none}
+.tl.selecting .eoc{top:0}
 .tl span::selection{background:rgba(43,71,212,.32);color:transparent}
 .pbox{cursor:text}
 @media (max-width:1079px){.answers{max-height:30vh}}
@@ -213,6 +216,27 @@ body.wordmode .hl i.sent{border-bottom-color:transparent}
 .ico-ul{text-decoration:underline 2px;text-underline-offset:3px}
 .ico-st{text-decoration:line-through 2px}
 .selbar .askbtn{background:var(--accent);color:var(--accent-ink)}
+.selbar .askico{display:none}
+.selbar .seldock{padding:7px}
+.selbar .seldock[aria-pressed="true"]{background:color-mix(in srgb,var(--paper) 22%,transparent)}
+/* barra anclada */
+.selbar.dock-top,.selbar.dock-bottom{left:50%!important;transform:translateX(-50%);flex-wrap:nowrap;max-width:calc(100vw - 12px);overflow-x:auto;scrollbar-width:none}
+.selbar.dock-top{top:calc(8px + env(safe-area-inset-top,0px))!important}
+.selbar.dock-bottom{top:auto!important;bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+.selbar.dock-left,.selbar.dock-right{top:50%!important;transform:translateY(-50%);flex-direction:column;flex-wrap:nowrap;width:auto;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:none;padding:6px 5px}
+.selbar.dock-left{left:calc(6px + env(safe-area-inset-left,0px))!important}
+.selbar.dock-right{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px))}
+.selbar.dock-left .lbl,.selbar.dock-right .lbl{display:none}
+.selbar.dock-left .askico,.selbar.dock-right .askico{display:block}
+.selbar.dock-left .dots,.selbar.dock-right .dots{display:grid;grid-template-columns:repeat(2,22px);gap:5px}
+.selbar.dock-left .sep,.selbar.dock-right .sep{width:auto;height:1px;align-self:stretch;margin:2px 0}
+.selbar.dock-left button,.selbar.dock-right button{justify-content:center}
+.selbar.dock-left .selgrip svg,.selbar.dock-right .selgrip svg{transform:rotate(90deg)}
+.dockpop .btn small{color:var(--muted);font-weight:400;margin-left:auto}
+.selbar.dock-top > *,.selbar.dock-bottom > *{flex-shrink:0}
+.selbar button{white-space:nowrap}
+@media (max-width:820px){.selbar.dock-top .lbl,.selbar.dock-bottom .lbl{display:none}.selbar.dock-top .askico,.selbar.dock-bottom .askico{display:block}.selbar.dock-top,.selbar.dock-bottom{gap:2px}}
+.dockpop .btn[aria-checked="true"]{background:var(--surface);font-weight:700}
 .selbar .askbtn:hover{background:var(--accent);filter:brightness(1.1)}
 .markpop{position:fixed;z-index:70;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.18);font-size:.84rem}
 .dlbtn{padding:6px 11px;font-size:.82rem}
@@ -224,6 +248,18 @@ body.wordmode .hl i.sent{border-bottom-color:transparent}
 .resetbtn.armed svg{color:var(--warn)}
 @media (max-width:560px){.resetbtn span,.dlbtn #dlLabel{display:none}.resetbtn,.dlbtn{padding:7px 9px}}
 .rtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* barra superior del lector: solo íconos (el nombre aparece al pasar el mouse y, con texto, en «Más») */
+.rtools > .btn{padding:7px 9px;gap:0;min-width:34px;justify-content:center}
+.rtools > .btn > span:not(.gdot),.rtools > .btn > #dlLabel{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rtools > .btn > svg{width:17px;height:17px}
+.seg .segico{display:inline-flex;align-items:center;gap:0}
+.seg .segico svg{width:16px;height:16px}
+.seg .segico span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.rtools .seg button{padding:6px 9px}
+.moremenu .mproxy{font-weight:600;gap:8px}
+.moremenu .mproxy svg{width:15px;height:15px;flex:0 0 15px}
+.moremenu .mproxy[aria-pressed="true"]{color:var(--accent)}
+.moremenu .msep{height:1px;background:var(--line);margin:4px 6px}
 .setbtn{display:none}
 @media (max-width:560px){
   .rhead{gap:6px 10px;padding:8px 12px}
@@ -885,6 +921,14 @@ body.placingbm #sheets .para:hover{outline:2px dashed #1FA463;outline-offset:3px
 .bmbtn .gdot{flex:0 0 auto}
 .selbar #selBm .gdot{width:9px;height:9px;margin-right:2px}
 [hidden].bmbanner,[hidden].bmask,[hidden].bmpop{display:none!important}
+.followdlg{max-width:min(360px,calc(100vw - 16px))}
+.followdlg .btn{align-items:flex-start;gap:10px;text-align:left;white-space:normal;padding:10px}
+.followdlg .btn small{display:block;color:var(--muted);font-size:.8rem;font-weight:400;margin-top:2px}
+.followdlg .ft{font-weight:700}
+.followdlg .fchk{width:16px;flex:0 0 16px;color:#1FA463;font-weight:800;visibility:hidden}
+.followdlg .btn[aria-checked="true"]{background:var(--surface)}
+.followdlg .btn[aria-checked="true"] .fchk{visibility:visible}
+.moremenu .followbtn b{font-weight:700}
 .para{position:relative}
 .para.resume::before{content:"";position:absolute;left:-16px;top:.62em;width:9px;height:9px;border-radius:50%;background:#1FA463;box-shadow:0 0 0 2px var(--paper)}
 @media (max-width:560px){.para.resume::before{left:-12px;width:8px;height:8px}}
@@ -902,6 +946,26 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
 @media (max-width:560px){.menustrip{gap:4px}.menustrip .zoom .zval{min-width:0;padding:0 2px;font-size:.66rem}.menustrip .zoom button{width:26px}.menustrip .mcenter{gap:4px}.menustrip .miniplayer{gap:3px}}
 @media (max-width:420px){.menustrip .zoom .zval{display:none}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- Más espacio para leer: cabecera y barras compactas ---------- */
+.top{flex-wrap:nowrap;padding-block:6px;gap:10px;min-height:50px}
+.top > *{flex-shrink:0}
+.top .priv{min-width:0;flex-shrink:1;overflow:hidden;white-space:nowrap}
+.rhead{padding:6px 16px;gap:8px 12px;flex-wrap:nowrap}
+.rhead h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 120px;font-size:1.08rem}
+.rhead .info{white-space:nowrap}
+.rtools{flex-wrap:nowrap}
+@media (max-width:1400px){ .brand span{display:none} .priv span.long{display:none} }
+@media (max-width:1180px){ .priv span{display:none} .rhead .info{display:none} }
+@media (max-width:760px){
+  .top{gap:6px;padding-block:5px;min-height:0;flex-wrap:wrap}
+  #uploadTop{padding:7px 10px}
+  #uploadTop .uplbl{display:none}
+  .tabs{padding-block:4px}
+  .rhead{flex-wrap:wrap;padding:5px 10px;gap:4px 8px}
+  .rhead h1{flex:1 1 100%}
+  .rtools{overflow-x:auto}
+}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -914,8 +978,8 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
     <span>Privado</span><span class="long" id="privText">· tus archivos quedan en este dispositivo</span>
   </div>
-  <button class="btn primary" id="uploadTop" type="button">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>Subir PDF
+  <button class="btn primary" id="uploadTop" type="button" title="Subir PDF">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg><span class="uplbl">Subir PDF</span>
   </button>
   <input id="file" type="file" accept="application/pdf,.pdf" multiple hidden>
 </header>
@@ -962,13 +1026,14 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
       <button class="btn permbtn" id="permBtn" type="button" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 3l7 3v6c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Ajustes</span></button>
       <button class="btn castbtn" id="castBtn" type="button" aria-haspopup="dialog"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8M3 16a4 4 0 0 1 4 4"/><circle cx="3.5" cy="19.5" r="1" fill="currentColor"/></svg><span>Transmitir</span></button>
       <button class="btn dlbtn" id="dlBtn" type="button" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="dlLabel">Descargar PDF</span><em id="dlCount" hidden></em></button>
+      <button class="btn followbtn" id="followBtn" type="button" title="Cómo se marca lo que va leyendo la voz"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16l4-11 4 11M8.5 12h5"/></svg><span>Modo seguimiento de lectura: <b id="followLbl">Por palabra</b></span></button>
       <button class="btn bmbtn" id="bmPlaceBtn" type="button" title="Elige el párrafo donde quieres dejar tu marca de lectura"><span class="gdot" aria-hidden="true"></span><span>Poner marca de lectura</span></button>
       <button class="btn resetbtn" id="resetBtn" type="button" title="Volver al inicio y borrar el avance"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg><span>Reiniciar progreso</span></button>
       <button class="btn donebtn" id="doneBtn" type="button" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Marcar como leído</span></button>
       <div class="zoom" id="zoomCtl"><button type="button" class="zout" aria-label="Alejar">−</button><button type="button" class="zval" title="Volver a 100%">100%</button><button type="button" class="zin" aria-label="Acercar">+</button></div>
       <div class="seg" id="modeSeg" role="group" aria-label="Vista" hidden>
-        <button type="button" data-mode="page" aria-pressed="true">Página original</button>
-        <button type="button" data-mode="text" aria-pressed="false">Solo texto</button>
+        <button type="button" data-mode="page" aria-pressed="true" class="segico" title="Página original: ver el PDF tal cual"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><rect x="8" y="12" width="8" height="5" rx="1"/></svg><span>Página original</span></button>
+        <button type="button" data-mode="text" aria-pressed="false" class="segico" title="Solo texto: el texto del PDF, más cómodo para leer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h14M5 18h9"/></svg><span>Solo texto</span></button>
       </div>
       </div>
     </div>
@@ -1137,13 +1202,14 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
     <button type="button" class="dot" data-c="azul" style="--dc:#7CB8FF" aria-label="Azul"></button>
   </div>
   <span class="sep"></span>
-  <button type="button" class="mkbtn" data-type="hl" title="Resaltar con marcador"><span class="ico ico-hl">ab</span>Marcador</button>
-  <button type="button" class="mkbtn" data-type="ul" title="Subrayar con línea"><span class="ico ico-ul">ab</span>Subrayar</button>
-  <button type="button" class="mkbtn" data-type="st" title="Tachar"><span class="ico ico-st">ab</span>Tachar</button>
+  <button type="button" class="mkbtn" data-type="hl" title="Resaltar con marcador"><span class="ico ico-hl">ab</span><span class="lbl">Marcador</span></button>
+  <button type="button" class="mkbtn" data-type="ul" title="Subrayar con línea"><span class="ico ico-ul">ab</span><span class="lbl">Subrayar</span></button>
+  <button type="button" class="mkbtn" data-type="st" title="Tachar"><span class="ico ico-st">ab</span><span class="lbl">Tachar</span></button>
   <span class="sep"></span>
-  <button type="button" class="nbsend" id="selBm" title="Dejar la marca de lectura en este párrafo"><span class="gdot" aria-hidden="true"></span>Marca aquí</button>
-  <button type="button" class="nbsend" id="selNb" title="Copiar el texto seleccionado al cuaderno"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/></svg>Al cuaderno</button>
-  <button type="button" class="askbtn" id="selAsk" title="El texto ya está en el cuadro de pregunta">Preguntar</button>
+  <button type="button" class="nbsend" id="selBm" title="Dejar la marca de lectura en este párrafo"><span class="gdot" aria-hidden="true"></span><span class="lbl">Marca aquí</span></button>
+  <button type="button" class="nbsend" id="selNb" title="Copiar el texto seleccionado al cuaderno"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/></svg><span class="lbl">Al cuaderno</span></button>
+  <button type="button" class="askbtn" id="selAsk" title="El texto ya está en el cuadro de pregunta"><svg class="askico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Preguntar</span></button>
+  <button type="button" class="seldock" id="selDock" title="Anclar la barra: izquierda, derecha, arriba o abajo" aria-label="Anclar barra" aria-haspopup="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v8"/></svg></button>
   <button type="button" class="selpin" id="selPin" hidden title="Soltar: volver a la barra que aparece junto a la selección" aria-label="Soltar barra">✕</button>
 </div>
 <div class="markpop" id="markPop" hidden><span id="markPopLabel"></span><button type="button" class="btn" id="markPopDel">Quitar marca</button></div>
@@ -1280,6 +1346,17 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
 <button class="tvexit" id="tvExit" type="button" hidden>Salir del Modo TV</button>
 <div class="bmbanner" id="bmBanner" hidden role="status"><span class="gdot" aria-hidden="true"></span><span>Toca el párrafo donde quieres dejar tu marca de lectura</span><button type="button" class="btn" id="bmCancel">Cancelar</button></div>
 <div class="bmask" id="bmAsk" hidden role="dialog" aria-label="Guardar marca de lectura"><span class="gdot" aria-hidden="true"></span><div><b>¿Guardar la marca de lectura en este párrafo?</b><small id="bmAskText"></small></div><div class="bmask-b"><button type="button" class="btn" id="bmAskNo">Ahora no</button><button type="button" class="btn primary" id="bmAskYes">Guardar marca</button></div></div>
+<div class="bmpop followdlg" id="followDlg" hidden role="menu" aria-label="Modo seguimiento de lectura"><b>Modo seguimiento de lectura</b>
+  <button type="button" class="btn" role="menuitemradio" data-follow="palabra"><span class="fchk">✓</span><span><span class="ft">Por palabra</span><small>Solo se subraya la palabra que se está leyendo; las demás, cuando les llegue su turno.</small></span></button>
+  <button type="button" class="btn" role="menuitemradio" data-follow="frase"><span class="fchk">✓</span><span><span class="ft">Por frase</span><small>Se subraya toda la frase que se está leyendo.</small></span></button>
+</div>
+<div class="bmpop dockpop" id="dockPop" hidden role="menu" aria-label="Anclar la barra de marcar"><b>Anclar la barra</b>
+  <button type="button" class="btn" data-dock="left">⇤ Izquierda <small>vertical</small></button>
+  <button type="button" class="btn" data-dock="right">⇥ Derecha <small>vertical</small></button>
+  <button type="button" class="btn" data-dock="top">⤒ Arriba <small>horizontal</small></button>
+  <button type="button" class="btn" data-dock="bottom">⤓ Abajo <small>horizontal</small></button>
+  <button type="button" class="btn" data-dock="">✥ Flotante <small>donde la dejes</small></button>
+</div>
 <div class="bmpop" id="bmPop" hidden role="menu"><b id="bmPopTitle">Tu marca de lectura</b><button type="button" class="btn" id="bmPopRead">▶ Leer desde aquí</button><button type="button" class="btn" id="bmPopMove">↕ Mover la marca a otro párrafo</button><button type="button" class="btn" id="bmPopSave">📌 Guardar como marca de lectura</button><button type="button" class="btn" id="bmPopClear">✕ Quitar la marca</button></div>
 <button class="fgo" id="fGo" type="button" aria-label="Ir a donde quedó la lectura" title="Ir a donde quedó la lectura" hidden><span class="gdot" aria-hidden="true"></span></button>
 <button class="fplay" id="fPlay" type="button" aria-label="Reproducir" title="Reproducir o pausar"><svg id="fpIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg></button>
@@ -1305,7 +1382,7 @@ const SAMPLE = {
     ]},
     { paras: [
       "Escuchar un documento. Pulsa el botón de reproducir y la voz leerá desde el punto en que te quedaste. Una línea roja fina subraya cada palabra mientras la voz la lee, para que sigas la lectura.",
-      "Si tocas dos veces cualquier frase del texto (doble clic en computadora), la lectura empieza desde ese punto. Un solo toque no inicia el audio, así puedes seleccionar y subrayar con calma. Puedes elegir entre voces en español y en inglés, y ajustar la velocidad entre 0,75 y 2 veces.",
+      "Si tocas tres veces cualquier frase del texto (triple clic en computadora), la lectura empieza desde ese punto. Con dos toques (doble clic) seleccionas una palabra para marcarla o subrayarla. Puedes elegir entre voces en español y en inglés, y ajustar la velocidad entre 0,75 y 2 veces.",
       "Si el documento está en un idioma y quieres escucharlo en el otro, activa la opción Traducir. Gemma traduce cada página justo antes de leerla y guarda la traducción para la próxima vez."
     ]},
     { paras: [
@@ -1323,10 +1400,10 @@ const SAMPLE = {
 
 /* ---------- Estado ---------- */
 const prefs = (() => { try { return JSON.parse(localStorage.getItem("atril-prefs") || "{}"); } catch { return {}; } })();
-const savePrefs = () => { try { localStorage.setItem("atril-prefs", JSON.stringify({ rate: S.rate, voice: S.voice, mode: S.mode, zoomI: S.zoomI, last: S.doc?.id, pos: S.posByDoc, bm: S.bm, pct: S.pct, done: S.done, filter: S.filter, cwd: S.cwd })); } catch {} try { scheduleSync(20000); } catch {} };
+const savePrefs = () => { try { localStorage.setItem("atril-prefs", JSON.stringify({ rate: S.rate, voice: S.voice, mode: S.mode, zoomI: S.zoomI, last: S.doc?.id, pos: S.posByDoc, bm: S.bm, follow: S.follow, pct: S.pct, done: S.done, filter: S.filter, cwd: S.cwd })); } catch {} try { scheduleSync(20000); } catch {} };
 const S = {
   docs: [SAMPLE], doc: null, readLang: "es", translate: false,
-  mode: prefs.mode === "text" ? "text" : "page", zoomI: Number.isInteger(prefs.zoomI) && prefs.zoomI >= 0 && prefs.zoomI < 12 ? prefs.zoomI : 4, rate: Number(prefs.rate) || 1, voice: prefs.voice || {}, posByDoc: prefs.pos || {}, bm: prefs.bm || {}, pct: prefs.pct || {}, done: prefs.done || {}, filter: ["todos", "pendientes", "leidos"].includes(prefs.filter) ? prefs.filter : "todos", cwd: typeof prefs.cwd === "string" ? prefs.cwd : "",
+  mode: prefs.mode === "text" ? "text" : "page", zoomI: Number.isInteger(prefs.zoomI) && prefs.zoomI >= 0 && prefs.zoomI < 12 ? prefs.zoomI : 4, rate: Number(prefs.rate) || 1, voice: prefs.voice || {}, posByDoc: prefs.pos || {}, bm: prefs.bm || {}, follow: prefs.follow === "frase" ? "frase" : "palabra", pct: prefs.pct || {}, done: prefs.done || {}, filter: ["todos", "pendientes", "leidos"].includes(prefs.filter) ? prefs.filter : "todos", cwd: typeof prefs.cwd === "string" ? prefs.cwd : "",
   pos: { pi: 0, ai: 0, si: 0 }, playing: false, token: 0,
 };
 let sample = null;
@@ -3623,8 +3700,43 @@ function buildTextLayer(pi) {
       tl.append(el("span", { "data-ai": ai, "data-o": st, "data-len": en - st, "data-w": bw, "data-h": bh, style: `left:${bx / pg.W * 100}%;top:${by / pg.H * 100}%`, text: para.slice(st, en) + " " }));
     }
   });
+  tl.append(el("div", { class: "eoc" }));
   return tl;
 }
+/* Selección estable en el PDF: mientras se arrastra, la capa «eoc» se coloca junto al extremo de la selección,
+   así el espacio entre renglones no hace saltar la selección al renglón de arriba o de abajo */
+(() => {
+  let down = false, prev = null;
+  const reset = (tl) => { const e = tl.querySelector(":scope > .eoc"); if (e && e !== tl.lastElementChild) tl.append(e); tl.classList.remove("selecting"); };
+  const resetAll = () => $$(".tl.selecting").forEach(reset);
+  document.addEventListener("pointerdown", (e) => { down = true; const tl = e.target.closest?.(".tl"); if (tl) tl.classList.add("selecting"); prev = null; });
+  document.addEventListener("pointerup", () => { down = false; resetAll(); });
+  document.addEventListener("pointercancel", () => { down = false; resetAll(); });
+  addEventListener("blur", () => { down = false; resetAll(); });
+  // al pasar más allá del final (o antes del inicio) del renglón, la selección llega hasta el borde de ese renglón
+  document.addEventListener("pointermove", (e) => {
+    if (!down || !e.target.classList?.contains("eoc")) return;
+    const sel = getSelection(); if (!sel || !sel.focusNode) return;
+    const f = sel.focusNode, sp = (f.nodeType === 3 ? f.parentElement : f)?.closest?.(".tl span"), tn = sp?.firstChild;
+    if (!tn || tn.nodeType !== 3) return;
+    const r = sp.getBoundingClientRect(); if (e.clientY < r.top - r.height * 0.8 || e.clientY > r.bottom + r.height * 0.8) return;
+    const end = tn.data.replace(/\s+$/, "").length;
+    try { if (e.clientX >= r.right - 2 && sel.focusOffset !== end) sel.extend(tn, end); else if (e.clientX <= r.left + 2 && sel.focusOffset !== 0) sel.extend(tn, 0); } catch {}
+  });
+  document.addEventListener("selectionchange", () => {
+    const sel = getSelection();
+    if (!sel || !sel.rangeCount) { resetAll(); prev = null; return; }
+    const r = sel.getRangeAt(0);
+    for (const tl of $$(".tl")) { if (r.intersectsNode(tl)) { if (down) tl.classList.add("selecting"); } else if (tl.classList.contains("selecting")) reset(tl); }
+    if (!down) { prev = r.cloneRange(); return; }
+    const modifyStart = prev && (r.compareBoundaryPoints(Range.END_TO_END, prev) === 0 || r.compareBoundaryPoints(Range.START_TO_END, prev) === 0);
+    let a = modifyStart ? r.startContainer : r.endContainer;
+    if (a.nodeType === 3) a = a.parentNode;
+    const tl = a.parentElement?.closest(".tl"), eoc = tl?.querySelector(".eoc");
+    if (eoc && a.parentElement === tl && a !== eoc) tl.insertBefore(eoc, modifyStart ? a : a.nextSibling);
+    prev = r.cloneRange();
+  });
+})();
 function fitTextLayer(pi) {
   const box = document.querySelector(`#pg-${pi} .pbox`); if (!box) return;
   const pg = S.doc.pages[pi], k = box.clientWidth / pg.W; if (!k) return;
@@ -3647,7 +3759,7 @@ function pageClick(e, pi, pbox) {
   const x = (e.clientX - r.left) / r.width * pg.W, y = (e.clientY - r.top) / r.height * pg.H;
   const mid = markAtPoint(pi, x, y);
   if (mid) { e.stopPropagation(); showMarkPop(mid, e.clientX, e.clientY); return; }
-  /* un solo clic no reproduce: la lectura empieza con doble clic */
+  /* un solo clic no reproduce: la lectura empieza con triple clic */
 }
 function pagePlayAt(cx, cy, pi, pbox) { const p = pagePosAt(cx, cy, pi, pbox); if (!p) return false; S.pos = p; play(); return true; }
 function pagePosAt(cx, cy, pi, pbox) {
@@ -3672,9 +3784,9 @@ $("#sheets").addEventListener("click", (e) => {
   if (hasSel()) return;
   const mk = e.target.closest("[data-mid]");
   if (mk) { e.stopPropagation(); showMarkPop(mk.dataset.mid, e.clientX, e.clientY); return; }
-  /* un solo clic no reproduce: la lectura empieza con doble clic */
+  /* un solo clic no reproduce: la lectura empieza con triple clic */
 });
-/* doble clic (o doble toque) sobre el texto: leer desde ahí */
+/* triple clic (o triple toque) sobre el texto: leer desde ahí. Con doble clic solo se selecciona el texto para marcarlo */
 function playFromPoint(cx, cy, target) {
   const pbox = target.closest?.(".pbox");
   if (pbox) return pagePlayAt(cx, cy, +pbox.closest(".sheet").dataset.pi, pbox);
@@ -3684,25 +3796,29 @@ function playFromPoint(cx, cy, target) {
 }
 let selBeforeDbl = "";
 $("#sheets").addEventListener("pointerdown", (e) => { if (e.detail === 1 || e.pointerType === "touch") selBeforeDbl = getSelection().toString(); });
-$("#sheets").addEventListener("dblclick", (e) => {
+$("#sheets").addEventListener("click", (e) => {
+  if (e.detail !== 3 || e.pointerType === "touch") return;
   if (e.target.closest("[data-mid]") && !e.target.closest(".pbox")) return;
   try { getSelection().removeAllRanges(); } catch {}
   clearTimeout(selT); hideSelBar(true);
-  if (playFromPoint(e.clientX, e.clientY, e.target)) { e.preventDefault(); if (quote && quote.text && quote.text.split(/\s+/).length === 1) { quote = null; renderQuote(); } }
+  if (playFromPoint(e.clientX, e.clientY, e.target)) { e.preventDefault(); if (quote && quote.text && quote.text.split(/\s+/).length <= 1) { quote = null; renderQuote(); } }
 });
-/* doble toque en pantallas táctiles */
+/* triple toque en pantallas táctiles */
 let lastTap = null;
 $("#sheets").addEventListener("pointerup", (e) => {
   if (e.pointerType !== "touch") return;
   const now = performance.now();
-  if (lastTap && now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 28) {
-    lastTap = null;
-    try { getSelection().removeAllRanges(); } catch {}
-    clearTimeout(selT); hideSelBar(true);
-    playFromPoint(e.clientX, e.clientY, e.target);
+  if (lastTap && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30) {
+    lastTap = { t: now, x: e.clientX, y: e.clientY, n: lastTap.n + 1 };
+    if (lastTap.n >= 3) {
+      lastTap = null;
+      try { getSelection().removeAllRanges(); } catch {}
+      clearTimeout(selT); hideSelBar(true);
+      playFromPoint(e.clientX, e.clientY, e.target);
+    }
     return;
   }
-  lastTap = { t: now, x: e.clientX, y: e.clientY };
+  lastTap = { t: now, x: e.clientX, y: e.clientY, n: 1 };
 });
 const showMark = () => S.playing;
 const hasResume = () => !!S.doc && (!!bmOf() || S.playing || S.pos.pi || S.pos.ai || S.pos.si || (S.pct[S.doc.id] || 0) > 0);
@@ -3806,6 +3922,15 @@ $("#sheets").addEventListener("click", (e) => {
   endPlaceBm(); setBookmark(p);
 }, true);
 $("#bmPlaceBtn").addEventListener("click", startPlaceBm);
+$("#followBtn").addEventListener("click", (e) => {
+  const d = $("#followDlg"); renderFollowUI(); d.hidden = false;
+  const r = ($("#moreBtn").getBoundingClientRect().width ? $("#moreBtn") : e.currentTarget).getBoundingClientRect(), w = d.offsetWidth, h = d.offsetHeight;
+  d.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
+  d.style.top = (r.bottom + 6 + h < innerHeight ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
+});
+$("#followDlg").addEventListener("click", (e) => { const b = e.target.closest("[data-follow]"); if (!b) return; $("#followDlg").hidden = true; if (b.dataset.follow !== S.follow) setFollow(b.dataset.follow); });
+document.addEventListener("pointerdown", (e) => { if (!$("#followDlg").hidden && !e.target.closest("#followDlg") && !e.target.closest("#followBtn")) $("#followDlg").hidden = true; });
+renderFollowUI();
 $("#selBm").addEventListener("click", () => {
   const s = getSelection(); if (!s.rangeCount) return;
   const r = s.getRangeAt(0).getClientRects()[0] || s.getRangeAt(0).getBoundingClientRect();
@@ -3927,10 +4052,15 @@ function markAtPoint(pi, x, y) {
 const selBar = () => $("#selBar");
 let hideT;
 let selPinned = false, selPos = null, contTool = null;
-try { const v = JSON.parse(localStorage.getItem("atril-selbar") || "null"); if (v && v.pinned) { selPinned = true; selPos = v.pos; } } catch {}
-function saveSelBar() { try { localStorage.setItem("atril-selbar", JSON.stringify({ pinned: selPinned, pos: selPos })); } catch {} }
+let selDock = "";
+try { const v = JSON.parse(localStorage.getItem("atril-selbar") || "null"); if (v && v.pinned) { selPinned = true; selPos = v.pos; selDock = ["left", "right", "top", "bottom"].includes(v.dock) ? v.dock : ""; } } catch {}
+function saveSelBar() { try { localStorage.setItem("atril-selbar", JSON.stringify({ pinned: selPinned, pos: selPos, dock: selDock })); } catch {} }
 function placePinned() {
-  const b = selBar(); if (!selPos) return;
+  const b = selBar();
+  for (const d of ["left", "right", "top", "bottom"]) b.classList.toggle("dock-" + d, selPinned && selDock === d);
+  $("#selDock").setAttribute("aria-pressed", String(!!(selPinned && selDock)));
+  if (selPinned && selDock) { b.style.left = ""; b.style.top = ""; return; }
+  if (!selPos) return;
   const bw = b.offsetWidth, bh = b.offsetHeight;
   const x = Math.max(4, Math.min(innerWidth - bw - 4, selPos.x * innerWidth)), y = Math.max(4, Math.min(innerHeight - bh - 4, selPos.y * innerHeight));
   b.style.left = x + "px"; b.style.top = y + "px";
@@ -4051,20 +4181,41 @@ function updateCaption() {
     c.hidden = !t; c.textContent = t || "";
   } else c.hidden = true;
 }
-function scrollToPos(smooth = true) {
+/* Seguir la lectura: la vista baja sola cuando lo que lee la voz se acerca al borde de abajo.
+   Si tú desplazas la página a mano, se respeta unos segundos antes de volver a seguir la lectura. */
+let userScrollAt = 0;
+(() => {
+  const sc = $("#readerScroll"), mark = () => { userScrollAt = Date.now(); };
+  sc.addEventListener("wheel", mark, { passive: true });
+  sc.addEventListener("touchmove", mark, { passive: true });
+  sc.addEventListener("keydown", (e) => { if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) mark(); });
+  sc.addEventListener("pointerdown", (e) => { if (e.target === sc) mark(); });   // barra de desplazamiento
+})();
+function followRect(r, smooth = true) {
+  const sc = $("#readerScroll"), b = sc.getBoundingClientRect();
+  const bottom = Math.min(b.bottom, innerHeight) - Math.max(80, b.height * 0.25), top = b.top + 40;
+  if (r.top >= top && r.bottom <= bottom) return false;
+  const target = Math.max(0, sc.scrollTop + r.top - b.top - b.height * 0.3);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, far = Math.abs(target - sc.scrollTop) > b.height * 1.5;
+  sc.scrollTo({ top: target, behavior: smooth && !reduce && !far ? "smooth" : "auto" });
+  return true;
+}
+function scrollToPos(smooth = true, fromSpeech = false) {
+  if (fromSpeech && Date.now() - userScrollAt < 4000) return;
   const sc = $("#readerScroll");
   const { pi, ai, si } = S.pos;
   const n = (pageMode() ? (document.querySelector(`#pg-${pi} .hl i`) || document.querySelector(`#pg-${pi} .resdot`)) : document.getElementById(`s-${pi}-${ai}-${si}`)) || $("#pg-" + pi);
   if (!n) return;
-  const r = n.getBoundingClientRect(), b = sc.getBoundingClientRect();
-  if (r.top < b.top + 40 || r.bottom > b.bottom - 40) {
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    sc.scrollTo({ top: sc.scrollTop + r.top - b.top - b.height * 0.3, behavior: smooth && !reduce ? "smooth" : "auto" });
-  }
+  let r = n.getBoundingClientRect();
+  if (!pageMode() && n.getClientRects) { const rs = n.getClientRects(); if (rs.length) r = rs[0]; }   // empieza por el primer renglón de la frase
+  followRect(r, smooth);
+  const b = sc.getBoundingClientRect();
   if (sc.scrollWidth > sc.clientWidth + 4 && (r.left < b.left + 10 || r.right > b.right - 10)) {
     sc.scrollTo({ left: Math.max(0, sc.scrollLeft + r.left - b.left - 24), behavior: smooth ? "smooth" : "auto" });
   }
 }
+// sigue cada palabra mientras se lee
+function followWord(rect) { if (!S.playing || !rect || Date.now() - userScrollAt < 4000) return; followRect(rect); }
 function gotoPage(pi) { stop(); S.pos = { pi, ai: 0, si: 0 }; highlight(); if (isNarrow()) setTab("read"); requestAnimationFrame(() => { const sc = $("#readerScroll"), n = $("#pg-" + pi); if (n) sc.scrollTo({ top: n.offsetTop - 12, behavior: "smooth" }); }); updateProgress(); savePos(); }
 
 /* progreso */
@@ -4177,14 +4328,43 @@ function markWord(text, ci, cl) {
     if (!pg || !hl || !rg) return;
     const sub = (S.doc.pages[pi].paras[ai] || "").slice(rg[0], rg[1]), off = Math.max(0, sub.indexOf(text));
     hl.querySelectorAll("i.word").forEach(n => n.remove());
-    for (const [x, by, w, bh] of segRects(pg, ai, rg[0] + off + ci, rg[0] + off + ci + len))
-      hl.append(el("i", { class: "word", style: `left:${x / pg.W * 100}%;top:${by / pg.H * 100}%;width:${w / pg.W * 100}%;height:${bh / pg.H * 100}%` }));
+    let first = null;
+    for (const [x, by, w, bh] of segRects(pg, ai, rg[0] + off + ci, rg[0] + off + ci + len)) {
+      const n = el("i", { class: "word", style: `left:${x / pg.W * 100}%;top:${by / pg.H * 100}%;width:${w / pg.W * 100}%;height:${bh / pg.H * 100}%` });
+      hl.append(n); first ??= n;
+    }
+    if (first) followWord(first.getBoundingClientRect());
   } else {
     const n = document.getElementById(`s-${pi}-${ai}-${si}`); if (!n || !window.CSS?.highlights || typeof Highlight === "undefined") return;
     const off = Math.max(0, n.textContent.indexOf(text));
-    const r = rangeIn(n, off + ci, off + ci + len); if (r) CSS.highlights.set("atril-word", new Highlight(r));
+    const r = rangeIn(n, off + ci, off + ci + len); if (r) { CSS.highlights.set("atril-word", new Highlight(r)); followWord(r.getBoundingClientRect()); }
   }
   document.body.classList.add("wordmode");
+}
+/* Ritmo estimado (para voces que no avisan cada palabra): unas 14 letras por segundo a velocidad normal,
+   con pausas en comas y puntos. Empieza 350 ms después de que arranca la voz por si la voz sí avisa. */
+let estT = [];
+function stopEstimate() { clearTimeout(wordT); estT.forEach(clearTimeout); estT = []; }
+function estimateWords(text, tok) {
+  const cps = 14 * (S.rate || 1); let t = 0;
+  const re = /\S+/g; let m, first = true;
+  while ((m = re.exec(text))) {
+    const ci = m.index, w = m[0];
+    const at = first ? 0 : t - 350; first = false;
+    estT.push(setTimeout(() => { if (tok === S.token && S.playing) markWord(text, ci, w.replace(/[^\p{L}\p{N}'’-]+$/u, "").length || w.length); }, Math.max(0, at)));
+    t += (w.length + 1) / cps * 1000 + (/[.!?…:;]$/.test(w) ? 380 : /,$/.test(w) ? 200 : 0);
+  }
+}
+function setFollow(mode) {
+  S.follow = mode === "frase" ? "frase" : "palabra"; savePrefs(); stopEstimate();
+  if (S.follow === "frase") { document.body.classList.remove("wordmode"); $$(".hl i.word").forEach(n => n.remove()); try { CSS.highlights?.delete("atril-word"); } catch {} }
+  renderFollowUI();
+  if (S.playing) play();   // vuelve a empezar la frase actual con el modo nuevo
+  toast(S.follow === "frase" ? "Seguimiento de lectura: se subraya la frase completa." : "Seguimiento de lectura: solo se subraya la palabra que se está leyendo.");
+}
+function renderFollowUI() {
+  const lab = $("#followLbl"); if (lab) lab.textContent = S.follow === "frase" ? "Por frase" : "Por palabra";
+  $$("#followDlg [data-follow]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.follow === S.follow)));
 }
 function setPlayIcon() {
   $("#liveDot").hidden = !S.playing; try { updateProgress(); } catch {}
@@ -4240,16 +4420,18 @@ async function speakNext(tok) {
   }
   const { pi, ai, si } = S.pos;
   const text = segs(pi, ai)[si];
-  highlight(); scrollToPos(); updateProgress(); updateCaption();
+  highlight(); scrollToPos(true, true); updateProgress(); updateCaption();
   if (trActive() && ai >= viewParas(pi).length - 2 && pi + 1 < d.pages.length) translatePage(pi + 1);
   const u = new SpeechSynthesisUtterance(text);
   const v = pickVoice(S.readLang); if (v) u.voice = v;
   u.lang = v?.lang || (S.readLang === "es" ? "es-ES" : "en-US");
   u.rate = S.rate;
   // si la voz no avisa cada palabra, se muestra el subrayado de la frase completa
-  u.onstart = () => { clearTimeout(wordT); wordT = setTimeout(() => document.body.classList.remove("wordmode"), 900); };
-  u.onboundary = (e) => { if (tok !== S.token || (e.name && e.name !== "word")) return; clearTimeout(wordT); markWord(text, e.charIndex, e.charLength); };
-  u.onend = () => { if (tok !== S.token) return; S.pos.si++; if (S.pos.si === 0 || S.pos.si % 3 === 0) savePos(); speakNext(tok); };
+  // «Por palabra»: se usa el aviso de cada palabra de la voz; si la voz no lo da, se calcula el ritmo de lectura
+  let realB = false;
+  u.onstart = () => { if (tok !== S.token) return; stopEstimate(); if (S.follow === "palabra") { document.body.classList.add("wordmode"); wordT = setTimeout(() => { if (!realB && tok === S.token) estimateWords(text, tok); }, 350); } };
+  u.onboundary = (e) => { if (tok !== S.token || (e.name && e.name !== "word") || S.follow !== "palabra") return; realB = true; stopEstimate(); markWord(text, e.charIndex, e.charLength); };
+  u.onend = () => { stopEstimate(); if (tok !== S.token) return; S.pos.si++; if (S.pos.si === 0 || S.pos.si % 3 === 0) savePos(); speakNext(tok); };
   u.onerror = (e) => { if (tok !== S.token || e.error === "interrupted" || e.error === "canceled") return; if (e.error === "not-allowed") { stop(); toast("Toca reproducir para empezar la lectura."); return; } S.pos.si++; speakNext(tok); };
   currentUtter = u;
   speechSynthesis.speak(u);
@@ -4324,11 +4506,32 @@ $$("#selBar .mkbtn").forEach(b => b.addEventListener("click", () => {
   }
   addMark(t);
 }));
+/* anclar la barra a un borde */
+$("#selDock").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const d = $("#dockPop"); d.hidden = !d.hidden; if (d.hidden) return;
+  $$("#dockPop [data-dock]").forEach(x => x.setAttribute("aria-checked", String(selPinned && x.dataset.dock === selDock)));
+  const r = $("#selDock").getBoundingClientRect(), w = d.offsetWidth, h = d.offsetHeight;
+  d.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+  d.style.top = (r.bottom + 8 + h < innerHeight ? r.bottom + 8 : Math.max(8, r.top - h - 8)) + "px";
+});
+$("#dockPop").addEventListener("pointerdown", (e) => e.preventDefault());
+$("#dockPop").addEventListener("click", (e) => {
+  const x = e.target.closest("[data-dock]"); if (!x) return;
+  $("#dockPop").hidden = true;
+  selDock = x.dataset.dock;
+  if (!selPinned) { selPinned = true; }
+  if (!selDock && !selPos) { const rr = selBar().getBoundingClientRect(); selPos = { x: rr.left / innerWidth, y: rr.top / innerHeight }; }
+  saveSelBar(); renderPin();
+  toast(selDock ? `Barra anclada ${({ left: "a la izquierda", right: "a la derecha", top: "arriba", bottom: "abajo" })[selDock]}.` : "Barra flotante: arrástrala desde el asa ⋮⋮ donde quieras.");
+});
+document.addEventListener("pointerdown", (e) => { if (!$("#dockPop").hidden && !e.target.closest("#dockPop") && !e.target.closest("#selDock")) $("#dockPop").hidden = true; });
 /* mover la barra: arrastrar desde el asa */
 $("#selGrip").addEventListener("pointerdown", (e) => {
   e.preventDefault(); e.stopPropagation();
   const b = selBar(), g = e.currentTarget; g.setPointerCapture(e.pointerId);
   const r = b.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+  if (selDock) { selDock = ""; placePinned(); }   // al arrastrar, la barra deja de estar anclada
   b.classList.add("moving");
   const mv = (ev) => { const x = Math.max(4, Math.min(innerWidth - r.width - 4, ev.clientX - dx)), y = Math.max(4, Math.min(innerHeight - r.height - 4, ev.clientY - dy)); b.style.left = x + "px"; b.style.top = y + "px"; };
   const up = () => {
@@ -4339,7 +4542,7 @@ $("#selGrip").addEventListener("pointerdown", (e) => {
   };
   g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up);
 });
-$("#selPin").addEventListener("click", () => { selPinned = false; contTool = null; saveSelBar(); renderPin(); hideSelBar(true); toast("La barra vuelve a aparecer junto al texto seleccionado."); });
+$("#selPin").addEventListener("click", () => { selPinned = false; selDock = ""; contTool = null; saveSelBar(); placePinned(); renderPin(); hideSelBar(true); toast("La barra vuelve a aparecer junto al texto seleccionado."); });
 requestAnimationFrame(() => renderPin());
 $$("#selBar .dot").forEach(b => b.addEventListener("click", () => { markColor = b.dataset.c; try { localStorage.setItem("atril-color", markColor); } catch {} renderDots(); }));
 $("#selAsk").addEventListener("click", () => { hideSelBar(true); setAsk(true); const q = $("#q"); q.focus({ preventScroll: true }); $("#askPanel").scrollIntoView({ block: "nearest" }); });

@@ -7,7 +7,8 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 ## Funciones
 
 - Lectura en voz alta en español e inglés, con voz y velocidad a elegir.
-- Doble clic o doble toque en una frase para empezar a leer desde ahí.
+- Triple clic o triple toque en una frase para empezar a leer desde ahí. Con doble clic o doble toque se selecciona el texto para marcarlo.
+- La vista baja sola para seguir lo que se está leyendo (si desplazas la página a mano, espera unos segundos antes de volver a seguir la lectura).
 - Resaltado amarillo mientras suena el audio.
 - Punto verde donde quedó la lectura, con un botón para volver a él.
 - Vista de la página original con sus imágenes, o vista de solo texto. Incluye zoom, pantalla completa y modo TV.
@@ -29,7 +30,9 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 - **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
 - **Dónde se guardan tus libros:** en este navegador (IndexedDB) y en la carpeta **«Atril - biblioteca»** de tu Google Drive.
 - **En vivo:** cada libro, carpeta, marca o nota se guarda en Drive al instante, y los demás dispositivos conectados a la misma cuenta lo reciben en unos segundos (aparece «Actualizado desde otro dispositivo»). Si estás escuchando un libro, la lectura no se interrumpe.
-- **Seguir la lectura:** mientras la voz lee, una línea roja fina y suave subraya cada palabra (si la voz del dispositivo no avisa palabra por palabra, se subraya la frase). Ya no se usa el resaltado amarillo.
+- **Modo seguimiento de lectura** (en «Más»): **Por palabra** subraya con una línea roja fina solo la palabra que se está leyendo (si la voz no avisa cada palabra, Atril calcula el ritmo); **Por frase** subraya la frase completa. Ya no se usa el resaltado amarillo.
+- **Barra de marcar anclable:** con el botón de anclar la pones a la izquierda o derecha (vertical) o arriba o abajo (horizontal), o la dejas flotante. Al seleccionar texto en el PDF la selección ya no salta al renglón de arriba o de abajo.
+- **Más espacio para leer:** la barra del lector muestra solo íconos (con su nombre al pasar el mouse y con texto dentro de «Más») y la cabecera ocupa una sola fila.
 - **Marca de lectura (punto verde):** en «Más» → **Poner marca de lectura** tocas cualquier párrafo y la marca queda ahí (también desde la barra de selección con **Marca aquí**). Al pausar la lectura en voz alta, Atril pregunta si guardas la marca en ese párrafo. El botón verde te lleva a la marca; tocando el punto verde puedes leer desde ahí, moverlo o quitarlo. Al poner la marca, la lectura en voz alta también sigue desde ese párrafo (si ya estaba leyendo, salta ahí). La marca se guarda en Drive y se ve en todos tus dispositivos.
 - **Quién los ve:** esa carpeta es privada. La app no tiene servidor propio y los datos van directo de tu navegador a Google.
 - **Preguntas y traducciones:** las responde Gemma 4 dentro del navegador de tu dispositivo (o, si lo eliges, Ollama en tu computadora). El texto no se envía a ningún servicio de IA.
