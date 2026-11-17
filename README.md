@@ -1,6 +1,6 @@
 # Atril · lector de PDF con audio
 
-Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar notas y hacerles preguntas. Las preguntas las responde **Gemma 4** dentro de tu propio celular, tableta o computadora. Tu biblioteca se guarda sola en **tu Google Drive**.
+Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar notas y preparar preguntas sobre ellos para la IA que prefieras (**NotebookLM, Copilot, Claude o Gemini**). Tu biblioteca se guarda sola en **tu Google Drive**.
 
 **Abrir la app:** https://gavg1797.github.io/atril/
 
@@ -25,6 +25,8 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 - Traducción de la lectura entre español e inglés.
 - Exportar e importar la biblioteca en un .zip, con contraseña opcional.
 
+- **Preguntar a tu IA:** selecciona texto (doble clic) y toca **Preguntar**, o escribe tu pregunta. Con **Copiar** o con los accesos directos a **NotebookLM, Copilot, Claude y Gemini**, Atril copia la consulta (pregunta + texto + página) y abre la IA en otra pestaña para que solo la pegues. En pantallas anchas el panel va a la derecha del documento; también puede ser una ventana flotante.
+
 ## Privacidad
 
 - **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
@@ -35,7 +37,7 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 - **Más espacio para leer:** la barra del lector muestra solo íconos (con su nombre al pasar el mouse y con texto dentro de «Más») y la cabecera ocupa una sola fila.
 - **Marca de lectura (punto verde):** en «Más» → **Poner marca de lectura** tocas cualquier párrafo y la marca queda ahí (también desde la barra de selección con **Marca aquí**). Al pausar la lectura en voz alta, Atril pregunta si guardas la marca en ese párrafo. El botón verde te lleva a la marca; tocando el punto verde puedes leer desde ahí, moverlo o quitarlo. Al poner la marca, la lectura en voz alta también sigue desde ese párrafo (si ya estaba leyendo, salta ahí). La marca se guarda en Drive y se ve en todos tus dispositivos.
 - **Quién los ve:** esa carpeta es privada. La app no tiene servidor propio y los datos van directo de tu navegador a Google.
-- **Preguntas y traducciones:** las responde Gemma 4 dentro del navegador de tu dispositivo (o, si lo eliges, Ollama en tu computadora). El texto no se envía a ningún servicio de IA.
+- **Preguntas:** Atril no tiene IA propia ni envía tu texto a ningún servicio. Arma la consulta (tu pregunta + el texto seleccionado + la página) y la copia; tú decides en qué IA pegarla.
 - **Este repositorio es público, pero solo contiene el código.** Nunca contiene tus libros.
 - **Computadoras compartidas:** en **Ajustes → Cerrar sesión y borrar de este dispositivo** quitas la copia local.
 - **Cambio de cuenta:** si alguien inicia sesión con otra cuenta en el mismo navegador, Atril borra primero la biblioteca local de la cuenta anterior.
@@ -56,7 +58,7 @@ La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no
    - Orígenes autorizados de JavaScript: `https://gavg1797.github.io`. Para probar en tu computadora, agrega también `http://localhost:8000`.
    - Copia el **ID de cliente**. Termina en `.apps.googleusercontent.com`.
 5. **Pon el ID en Atril.** Hay dos formas:
-   - En la app: toca **Ajustes de Google y Gemma** en la pantalla de inicio y pégalo. Queda guardado en ese navegador.
+   - En la app: toca **Ajustes de Google** en la pantalla de inicio y pégalo. Queda guardado en ese navegador.
    - Para todos tus dispositivos a la vez: escríbelo en `config.js`, en `googleClientId`. El ID de cliente no es secreto y puede estar en un repositorio público.
 
 **Qué pasa al iniciar sesión:** como la app está en modo de prueba, Google muestra el aviso *"Google no verificó esta app"*. Es normal porque la app es tuya. Toca **Continuar** y acepta los permisos de Drive.
@@ -70,68 +72,20 @@ La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no
 
 **Costo:** $0. Google Drive API, Google Picker API e inicio de sesión no cobran, y el proyecto no tiene cuenta de facturación, así que no hay forma de que se cobre nada. La verificación de marca de Google para permisos no sensibles también es gratuita.
 
-## Gemma 4 en cualquier dispositivo (gratis, desde el sitio)
-
-En **Ajustes → Gemma 4 → En este dispositivo**, toca **Descargar**. Atril baja el modelo una sola vez desde Hugging Face (Google, licencia Apache 2.0) y lo guarda en ese navegador. Después funciona sin internet y las preguntas no salen del dispositivo.
-
-| Modelo | Tamaño | Para |
-| --- | --- | --- |
-| Gemma 4 E2B (recomendado) | 2,0 GB | celulares, tabletas y computadoras |
-| Gemma 4 E4B | 3,0 GB | computadoras con buena tarjeta gráfica |
-
-- Necesita **WebGPU**: Chrome o Edge actualizados (computadora y Android), Safari en iPhone o iPad con iOS 26 o más reciente.
-- Descárgalo con wifi. Si se corta, toca **Continuar descarga** y sigue donde quedó.
-- Cada dispositivo descarga su propia copia. Puedes borrarla en Ajustes.
-- En celulares con poca memoria, elige **Memoria corta**.
-- **Sin WebGPU** (por ejemplo, Samsung con procesador Exynos como el Galaxy S24 FE): elige **Gemma 4 E2B · modo procesador** (2,6 GB). Corre en el procesador con [wllama](https://github.com/ngxson/wllama) (llama.cpp), sin tarjeta gráfica. Es más lento: cuenta con 30 segundos a unos minutos por respuesta. Después de descargarlo, recarga Atril una vez para que use varios núcleos.
-
 ## Usar Atril sin internet
 
 1. Con internet, entra con Google y ve a **Ajustes → Sin conexión** para crear un **PIN** de 4 a 12 números.
-2. En **Ajustes → Gemma 4**, descarga el modelo en ese dispositivo.
-3. Abre una vez cada libro que quieras tener a mano. Los libros de tu Drive ya se descargan solos al iniciar sesión.
+2. Abre una vez cada libro que quieras tener a mano. Los libros de tu Drive ya se descargan solos al iniciar sesión.
 
 Sin internet, Atril abre desde la copia guardada en el dispositivo. Pide tu PIN y funcionan:
 
 - la lectura en voz alta;
 - las marcas y el cuaderno;
-- las preguntas y la traducción con Gemma.
+- preparar y copiar preguntas.
 
 Los cambios que hagas sin internet se suben a Drive la próxima vez que inicies sesión con conexión.
 
 **Voces sin internet:** la voz depende del sistema. Las voces del dispositivo (Windows, macOS, iOS, Android) funcionan sin internet; las voces «Google…» de Chrome en computadora necesitan conexión.
-
-## Gemma con la app Mobile Server (Android)
-
-En teléfonos donde el navegador no tiene WebGPU (por ejemplo, Samsung con Exynos), Atril puede usar la Gemma de [Mobile Server](https://github.com/techjarves/mobile-server). Es una versión modificada y no oficial de Google AI Edge Gallery (licencia Apache 2.0) que corre Gemma con la tarjeta gráfica del teléfono y la ofrece en `http://localhost:8080` como API compatible con OpenAI.
-
-1. Descarga `app-arm64-v8a-release.apk` de sus [Releases](https://github.com/techjarves/mobile-server/releases) e instálalo; Android pedirá permitir apps de origen desconocido para Chrome.
-2. En Mobile Server, descarga **Gemma 4 E2B**, ábrelo una vez en el chat para que quede cargado y activa el servidor. No hace falta activar túneles: Atril se conecta dentro del mismo teléfono.
-3. En Atril, ve a **Ajustes → Gemma 4 → App Edge Gallery modificada** y toca **Probar conexión**. Si Chrome pide acceso a otras apps del dispositivo, toca **Permitir**.
-
-**Ten en cuenta:**
-
-- Deja Mobile Server abierta en segundo plano.
-- El servidor también escucha en tu red wifi, sin contraseña. Otros dispositivos de la misma red podrían usar tu Gemma, pero no ven tus documentos.
-
-## Opcional: Gemma 4 con Ollama (en tu computadora)
-
-1. **Instala Ollama** desde https://ollama.com/download.
-2. **Descarga el modelo.** En una terminal, ejecuta:
-   ```
-   ollama pull gemma4
-   ```
-   Si tu equipo tiene poca memoria, usa `gemma4:e2b`.
-3. **Permite que Atril se conecte a Ollama.** Por seguridad, Ollama solo acepta páginas que tú autorizas.
-   - **Windows:** abre *Configuración → Sistema → Acerca de → Configuración avanzada del sistema → Variables de entorno*. Crea la variable de usuario `OLLAMA_ORIGINS` con el valor `https://gavg1797.github.io`. Después cierra Ollama desde la bandeja del sistema y vuelve a abrirlo.
-   - **macOS:** ejecuta `launchctl setenv OLLAMA_ORIGINS "https://gavg1797.github.io"` y reinicia Ollama.
-   - **Linux (systemd):** ejecuta `sudo systemctl edit ollama`, agrega `Environment="OLLAMA_ORIGINS=https://gavg1797.github.io"` bajo `[Service]` y luego ejecuta `sudo systemctl restart ollama`.
-4. **Comprueba la conexión.** En Atril, abre **Ajustes → Probar conexión**. Si Chrome pregunta si el sitio puede acceder a dispositivos de tu red local, acepta.
-
-**Límites de las preguntas:**
-
-- Solo funcionan en la computadora donde corre Ollama, con Chrome, Edge o Firefox. Safari bloquea la conexión con `localhost`.
-- En el celular y la tableta funcionan la lectura, las marcas, el cuaderno y Google Drive.
 
 ## Ejecutar en tu computadora
 
@@ -139,15 +93,15 @@ En teléfonos donde el navegador no tiene WebGPU (por ejemplo, Samsung con Exyno
 python3 -m http.server 8000
 ```
 
-Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Google y en `OLLAMA_ORIGINS`.
+Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Google.
 
 ## Archivos
 
 | Archivo | Para qué sirve |
 | --- | --- |
 | `index.html` | El lector completo: biblioteca, reproductor, marcas, cuaderno, preguntas y sincronización. |
-| `platform.js` | Inicio de sesión con Google, API de Google Drive, conexión con Ollama y descargas. |
+| `platform.js` | Inicio de sesión con Google, API de Google Drive y descargas. |
 | `platform.css` | Pantalla de acceso y ajustes. |
-| `config.js` | ID de cliente de Google, clave del selector de Drive, Gemma y Ollama. |
+| `config.js` | ID de cliente de Google y clave del selector de Drive. |
 | `privacidad.html` | Política de privacidad (la pide la pantalla de consentimiento de Google). |
 | `sw.js`, `manifest.webmanifest` | Permiten instalar Atril como app en el celular o la computadora. |

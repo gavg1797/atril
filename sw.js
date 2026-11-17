@@ -1,10 +1,10 @@
 /* Atril sin conexión.
  * - La app (este sitio) se sirve primero desde la red y, si no hay internet, desde la copia guardada.
- * - Las librerías de los CDN (pdf.js, pdf-lib, JSZip, docx, MediaPipe/Gemma y las fuentes) se guardan
+ * - Las librerías de los CDN (pdf.js, pdf-lib, JSZip, docx y las fuentes) se guardan
  *   la primera vez y después se sirven desde aquí: tienen versión fija, así que nunca cambian.
- * - No se guardan aquí Google (inicio de sesión, Drive) ni el modelo de Gemma (va aparte, en el navegador).
+ * - No se guardan aquí Google (inicio de sesión, Drive).
  */
-const APP = "atril-app-v23", LIBS = "atril-libs-v1";
+const APP = "atril-app-v29", LIBS = "atril-libs-v1";
 const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html", "guia.js"];
 const CORE_LIBS = [
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
@@ -26,17 +26,10 @@ self.addEventListener("install", (e) => {
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if ((k.startsWith("atril-app-") && k !== APP) || (k.startsWith("atril-libs-") && k !== LIBS)) await caches.delete(k);
+    for (const k of await caches.keys()) if ((k.startsWith("atril-app-") && k !== APP) || (k.startsWith("atril-libs-") && k !== LIBS) || k === "atril-flags" || k.startsWith("atril-gemma")) await caches.delete(k);
     await self.clients.claim();
   })());
 });
-/* Modo procesador de Gemma: con Document-Isolation-Policy la página queda aislada y Gemma puede usar
-   varios núcleos (SharedArrayBuffer), sin romper el inicio de sesión de Google ni el selector de Drive. */
-async function isolate(r) {
-  try { if (!(await (await caches.open("atril-flags")).match("/__isolate"))) return r; } catch { return r; }
-  const h = new Headers(r.headers); h.set("Document-Isolation-Policy", "isolate-and-credentialless");
-  return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
-}
 const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
 self.addEventListener("fetch", (e) => {
   const req = e.request; if (req.method !== "GET") return;
@@ -52,7 +45,7 @@ self.addEventListener("fetch", (e) => {
         r = (await app.match(req, { ignoreSearch: true })) || (req.mode === "navigate" ? await app.match("index.html") : null);
         if (!r) return Response.error();
       }
-      return req.mode === "navigate" ? isolate(r) : r;
+      return r;
     })());
     return;
   }

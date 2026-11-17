@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2B47D4">
-<meta name="description" content="Atril: escucha tus PDF en voz alta, márcalos y pregúntales con Gemma. Tu biblioteca se guarda en tu Google Drive.">
+<meta name="description" content="Atril: escucha tus PDF en voz alta, márcalos y prepara preguntas para tu IA favorita. Tu biblioteca se guarda en tu Google Drive.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -966,6 +966,61 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
   .rhead h1{flex:1 1 100%}
   .rtools{overflow-x:auto}
 }
+
+/* Preguntar sin IA integrada: copiar la consulta y abrir la IA elegida */
+.ask .sendbtn{width:auto;padding:0 12px;gap:6px;display:inline-flex;align-items:center;font-weight:700;font-size:.82rem}
+.ask .sendbtn.done{background:#1FA463}
+.ask .sendbtn.done .cplbl::after{content:"  ✓"}
+.aibar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 12px 6px}
+.aibar .aitx{font-size:.72rem;color:var(--muted);font-weight:600;margin-right:2px}
+.aibar a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 10px 4px 4px;font-size:.8rem;font-weight:600}
+.aibar a:hover{border-color:var(--accent)}
+.aiic{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--ac);color:#fff;font-size:.68rem;font-weight:800}
+.askhelp{margin:0;padding:0 12px 6px;font-size:.76rem;color:var(--muted)}
+@media (max-width:760px){.askhelp{display:none}.aibar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.aibar a{flex:none}}
+body.askside .ask:not(.full) .askhelp{padding:8px 14px;font-size:.82rem;line-height:1.5}
+/* Ventana flotante de preguntas */
+.askfloatbtn{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:4px;display:grid;place-items:center}
+.askfloatbtn:hover,.askfloatbtn[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft)}
+body.askfloat .ask:not(.full){position:fixed;z-index:88;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);resize:both;overflow:auto;min-width:280px;min-height:170px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);padding-bottom:6px}
+body.askfloat .ask:not(.full) .askhead{display:flex!important;cursor:move;padding:8px 10px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;touch-action:none;user-select:none}
+body.askfloat .ask:not(.full) .askhead h2::before{content:"⋮⋮ ";letter-spacing:-.15em;color:var(--muted)}
+body.askfloat .ask:not(.full) .chips{display:flex}
+body.askfloat .ask.moving{opacity:.92}
+body.askfloat .ask:not(.full) .askhelp{display:block}
+/* Panel lateral de preguntas (pantallas anchas) */
+body.askside .reader{padding-right:var(--ask-w,380px)}
+body.askside .ask:not(.full){position:fixed;z-index:45;top:var(--ask-top,110px);bottom:var(--ask-bot,0px);right:var(--ask-right,0px);width:var(--ask-w,380px);border-top:0;border-left:1px solid var(--line);box-shadow:-10px 0 28px rgba(0,0,0,.06);padding-bottom:6px}
+body.askside .ask:not(.full) .answers{flex:1;max-height:none}
+body.askside .ask:not(.full) .askhead{padding:8px 12px 4px}
+body.askside .ask:not(.full) .chips{flex-wrap:wrap}
+body.askside .ask:not(.full) .composer{align-items:flex-end}
+body.askside .ask:not(.full) .composer textarea{min-height:64px;max-height:220px}
+body.askside .ask:not(.full) .fsbtn{align-self:flex-end;margin-bottom:6px}
+body.askside .ask:has(#quoteBox:not([hidden])) .chips{display:none}
+/* ---------- Panel «Preguntar» compacto: más espacio para el documento ---------- */
+.ask{padding-bottom:2px}
+.askhead{padding:4px 12px 0;gap:8px;min-height:0}
+.askhead h2{font-size:.66rem}
+.askhead .linkbtn{font-size:.76rem}
+.askhead .askclose{width:26px;height:26px;font-size:.85rem}
+.answers{max-height:24vh}
+@media (max-width:560px){.answers{max-height:18vh}}
+.ask .chips{padding:2px 12px 3px;gap:5px}
+.ask .chip{padding:3px 9px;font-size:.74rem}
+.ask:has(#quoteBox:not([hidden])) .chips{display:none}
+.ask .composer{padding:3px 10px 6px;gap:6px;align-items:center}
+.ask .composer .field{border-radius:10px}
+.quote{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 10px}
+.quote .qhead{flex:none;font-size:.62rem;gap:6px}
+.quote blockquote{flex:1;min-width:0;margin:0;max-height:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.85rem;line-height:1.3;padding-left:7px}
+.quote #quoteClear{flex:none;font-size:.85rem;padding:2px 6px}
+.composer textarea{padding:7px 10px;font-size:.92rem}
+.ask .sendbtn{height:36px;border-radius:9px}
+.ask .fsbtn{display:none!important}
+@media (max-width:760px){.aibar .aitx{display:none}}
+.ask .fsbtn span{display:none}
+.ask .fsbtn{padding:6px}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1097,26 +1152,36 @@ body.libfull .fgo,body.pdfedit .fgo{display:none!important}
     <section class="ask" id="askPanel" aria-label="Preguntas sobre este PDF" hidden>
       <div class="askhead">
         <h2>Preguntar</h2>
-        <button class="linkbtn" id="toggleAns" type="button" aria-expanded="true">Ocultar respuestas</button>
+        <button class="linkbtn" id="toggleAns" type="button" aria-expanded="true" hidden>Ocultar respuestas</button>
         <span class="spacer"></span>
-        <button class="linkbtn" id="clearChat" type="button">Borrar chat</button>
+        <button class="linkbtn" id="clearChat" type="button" hidden>Borrar chat</button>
+        <button class="askfloatbtn" id="askFloat" type="button" aria-pressed="false" title="Ventana flotante: muévela a donde quieras" aria-label="Ventana flotante"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><rect x="11" y="11" width="8" height="7" rx="1" fill="currentColor" stroke="none"/></svg></button>
         <button class="askclose" id="askClose" type="button" aria-label="Cerrar preguntas" title="Ocultar el panel de preguntas">✕</button>
       </div>
       <div class="notice" id="askNotice" hidden></div>
       <div class="permpill" id="permPill" hidden><span>Para no tener que confirmar cada vez:</span><button class="btn" type="button" id="permAlways">Permitir preguntas siempre</button></div>
-      <div class="answers" id="chatScroll"><div class="msgs" id="msgs"></div></div>
+      <div class="answers" id="chatScroll" hidden><div class="msgs" id="msgs"></div></div>
       <div class="chips" id="chips"></div>
       <form class="composer" id="askForm">
         <div class="field">
           <div class="quote" id="quoteBox" hidden>
-            <div class="qhead"><span id="quoteLabel">Texto seleccionado</span><button type="button" id="quoteClear" class="linkbtn" aria-label="Quitar texto seleccionado">Quitar</button></div>
+            <div class="qhead"><span id="quoteLabel">Texto seleccionado</span></div>
             <blockquote id="quoteText"></blockquote>
+            <button type="button" id="quoteClear" class="linkbtn" aria-label="Quitar texto seleccionado" title="Quitar texto seleccionado">✕</button>
           </div>
-          <textarea id="q" rows="1" placeholder="Pregunta o selecciona texto del PDF…" aria-label="Tu pregunta"></textarea>
+          <textarea id="q" rows="1" placeholder="Escribe tu pregunta o selecciona texto del PDF…" aria-label="Tu pregunta"></textarea>
         </div>
-        <button class="sendbtn" id="sendBtn" type="submit" aria-label="Enviar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="sendbtn" id="sendBtn" type="submit" aria-label="Copiar consulta" title="Copiar la consulta para pegarla en tu IA"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg><span class="cplbl">Copiar</span></button>
         <button class="fsbtn" id="fsBtn" type="button" aria-pressed="false" title="Ver las respuestas en pantalla completa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Pantalla completa</span></button>
       </form>
+      <div class="aibar" id="aiBar" role="group" aria-label="Abrir una IA para pegar la consulta">
+        <span class="aitx">Copiar y abrir en:</span>
+        <a data-ai="NotebookLM" href="https://notebooklm.google.com/" target="_blank" rel="noopener"><b class="aiic" style="--ac:#1f1f1f">N</b>NotebookLM</a>
+        <a data-ai="Copilot" href="https://copilot.microsoft.com/" target="_blank" rel="noopener"><b class="aiic" style="--ac:#0b6cbd">C</b>Copilot</a>
+        <a data-ai="Claude" href="https://claude.ai/new" target="_blank" rel="noopener"><b class="aiic" style="--ac:#c96442">C</b>Claude</a>
+        <a data-ai="Gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener"><b class="aiic" style="--ac:#4f6bed">G</b>Gemini</a>
+      </div>
+      <p class="askhelp">Selecciona texto (doble clic) y toca <b>Preguntar</b>, o escribe tu pregunta. Con <b>Copiar</b> o con una de las IA de arriba, Atril copia la consulta con el texto y la página; luego solo la pegas.</p>
     </section>
   </section>
   <aside class="panel nb" id="nb" hidden aria-label="Cuaderno de notas">
@@ -1383,19 +1448,16 @@ const SAMPLE = {
     { paras: [
       "Escuchar un documento. Pulsa el botón de reproducir y la voz leerá desde el punto en que te quedaste. Una línea roja fina subraya cada palabra mientras la voz la lee, para que sigas la lectura.",
       "Si tocas tres veces cualquier frase del texto (triple clic en computadora), la lectura empieza desde ese punto. Con dos toques (doble clic) seleccionas una palabra para marcarla o subrayarla. Puedes elegir entre voces en español y en inglés, y ajustar la velocidad entre 0,75 y 2 veces.",
-      "Si el documento está en un idioma y quieres escucharlo en el otro, activa la opción Traducir. Gemma traduce cada página justo antes de leerla y guarda la traducción para la próxima vez."
+      "En «Más» → «Modo seguimiento de lectura» eliges si se subraya solo la palabra que se está leyendo o la frase completa."
     ]},
     { paras: [
-      "Hacer preguntas. En el panel de preguntas puedes escribir cualquier duda sobre el documento abierto. Las respuestas se basan solo en el contenido del PDF e indican las páginas de donde sale la información.",
-      "Toca una referencia de página para ir directamente a ese punto del documento. También puedes escuchar cada respuesta en voz alta.",
-      "Privacidad. Los PDF y su texto se guardan en este navegador y en una carpeta privada de tu Google Drive. Las preguntas y traducciones las responde Gemma en tu propia computadora, con Ollama, así que el texto no sale a ningún otro servicio.",
+      "Hacer preguntas. Selecciona texto con doble clic y toca Preguntar, o escribe tu duda en el panel de preguntas. Atril arma la consulta con el texto y la página.",
+      "Toca Copiar, o una de las IA (NotebookLM, Copilot, Claude o Gemini): la consulta queda copiada y la IA se abre en otra pestaña; solo tienes que pegarla.",
+      "Privacidad. Los PDF y su texto se guardan en este navegador y en una carpeta privada de tu Google Drive. Atril no envía tu texto a ningún servicio: solo copias la consulta y tú decides dónde pegarla.",
       "Los archivos escaneados como imagen no tienen texto seleccionable, así que Atril no puede leerlos. En ese caso conviene pasarlos antes por un programa de reconocimiento de texto."
     ]}
   ],
-  chat: [
-    { role: "user", content: "¿Mis documentos se suben a internet?", example: true },
-    { role: "assistant", content: "Solo a tu cuenta. Los PDF y su texto se guardan **en este navegador y en tu Google Drive privado** [p. 3]. Se guardan en este navegador y en una carpeta privada de tu Google Drive, y las preguntas las responde Gemma en tu propia computadora [p. 3].", example: true }
-  ]
+  chat: []
 };
 
 /* ---------- Estado ---------- */
@@ -4263,8 +4325,8 @@ function renderLangUI() {
     note.hidden = false;
     $("#trText").textContent = `El documento está en ${LANG_NAME[d.lang]}.`;
     $("#trLabel").textContent = `Traducir al ${LANG_NAME[S.readLang]}`;
-    $("#trToggle").checked = S.translate; $("#trToggle").disabled = !sample;
-    if (!sample) $("#trText").textContent += " La traducción necesita Gemma (Ollama).";
+    $("#trToggle").checked = S.translate; $("#trToggle").disabled = !sample; $("#trToggle").closest(".switch").hidden = !sample;
+    if (!sample) $("#trText").textContent += ` La voz en ${LANG_NAME[S.readLang]} lo leerá tal como está escrito.`;
   } else note.hidden = true;
   if (!voicesFor(S.readLang).length && hasTTS && speechSynthesis.getVoices().length) status(`Este dispositivo no tiene voces en ${LANG_NAME[S.readLang]} instaladas; se usará la voz del sistema.`);
 }
@@ -4483,8 +4545,8 @@ function renderQuote() {
   const box = $("#quoteBox");
   if (!quote) { box.hidden = true; $("#q").placeholder = DEF_PH; return; }
   box.hidden = false;
-  $("#quoteText").textContent = quote.text;
-  $("#quoteLabel").textContent = "Texto seleccionado · " + (quote.p1 === quote.p2 ? `pág. ${quote.p1 + 1}` : `págs. ${quote.p1 + 1}–${quote.p2 + 1}`);
+  $("#quoteText").textContent = quote.text; $("#quoteText").title = quote.text;
+  $("#quoteLabel").textContent = (quote.p1 === quote.p2 ? `Pág. ${quote.p1 + 1}` : `Págs. ${quote.p1 + 1}–${quote.p2 + 1}`);
   $("#q").placeholder = "Escribe qué quieres saber sobre este texto (opcional)…";
 }
 let lastPtrType = "mouse", ptrDown = false;
@@ -4545,7 +4607,7 @@ $("#selGrip").addEventListener("pointerdown", (e) => {
 $("#selPin").addEventListener("click", () => { selPinned = false; selDock = ""; contTool = null; saveSelBar(); placePinned(); renderPin(); hideSelBar(true); toast("La barra vuelve a aparecer junto al texto seleccionado."); });
 requestAnimationFrame(() => renderPin());
 $$("#selBar .dot").forEach(b => b.addEventListener("click", () => { markColor = b.dataset.c; try { localStorage.setItem("atril-color", markColor); } catch {} renderDots(); }));
-$("#selAsk").addEventListener("click", () => { hideSelBar(true); setAsk(true); const q = $("#q"); q.focus({ preventScroll: true }); $("#askPanel").scrollIntoView({ block: "nearest" }); });
+$("#selAsk").addEventListener("click", () => { hideSelBar(true); setAsk(true); const q = $("#q"); q.focus({ preventScroll: true }); $("#askPanel").scrollIntoView({ block: "nearest" }); if (quote?.text) copyText(quote.text).then(ok => { if (ok) toast("Texto copiado y puesto en «Preguntar». Escribe tu pregunta y toca Copiar o una IA."); }); });
 $("#markPopDel").addEventListener("click", () => removeMark($("#markPop").dataset.mid));
 document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#markPop")) hideMarkPop(); });
 $("#readerScroll").addEventListener("scroll", () => { hideMarkPop(); if (!selBar().hidden) { const s = getSelection(); if (s && s.rangeCount && !s.isCollapsed) showSelBar(s.getRangeAt(0).getBoundingClientRect(), !!lastSegs); } }, { passive: true });
@@ -4553,8 +4615,55 @@ $("#dlBtn").addEventListener("click", downloadMarked);
 renderDots();
 $("#quoteClear").addEventListener("click", () => { quote = null; renderQuote(); });
 let ansOpen = true, askFull = false, askOpen = false;
+/* En pantallas anchas, «Preguntar» se abre como panel lateral a la derecha del documento (el documento conserva toda su altura) */
+const askSideOK = () => matchMedia("(min-width: 1100px)").matches;
+/* Ventana flotante para «Preguntar»: se arrastra desde su barra superior y recuerda posición y tamaño */
+let askFloat = false, askFloatPos = null;
+try { const v = JSON.parse(localStorage.getItem("atril-askfloat") || "null"); if (v) { askFloat = !!v.on; askFloatPos = v.pos || null; } } catch {}
+const saveAskFloat = () => { try { localStorage.setItem("atril-askfloat", JSON.stringify({ on: askFloat, pos: askFloatPos })); } catch {} };
+function placeAskFloat() {
+  const p = $("#askPanel"), on = askOpen && !askFull && askFloat;
+  document.body.classList.toggle("askfloat", on);
+  $("#askFloat").setAttribute("aria-pressed", String(askFloat));
+  $("#askFloat").title = askFloat ? "Volver a fijar el panel" : "Ventana flotante: muévela a donde quieras";
+  if (!on) { p.style.left = p.style.top = p.style.width = p.style.height = ""; return; }
+  const w = Math.min(askFloatPos?.w || 400, innerWidth - 16), h = askFloatPos?.h ? Math.min(askFloatPos.h, innerHeight - 16) : null;
+  p.style.width = w + "px"; if (h) p.style.height = h + "px";
+  const ph = p.offsetHeight;
+  const x = askFloatPos ? askFloatPos.x * innerWidth : innerWidth - w - 24, y = askFloatPos ? askFloatPos.y * innerHeight : innerHeight - ph - 90;
+  p.style.left = Math.max(8, Math.min(innerWidth - w - 8, x)) + "px"; p.style.top = Math.max(8, Math.min(innerHeight - ph - 8, y)) + "px";
+}
+$("#askFloat").addEventListener("click", () => {
+  askFloat = !askFloat; saveAskFloat(); placeAskSide(); placeAskFloat();
+  toast(askFloat ? "Ventana flotante: arrástrala desde su barra superior y cambia su tamaño desde la esquina." : "Panel de preguntas fijo otra vez.");
+});
+$("#askPanel .askhead").addEventListener("pointerdown", (e) => {
+  if (!document.body.classList.contains("askfloat") || e.target.closest("button,a,input,textarea")) return;
+  e.preventDefault();
+  const p = $("#askPanel"), r = p.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top, hd = e.currentTarget;
+  hd.setPointerCapture(e.pointerId); p.classList.add("moving");
+  const mv = (ev) => { p.style.left = Math.max(4, Math.min(innerWidth - r.width - 4, ev.clientX - dx)) + "px"; p.style.top = Math.max(4, Math.min(innerHeight - 40, ev.clientY - dy)) + "px"; };
+  const up = () => { hd.removeEventListener("pointermove", mv); hd.removeEventListener("pointerup", up); p.classList.remove("moving"); const rr = p.getBoundingClientRect(); askFloatPos = { ...(askFloatPos || {}), x: rr.left / innerWidth, y: rr.top / innerHeight }; saveAskFloat(); };
+  hd.addEventListener("pointermove", mv); hd.addEventListener("pointerup", up);
+});
+try { new ResizeObserver(() => { const p = $("#askPanel"); if (!document.body.classList.contains("askfloat") || p.classList.contains("moving") || !p.style.width) return; const r = p.getBoundingClientRect(); if (r.width < 50) return; askFloatPos = { ...(askFloatPos || { x: r.left / innerWidth, y: r.top / innerHeight }), w: Math.round(r.width), h: Math.round(r.height) }; saveAskFloat(); }).observe($("#askPanel")); } catch {}
+addEventListener("resize", () => placeAskFloat());
+function placeAskSide() {
+  const side = askOpen && !askFull && !askFloat && askSideOK();
+  document.body.classList.toggle("askside", side);
+  const p = $("#askPanel"), rd = $(".reader");
+  if (!side || !rd) { p.style.removeProperty("--ask-top"); return; }
+  const rr = rd.getBoundingClientRect(), rh = rd.querySelector(".rhead"), hr = rh && rh.offsetParent ? rh.getBoundingClientRect() : null;
+  const w = Math.round(Math.min(420, Math.max(320, rr.width * 0.32)));
+  p.style.setProperty("--ask-top", Math.round(hr ? hr.bottom : rr.top) + "px");
+  p.style.setProperty("--ask-bot", Math.max(0, Math.round(innerHeight - rr.bottom)) + "px");
+  p.style.setProperty("--ask-right", Math.max(0, Math.round(innerWidth - rr.right)) + "px");
+  document.documentElement.style.setProperty("--ask-w", w + "px");
+}
+addEventListener("resize", () => placeAskSide());
+try { new ResizeObserver(() => placeAskSide()).observe(document.querySelector(".reader")); } catch {}
 function setAsk(on, focus = true) {
-  askOpen = on; $("#askPanel").hidden = !on;
+  askOpen = on; $("#askPanel").hidden = !on; placeAskSide(); placeAskFloat();
   const b = $("#askBtn"); b.setAttribute("aria-expanded", String(on)); b.classList.toggle("on", on);
   if (!on && askFull) setAskFull(false);
   if (on) { renderAnsToggle(); if (focus) requestAnimationFrame(() => $("#q").focus({ preventScroll: true })); }
@@ -4566,9 +4675,8 @@ function setAskFull(on) {
   p.classList.toggle("full", on); b.setAttribute("aria-pressed", String(on));
   b.lastChild.textContent = on ? "Salir de pantalla completa" : "Pantalla completa";
   b.title = on ? "Volver al documento" : "Ver las respuestas en pantalla completa";
-  if (on) { ansOpen = true; $("#chatScroll").hidden = false; }
+  placeAskSide(); placeAskFloat();
   renderAnsToggle();
-  if (on) $("#chatScroll").hidden = false;
   requestAnimationFrame(() => { const sc = $("#chatScroll"); sc.scrollTop = sc.scrollHeight; });
 }
 $("#fsBtn").addEventListener("click", () => setAskFull(!askFull));
@@ -4760,7 +4868,7 @@ function msgNode(m, idx) {
   const exp = el("span", { class: "exp" }, el("span", { class: "explab", text: "Descargar:" }));
   for (const [fmt, lab] of [["pdf", "PDF"], ["docx", "Word"], ["md", "Markdown"]]) { const b = el("button", { type: "button", class: "expbtn", text: lab, title: `Descargar esta respuesta como ${lab}` }); b.addEventListener("click", () => exportAnswer(m.content, fmt, b)); exp.append(b); }
   const toNb = el("button", { type: "button", title: "Copiar esta respuesta al cuaderno" }); toNb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="13" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/></svg>Al cuaderno';
-  toNb.addEventListener("click", () => { nbAddText(plainKeepLines(m.content), { tag: "Respuesta de Gemma" }); toast("Respuesta copiada al cuaderno."); });
+  toNb.addEventListener("click", () => { nbAddText(plainKeepLines(m.content), { tag: "Respuesta" }); toast("Respuesta copiada al cuaderno."); });
   return el("div", { class: "m bot" }, bubble, el("div", { class: "mact" }, toNb, listen, copy, m.example ? null : exp, m.example ? el("span", { class: "tag", style: "align-self:center;margin-left:4px", text: "Ejemplo" }) : null));
 }
 function renderChat() {
@@ -4772,11 +4880,10 @@ function renderChat() {
 }
 function renderChips() {
   const c = $("#chips"); c.replaceChildren();
-  if (S.doc.chat.filter(m => !m.example).length > 2) return;
   const qs = S.doc.lang === "en"
     ? ["Resume el documento en 5 puntos", "What are the key ideas?", "¿Qué conclusiones presenta?"]
     : ["Resume el documento en 5 puntos", "¿Cuáles son las ideas principales?", "Explain this document in English"];
-  for (const q of qs) { const b = el("button", { class: "chip", type: "button", text: q }); b.addEventListener("click", () => ask(q)); c.append(b); }
+  for (const q of qs) { const b = el("button", { class: "chip", type: "button", text: q }); b.addEventListener("click", () => { $("#q").value = q; autoGrow(); $("#q").focus(); }); c.append(b); }
 }
 
 $("#msgs").addEventListener("click", (e) => { const c = e.target.closest(".cite"); if (c) { const p = +c.dataset.page - 1; if (p >= 0 && p < S.doc.pages.length) gotoPage(p); } });
@@ -4797,56 +4904,43 @@ function buildContext(q) {
   const index = d.pages.map((p, i) => `p.${i + 1}: ${(p.paras[0] || "").slice(0, 110)}`).join("\n").slice(0, 18000);
   return { ctx: `<indice primeras_lineas_de_cada_pagina>\n${index}\n</indice>\n<extractos_relevantes>\n${picked.map(c => `<extracto pagina="${c.pi + 1}">\n${c.t}\n</extracto>`).join("\n")}\n</extractos_relevantes>`, partial: true };
 }
-async function ask(qRaw) {
-  const qText = (qRaw || "").trim(); const qq = quote;
-  if (!qText && !qq) return;
-  if (!sample) { toast("Las preguntas necesitan Gemma (Ollama). Revisa Ajustes."); return; }
-  if (askCtl) return;
-  const d = S.doc;
-  const q = qq ? `Fragmento seleccionado del documento (${qq.p1 === qq.p2 ? "p. " + (qq.p1 + 1) : "pp. " + (qq.p1 + 1) + "-" + (qq.p2 + 1)}):\n"""${qq.text}"""\n\n${qText || "Explícame este fragmento con palabras sencillas y en su contexto dentro del documento."}` : qText;
-  d.chat = d.chat.filter(m => !m.example);
-  d.chat.push(qq ? { role: "user", content: q, quote: qq, q: qText } : { role: "user", content: q });
-  quote = null; renderQuote(); try { getSelection().removeAllRanges(); } catch {}
-  ansOpen = true; $("#chatScroll").hidden = false;
-  renderChat();
-  const thinking = el("div", { class: "m bot" }, el("div", { class: "bubble thinking", text: "Pensando…" }));
-  $("#msgs").append(thinking); $("#chatScroll").scrollTop = $("#chatScroll").scrollHeight;
-  $("#q").value = ""; autoGrow();
-  askCtl = new AbortController(); setSendMode(true);
-  const { ctx, partial } = buildContext(qText + " " + (qq?.text || ""));
-  const rules = `Eres el asistente de lectura de la aplicación Atril. Responde preguntas sobre el PDF «${d.name}» usando SOLO el contenido que aparece abajo.
-Reglas:
-- Responde en el mismo idioma en que está escrita la última pregunta (español o inglés), aunque el documento esté en otro idioma. Si solo hay un fragmento seleccionado sin pregunta propia, responde en el idioma del fragmento.
-- Si la pregunta incluye un fragmento seleccionado, céntrate en ese fragmento y usa el resto del documento como contexto.
-- Cita las páginas en el formato [p. N] justo después del dato que sale de ellas.
-- Para preguntas sobre el contenido, usa solo el documento; si la respuesta no está, dilo con claridad y no inventes.
-- También atiendes cualquier petición relacionada: resúmenes, guías de estudio, esquemas, cuestionarios con respuestas, fichas, informes, ensayos, cartas, presentaciones en texto, traducciones, explicaciones de conceptos, ejemplos o ejercicios. Puedes usar conocimiento general para eso, y aclara brevemente cuando algo no viene del documento.
-- Si te piden un documento, PDF, Word o archivo: escríbelo completo y listo para usar. Empieza con un título "# Título", usa "## " para secciones, listas y tablas en formato markdown si ayudan. No digas que no puedes crear archivos: la aplicación muestra botones para descargar tu respuesta como PDF, Word o Markdown. No expliques cómo descargarlo.
-- En respuestas normales sé claro y breve, con listas cortas con "- " cuando ayuden y **negritas** con moderación; reserva los títulos y tablas para cuando te pidan un documento o una comparación.${partial ? "\n- El documento es largo: solo tienes un índice y los extractos más relevantes. Si eso limita la respuesta, menciónalo." : ""}
-
-${ctx}`;
-  const hist = d.chat.slice(0, -1).slice(-6).map(m => ({ role: m.role, content: m.content }));
-  const input = [{ role: "user", content: rules }, ...hist, { role: "user", content: q }];
-  const bubble = thinking.querySelector(".bubble");
-  try {
-    const { text, truncated } = await sample(input, { cache: false, signal: askCtl.signal, onText: ({ text }) => { bubble.classList.remove("thinking"); bubble.innerHTML = md(text); $("#chatScroll").scrollTop = $("#chatScroll").scrollHeight; } });
-    d.chat.push({ role: "assistant", content: text + (truncated ? "\n\n(Respuesta recortada por longitud.)" : "") });
-  } catch (e) {
-    if (e?.text) d.chat.push({ role: "assistant", content: e.text + (e.code === "cancelled" ? "\n\n(Detenido)" : "") });
-    else if (e?.code === "cancelled") d.chat.pop();
-    if (e?.code !== "cancelled") toast(errCopy(e));
-    if (e?.code === "not_granted") permNotice("denied");
-    else if (["sampling_disabled", "not_declared", "capability_disabled"].includes(e?.code)) disableAsk(errCopy(e));
-  } finally {
-    askCtl = null; setSendMode(false); idbPut(d); if (S.doc === d) renderChat();
+/* «Preguntar»: arma la consulta (pregunta + texto seleccionado + documento y página) y la copia
+   para pegarla en la IA que prefieras (NotebookLM, Copilot, Claude, Gemini). */
+function buildQuery() {
+  const qText = ($("#q").value || "").trim(), qq = quote, d = S.doc;
+  if (!qText && !qq) return "";
+  const parts = [];
+  if (d && !d.sample) parts.push(`Sobre el documento «${d.name}»:`);
+  if (qq) parts.push(`Texto seleccionado (${qq.p1 === qq.p2 ? "pág. " + (qq.p1 + 1) : "págs. " + (qq.p1 + 1) + "–" + (qq.p2 + 1)}):\n"""\n${qq.text.trim()}\n"""`);
+  parts.push(qText ? (qq ? "Pregunta: " + qText : qText) : "Explícame este fragmento con palabras sencillas y en su contexto.");
+  return parts.join("\n\n");
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch {
+    const ta = el("textarea", { style: "position:fixed;left:-9999px;top:0;opacity:0" }); ta.value = t; document.body.append(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
   }
 }
+async function ask(target) {
+  const t = buildQuery();
+  if (!t) { toast("Escribe una pregunta o selecciona texto del PDF."); $("#q").focus(); return false; }
+  const ok = await copyText(t);
+  toast(ok ? (target ? `Consulta copiada. Pégala en ${target} (Ctrl+V o mantén presionado → Pegar).` : "Consulta copiada. Ábrela en tu IA y pégala (Ctrl+V o mantén presionado → Pegar).") : "No se pudo copiar automáticamente: selecciona el texto y cópialo a mano.");
+  const b = $("#sendBtn"); b.classList.add("done"); setTimeout(() => b.classList.remove("done"), 1400);
+  return ok;
+}
+$("#aiBar").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-ai]"); if (!a) return;
+  const t = buildQuery(); if (!t) return;          // sin consulta: solo abre la IA
+  copyText(t).then(ok => toast(ok ? `Consulta copiada. Pégala en ${a.dataset.ai} (Ctrl+V o mantén presionado → Pegar).` : "No se pudo copiar automáticamente."));
+});
 function setSendMode(busy) {
   const b = $("#sendBtn");
   b.innerHTML = busy ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   b.setAttribute("aria-label", busy ? "Detener" : "Enviar");
 }
-$("#askForm").addEventListener("submit", (e) => { e.preventDefault(); if (askCtl) { askCtl.abort(); return; } ask($("#q").value); });
+$("#askForm").addEventListener("submit", (e) => { e.preventDefault(); ask(); });
 const autoGrow = () => { const t = $("#q"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; };
 $("#q").addEventListener("input", autoGrow);
 $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#askForm").requestSubmit(); } });
@@ -4873,7 +4967,7 @@ function renderPermBtn(st) {
   const b = $("#permBtn"); if (!b) return;
   b.hidden = !perms;
   b.classList.toggle("ok", st === "granted");
-  b.title = "Cuenta de Google, Drive y Gemma";
+  b.title = "Cuenta de Google y Drive";
 }
 async function openPermissions() {
   if (!perms) { toast("Abre Ajustes desde el menú."); return; }
@@ -4917,7 +5011,6 @@ function speakAnswer(text, btn) {
 })();
 (async () => {
   try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
-  if (!sample) disableAsk("Las preguntas y la traducción necesitan Gemma (Ollama). La lectura en voz alta funciona en cualquier caso.");
   try { perms = await window.claude?.use?.("permissions"); } catch { perms = null; }
   if (perms && sample) refreshPerms(); else renderPermBtn();
   if (S.doc) renderLangUI();
