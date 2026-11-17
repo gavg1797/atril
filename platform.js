@@ -814,7 +814,47 @@
     setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
     try { navigator.storage?.persist?.(); } catch {}
     modelInfo().then(i => { if (i.complete) { cacheGemmaRuntime(); if (MODELS[lModel()].kind === "cpu") setIsolation(true); } }).catch(() => {});
+    addLogoutButton();
     if (offlineMode) setTimeout(() => toast(navigator.onLine ? "Entraste sin sesión de Google: inicia sesión para guardar en Drive." : "Modo sin conexión: tus cambios se guardan en este dispositivo y se subirán a Drive cuando vuelvas a tener internet."), 800);
+  }
+  // Botón «Cerrar sesión» visible en la barra superior (además del que está en Ajustes)
+  function addLogoutButton() {
+    const top = document.querySelector("header.top");
+    if (!top || document.getElementById("pfOutBtn")) return;
+    const b = h("button", { id: "pfOutBtn", class: "btn pfoutbtn", type: "button", title: user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión" });
+    b.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg><span>Cerrar sesión</span>`;
+    b.addEventListener("click", askLogout);
+    const up = document.getElementById("uploadTop");
+    if (up) top.insertBefore(b, up); else top.append(b);
+  }
+  function askLogout() {
+    let d = document.getElementById("pfOut");
+    if (!d) {
+      d = h("div", { id: "pfOut", role: "dialog", "aria-modal": "true", "aria-labelledby": "pfOutTitle" });
+      d.innerHTML = `<div class="pfcard">
+        <div class="pfhead"><h2 id="pfOutTitle">Cerrar sesión</h2><button class="pfx" id="pfOutX" type="button" aria-label="Cancelar">✕</button></div>
+        <p class="pfline" id="pfOutWho"></p>
+        <p class="pfhint">Antes de salir, Atril guarda en Google Drive los cambios pendientes.</p>
+        <div class="pfrow wrap" style="margin-top:14px">
+          <button class="pfbtn pfprimary" id="pfOutYes" type="button">Cerrar sesión</button>
+          <button class="pfbtn pfdanger" id="pfOutWipe" type="button">Cerrar sesión y borrar de este dispositivo</button>
+          <button class="pfbtn" id="pfOutNo" type="button">Cancelar</button>
+        </div>
+        <p class="pfhint">«Borrar de este dispositivo» quita los libros guardados en este navegador (útil en una computadora prestada). Tu copia en Google Drive no se toca.</p>
+      </div>`;
+      document.body.append(d);
+      const close = () => { d.hidden = true; };
+      d.addEventListener("click", (e) => { if (e.target === d) close(); });
+      d.querySelector("#pfOutX").addEventListener("click", close);
+      d.querySelector("#pfOutNo").addEventListener("click", close);
+      addEventListener("keydown", (e) => { if (e.key === "Escape" && !d.hidden) close(); });
+      const go = async (wipe, btn) => { d.querySelectorAll("button").forEach(x => x.disabled = true); btn.textContent = "Cerrando sesión…"; await logout(wipe); };
+      d.querySelector("#pfOutYes").addEventListener("click", (e) => go(false, e.currentTarget));
+      d.querySelector("#pfOutWipe").addEventListener("click", (e) => go(true, e.currentTarget));
+    }
+    d.querySelector("#pfOutWho").textContent = user?.email ? `Sesión iniciada como ${user.email}.` : (offlineMode ? "Estás usando Atril sin conexión." : "");
+    d.hidden = false;
+    d.querySelector("#pfOutYes").focus();
   }
   addEventListener("beforeunload", (e) => { if (started && window.__atrilPending?.()) { e.preventDefault(); e.returnValue = ""; } });
 
