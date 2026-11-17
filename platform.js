@@ -498,7 +498,7 @@
       <ul class="pfpoints">
         <li><b>Privado.</b> Tus libros se guardan en este navegador y en la carpeta «Atril - biblioteca» de tu Google Drive. Nadie más tiene acceso.</li>
         <li><b>Gemma 4 en tu dispositivo.</b> Las preguntas y traducciones las responde Gemma dentro de tu celular, tableta o computadora; el texto no va a otros servicios.</li>
-        <li><b>Varias cuentas.</b> Cada cuenta de Google tiene su propia biblioteca en este navegador; cambiar de cuenta no borra nada.</li>
+        <li><b>Cada cuenta es privada.</b> Solo ves la biblioteca de la cuenta con la que entras, y al cerrar sesión no queda nada en este dispositivo.</li>
         <li><b>Cada vez que abres Atril</b> tienes que iniciar sesión.</li>
       </ul>
       <button class="pflink" id="pfOpenSet" type="button">Ajustes de Google y Gemma</button>
@@ -509,8 +509,8 @@
       <section id="pfAcct" hidden>
         <h3>Cuenta de Google</h3>
         <p class="pfline" id="pfWho"></p>
-        <div class="pfrow wrap"><button class="pfbtn" id="pfSyncNow" type="button">Guardar en Drive ahora</button><button class="pfbtn" id="pfLogout" type="button">Cerrar sesión</button><button class="pfbtn pfdanger" id="pfWipe" type="button">Cerrar sesión y borrar de este dispositivo</button></div>
-        <p class="pfhint">«Borrar de este dispositivo» quita los libros guardados en este navegador. Tu copia en Google Drive no se toca.</p>
+        <div class="pfrow wrap"><button class="pfbtn" id="pfSyncNow" type="button">Guardar en Drive ahora</button><button class="pfbtn" id="pfLogout" type="button">Cerrar sesión</button></div>
+        <p class="pfhint">Al cerrar sesión, Atril guarda tus cambios en Google Drive y no deja tu biblioteca en este dispositivo.</p>
       </section>
       <section id="pfOffSet" hidden>
         <h3>Sin conexión</h3>
@@ -626,8 +626,7 @@
     });
     dlSubs.add(() => { renderLocal(); renderPill(); });
     $("#pfRenew").addEventListener("click", renew);
-    $("#pfLogout").addEventListener("click", () => logout(false));
-    $("#pfWipe").addEventListener("click", () => logout(true));
+    $("#pfLogout").addEventListener("click", () => { closeSettings(); askLogout(); });
     $("#pfSyncNow").addEventListener("click", async () => { const b = $("#pfSyncNow"); b.disabled = true; b.textContent = "Guardando…"; try { await window.__atrilSyncNow?.(); } finally { b.disabled = false; b.textContent = "Guardar en Drive ahora"; } });
     if (!cfg.googleClientId) msg("Primero pega tu ID de cliente de Google en «Ajustes de Google y Gemma».", true);
   }
@@ -769,68 +768,49 @@
     } catch (e) { bar.firstElementChild.textContent = e.message || "No se pudo renovar la sesión."; }
     finally { b.disabled = false; }
   }
-  /* ---------- Varias cuentas en el mismo navegador ----------
-   * Los libros de cada cuenta viven en su propia base de datos (IndexedDB).
-   * Las preferencias (claves «atril-…» de localStorage) se guardan aparte al cambiar de cuenta y se restauran al volver. */
-  const ACCTS_KEY = "atril@cuentas";
-  const accts = () => { try { return JSON.parse(localStorage.getItem(ACCTS_KEY) || "{}"); } catch { return {}; } };
-  const saveAccts = (a) => { try { localStorage.setItem(ACCTS_KEY, JSON.stringify(a)); } catch {} };
-  const shortHash = (t) => { let x = 5381; for (const c of String(t)) x = ((x * 33) ^ c.charCodeAt(0)) >>> 0; return x.toString(36); };
-  function dbFor(sub, email) {
-    const a = accts();
-    if (!a[sub]) {
-      const used = new Set(Object.values(a).map(x => x.db));
-      const own = ownerRec();
-      // la primera cuenta (la que ya usaba Atril) conserva la base de datos original «atril»
-      const legacy = !used.has("atril") && (!own || own.sub === sub);
-      a[sub] = { db: legacy ? "atril" : "atril-u-" + shortHash(sub) };
-    }
-    if (email) a[sub].email = email;
-    saveAccts(a); return a[sub].db;
+  // Limpia restos de versiones anteriores (bibliotecas guardadas aparte por cuenta).
+  async function cleanupLegacy() {
+    const del = (n) => new Promise((res) => { try { const r = indexedDB.deleteDatabase(n); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+    try { localStorage.removeItem("atril@cuentas"); } catch {}
+    await del("atril-cuentas");
+    try { const dbs = await indexedDB.databases?.(); for (const d of dbs || []) if (d.name && d.name.startsWith("atril-u-")) await del(d.name); } catch {}
   }
   const personalKeys = () => Object.keys(localStorage).filter(k => k.startsWith("atril-") && k !== CFG_KEY && k !== OWNER_KEY);
-  function kv(mode, fn) {
-    return new Promise((res) => {
-      try {
-        const r = indexedDB.open("atril-cuentas", 1);
-        r.onupgradeneeded = () => r.result.createObjectStore("ls");
-        r.onsuccess = () => { const db = r.result; const tx = db.transaction("ls", mode); const st = tx.objectStore("ls"); const out = fn(st); tx.oncomplete = () => { db.close(); res(out && "result" in out ? out.result : undefined); }; tx.onerror = tx.onabort = () => { db.close(); res(undefined); }; };
-        r.onerror = () => res(undefined);
-      } catch { res(undefined); }
-    });
-  }
-  async function stashLs(sub) {
-    const snap = {}; for (const k of personalKeys()) snap[k] = localStorage.getItem(k);
-    await kv("readwrite", (st) => { st.put(snap, sub); });
-    for (const k of Object.keys(snap)) localStorage.removeItem(k);
-  }
-  async function restoreLs(sub) {
-    const snap = await kv("readonly", (st) => st.get(sub));
-    if (!snap || typeof snap !== "object") return;
-    for (const [k, v] of Object.entries(snap)) { try { if (v != null) localStorage.setItem(k, v); } catch {} }
-    await kv("readwrite", (st) => { st.delete(sub); });
-  }
-  async function switchAccount(from, to) {
-    dbFor(from.sub, from.email);       // registra la cuenta anterior con su base de datos
-    await stashLs(from.sub);           // guarda aparte sus preferencias y su estado de Drive
-    await restoreLs(to.sub);           // y trae las de la cuenta que entra, si ya había usado Atril aquí
-  }
   async function wipeDevice() {
-    // borra solo la biblioteca de la cuenta activa; las de otras cuentas quedan intactas
-    const sub = user?.sub || ownerRec()?.sub;
-    const name = window.__atrilDbName || (sub ? dbFor(sub) : "atril");
-    await new Promise((res) => { try { const r = indexedDB.deleteDatabase(name); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+    // borra toda la información personal de este dispositivo (la copia de Google Drive no se toca)
+    await new Promise((res) => { try { const r = indexedDB.deleteDatabase("atril"); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
     try { for (const k of personalKeys()) localStorage.removeItem(k); localStorage.removeItem(OWNER_KEY); } catch {}
-    if (sub) { const a = accts(); delete a[sub]; saveAccts(a); await kv("readwrite", (st) => { st.delete(sub); }); }
+    await cleanupLegacy();
     try { for (const k of await caches.keys()) if (k.startsWith("atril-data")) await caches.delete(k); } catch {}
   }
-  async function logout(wipe) {
-    const pending = window.__atrilPending?.();
-    if (pending && token) { try { await window.__atrilSyncNow?.(); } catch {} }
-    if (wipe) await wipeDevice();
+  // Cerrar sesión: guarda en Google Drive y borra todo de este dispositivo.
+  async function logout(force) {
+    if (window.__atrilPending?.() && token) { try { await window.__atrilSyncNow?.(); } catch {} }
+    if (!force && window.__atrilPending?.()) {
+      const go = await confirmUnsaved();
+      if (!go) return false;
+    }
+    // evita que el lector vuelva a escribir algo al salir de la página
+    const set = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) { if (this === localStorage && String(k).startsWith("atril-") && k !== CFG_KEY) return; return set.call(this, k, v); };
+    await wipeDevice();
     try { if (token) google.accounts.oauth2.revoke(token, () => {}); } catch {}
     token = null; user = null;
     location.reload();
+    return true;
+  }
+  function confirmUnsaved() {
+    return new Promise((res) => {
+      const d = document.getElementById("pfOut"); if (!d) { res(true); return; }
+      const card = d.querySelector(".pfcard"); const keep = card.innerHTML;
+      card.innerHTML = `<div class="pfhead"><h2>Cambios sin guardar</h2></div>
+        <p class="pfwarn">No se pudieron guardar tus últimos cambios en Google Drive (sin internet o la sesión de Google venció). Si cierras sesión ahora, esos cambios se perderán.</p>
+        <div class="pfrow wrap" style="margin-top:14px"><button class="pfbtn" id="pfUnsNo" type="button">Volver a Atril</button><button class="pfbtn pfdanger" id="pfUnsYes" type="button">Cerrar sesión de todos modos</button></div>`;
+      d.hidden = false;
+      const done = (v) => { card.innerHTML = keep; d.hidden = true; d.__wired = false; res(v); };
+      card.querySelector("#pfUnsNo").onclick = () => done(false);
+      card.querySelector("#pfUnsYes").onclick = () => done(true);
+    });
   }
 
   async function login() {
@@ -840,15 +820,11 @@
       msg("Comprobando tu cuenta…");
       const me = await whoAmI();
       const owner = (() => { try { return JSON.parse(localStorage.getItem(OWNER_KEY) || "null"); } catch { return null; } })();
-      // Cada cuenta tiene su propio espacio en este navegador: al cambiar de cuenta no se borra nada.
-      if (owner && owner.sub !== me.sub) {
-        msg(`Guardando aparte la biblioteca de ${owner.email || "la otra cuenta"}…`);
-        await switchAccount(owner, me);
-        setTimeout(() => toast(`La biblioteca de ${owner.email || "la otra cuenta"} sigue guardada en este dispositivo. Vuelve a ella iniciando sesión con esa cuenta.`), 900);
-      } else {
-        await restoreLs(me.sub); // por si esta cuenta tenía preferencias guardadas aparte
-      }
-      window.__atrilDbName = dbFor(me.sub, me.email);
+      // Privacidad: en este dispositivo solo puede haber información de la cuenta que inicia sesión.
+      // Si quedó algo de otra cuenta (por ejemplo, cerró el navegador sin cerrar sesión), se borra; su copia está en su Google Drive.
+      if (owner && owner.sub !== me.sub) { msg("Preparando tu biblioteca…"); await wipeDevice(); }
+      await cleanupLegacy();
+      window.__atrilDbName = "atril";
       user = me;
       try { localStorage.setItem(OWNER_KEY, JSON.stringify({ sub: me.sub, email: me.email })); } catch {}
       start();
@@ -859,7 +835,7 @@
   }
   function start() {
     if (started) return; started = true;
-    if (user?.sub) window.__atrilDbName = dbFor(user.sub, user.email);
+    window.__atrilDbName = "atril";
     try { const st = JSON.parse(localStorage.getItem("atril-drive") || "{}"); st.on = true; localStorage.setItem("atril-drive", JSON.stringify(st)); } catch {}
     gate.remove();
     document.documentElement.classList.add("pf-in");
@@ -880,6 +856,15 @@
     b.addEventListener("click", askLogout);
     const up = document.getElementById("uploadTop");
     if (up) top.insertBefore(b, up); else top.append(b);
+    // «Sesión iniciada con …»
+    const email = user?.email || "";
+    if (email) {
+      const who = h("div", { id: "pfWhoChip", class: "pfwho", title: email });
+      who.innerHTML = `<span class="pfava" aria-hidden="true"></span><span class="pfwtx"><small>Sesión iniciada con</small><b></b></span>`;
+      who.querySelector(".pfava").textContent = email.slice(0, 1).toUpperCase();
+      who.querySelector("b").textContent = email;
+      top.insertBefore(who, b);
+    }
   }
   function askLogout() {
     let d = document.getElementById("pfOut");
@@ -888,23 +873,23 @@
       d.innerHTML = `<div class="pfcard">
         <div class="pfhead"><h2 id="pfOutTitle">Cerrar sesión</h2><button class="pfx" id="pfOutX" type="button" aria-label="Cancelar">✕</button></div>
         <p class="pfline" id="pfOutWho"></p>
-        <p class="pfhint">Antes de salir, Atril guarda en Google Drive los cambios pendientes.</p>
+        <p class="pfhint">Atril guarda tus cambios en Google Drive y borra tu biblioteca de este dispositivo. Al volver a iniciar sesión se descarga de nuevo desde tu Drive.</p>
         <div class="pfrow wrap" style="margin-top:14px">
           <button class="pfbtn pfprimary" id="pfOutYes" type="button">Cerrar sesión</button>
-          <button class="pfbtn pfdanger" id="pfOutWipe" type="button">Cerrar sesión y borrar de este dispositivo</button>
           <button class="pfbtn" id="pfOutNo" type="button">Cancelar</button>
         </div>
-        <p class="pfhint">«Borrar de este dispositivo» quita los libros guardados en este navegador (útil en una computadora prestada). Tu copia en Google Drive no se toca.</p>
       </div>`;
       document.body.append(d);
       const close = () => { d.hidden = true; };
       d.addEventListener("click", (e) => { if (e.target === d) close(); });
-      d.querySelector("#pfOutX").addEventListener("click", close);
-      d.querySelector("#pfOutNo").addEventListener("click", close);
+      d.addEventListener("click", (e) => { if (e.target.closest("#pfOutX,#pfOutNo")) close(); });
       addEventListener("keydown", (e) => { if (e.key === "Escape" && !d.hidden) close(); });
-      const go = async (wipe, btn) => { d.querySelectorAll("button").forEach(x => x.disabled = true); btn.textContent = "Cerrando sesión…"; await logout(wipe); };
-      d.querySelector("#pfOutYes").addEventListener("click", (e) => go(false, e.currentTarget));
-      d.querySelector("#pfOutWipe").addEventListener("click", (e) => go(true, e.currentTarget));
+      d.addEventListener("click", async (e) => {
+        const b = e.target.closest("#pfOutYes"); if (!b) return;
+        d.querySelectorAll("button").forEach(x => x.disabled = true); b.textContent = "Guardando y cerrando sesión…";
+        const ok = await logout(false);
+        if (!ok) { d.querySelectorAll("button").forEach(x => x.disabled = false); const y = d.querySelector("#pfOutYes"); if (y) y.textContent = "Cerrar sesión"; }
+      });
     }
     d.querySelector("#pfOutWho").textContent = user?.email ? `Sesión iniciada como ${user.email}.` : (offlineMode ? "Estás usando Atril sin conexión." : "");
     d.hidden = false;

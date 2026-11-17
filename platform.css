@@ -58,3 +58,10 @@ html:not(.pf-in) body > *:not(#pfGate):not(#pfSet):not(script){visibility:hidden
 
 /* Botón «Cerrar sesión» en la barra superior */
 @media (max-width:560px){.pfoutbtn span{display:none}.pfoutbtn{padding-inline:10px}}
+/* «Sesión iniciada con …» en la barra superior */
+.pfwho{display:inline-flex;align-items:center;gap:9px;padding:4px 14px 4px 4px;border:1px solid var(--line,#D3DBD9);border-radius:999px;background:var(--paper,#fff);max-width:100%;min-width:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.pfava{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--accent-ink,#fff);background:linear-gradient(135deg,var(--accent,#2B47D4),#6f86f0)}
+.pfwtx{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.pfwtx small{font-size:11px;color:var(--muted,#5A6764);letter-spacing:.01em}
+.pfwtx b{font-size:13px;font-weight:600;color:var(--ink,#18201F);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+@media (max-width:760px){.pfwho{order:10;flex:1 1 100%;border-radius:14px;padding:5px 12px 5px 5px}.pfwtx b{max-width:none}}
