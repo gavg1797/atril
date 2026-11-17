@@ -18,6 +18,8 @@
   const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
 
   let token = null, tokenExp = 0, user = null, started = false, offlineMode = false;
+  const READ_KEY = "atril@lectura", GUIDE_KEY = "atril@guia-v1";
+  try { if (localStorage.getItem(READ_KEY) === "1") document.documentElement.dataset.read = "libro"; } catch {}
   const OFF_KEY = "atril-offline";
   const $ = (s, r = document) => r.querySelector(s);
   const h = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (v == null) continue; if (k === "text") n.textContent = v; else if (k === "html") n.innerHTML = v; else n.setAttribute(k, v); } n.append(...kids.filter(Boolean)); return n; };
@@ -845,6 +847,7 @@
     try { navigator.storage?.persist?.(); } catch {}
     modelInfo().then(i => { if (i.complete) { cacheGemmaRuntime(); if (MODELS[lModel()].kind === "cpu") setIsolation(true); } }).catch(() => {});
     addLogoutButton();
+    setTimeout(setupReaderUI, 0);
     if (offlineMode) setTimeout(() => toast(navigator.onLine ? "Entraste sin sesión de Google: inicia sesión para guardar en Drive." : "Modo sin conexión: tus cambios se guardan en este dispositivo y se subirán a Drive cuando vuelvas a tener internet."), 800);
   }
   // Botón «Cerrar sesión» visible en la barra superior (además del que está en Ajustes)
@@ -865,6 +868,73 @@
       who.querySelector("b").textContent = email;
       top.insertBefore(who, b);
     }
+  }
+  /* ---------- Modo lectura, menú «Más», ayuda y recorrido guiado ---------- */
+  function setupReaderUI() {
+    // Modo lectura
+    const rb = document.getElementById("readModeBtn");
+    const syncRead = () => { const on = document.documentElement.dataset.read === "libro"; if (rb) { rb.setAttribute("aria-pressed", String(on)); rb.title = on ? "Volver a los colores normales" : "Colores de libro, más cómodos para leer"; } };
+    rb?.addEventListener("click", () => {
+      const on = document.documentElement.dataset.read !== "libro";
+      if (on) document.documentElement.dataset.read = "libro"; else delete document.documentElement.dataset.read;
+      try { localStorage.setItem(READ_KEY, on ? "1" : "0"); } catch {}
+      syncRead(); toast(on ? "Modo lectura activado: colores de libro." : "Colores normales.");
+    });
+    syncRead();
+    // Menú «Más»: las acciones menos usadas salen de la barra para que se vea más simple
+    const more = document.getElementById("moreBtn");
+    if (more && !document.getElementById("moreMenu")) {
+      const menu = h("div", { id: "moreMenu", class: "moremenu", role: "menu", hidden: "" });
+      for (const id of ["newPdfBtn", "editDocBtn", "splitBtn", "castBtn", "dlBtn", "resetBtn", "permBtn"]) { const el = document.getElementById(id); if (el) menu.append(el); }
+      document.body.append(menu);
+      const close = () => { menu.hidden = true; more.setAttribute("aria-expanded", "false"); };
+      const open = () => {
+        menu.hidden = false; more.setAttribute("aria-expanded", "true");
+        const r = more.getBoundingClientRect(), w = menu.offsetWidth, hgt = menu.offsetHeight;
+        menu.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
+        menu.style.top = (r.bottom + 6 + hgt < innerHeight ? r.bottom + 6 : Math.max(8, r.top - hgt - 6)) + "px";
+      };
+      more.addEventListener("click", (e) => { e.stopPropagation(); menu.hidden ? open() : close(); });
+      menu.addEventListener("click", (e) => { if (e.target.closest("button")) setTimeout(close, 0); });
+      document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== more && !more.contains(e.target)) close(); });
+      addEventListener("resize", close);
+    }
+    // Botón de ayuda en la barra superior
+    const top = document.querySelector("header.top");
+    if (top && !document.getElementById("helpBtn")) {
+      const hb = h("button", { id: "helpBtn", class: "btn helpbtn", type: "button", title: "Guía: cómo usar Atril", "aria-label": "Guía: cómo usar Atril" }); hb.textContent = "?";
+      hb.addEventListener("click", startGuide);
+      const out = document.getElementById("pfWhoChip") || document.getElementById("pfOutBtn");
+      if (out) top.insertBefore(hb, out); else top.append(hb);
+    }
+    // La primera vez, el recorrido arranca solo
+    let seen = false; try { seen = localStorage.getItem(GUIDE_KEY) === "1"; } catch {}
+    if (!seen) setTimeout(startGuide, 900);
+  }
+  const tab = (t) => () => { const b = document.querySelector(`.tabs [data-tab="${t}"]`); if (b && getComputedStyle(b.parentElement).display !== "none") b.click(); };
+  // Para los pasos del lector: si no hay un documento abierto, abre el primero de la biblioteca (por ejemplo, la guía de Atril)
+  const reader = () => {
+    const rb = document.getElementById("readModeBtn"); const vis = rb && rb.getBoundingClientRect().width > 0;
+    if (vis) return;
+    if (document.body.classList.contains("focus")) { document.getElementById("showMenu")?.click(); if (document.getElementById("readModeBtn")?.getBoundingClientRect().width > 0) return; }
+    const li = document.querySelector("#docs li.doc"); if (li) li.click(); else tab("read")();
+    setTimeout(() => { if (document.body.classList.contains("focus")) document.getElementById("showMenu")?.click(); }, 150);
+  };
+  function startGuide() {
+    if (!window.Guia) return;
+    Guia.start([
+      { title: "¡Bienvenido a Atril!", text: "Te muestro en un minuto cómo usarlo: subir tus PDF, escucharlos, leerlos con comodidad y preguntarles." },
+      { sel: "#uploadTop", title: "1. Sube tus PDF", text: "Toca «Subir PDF» o arrastra el archivo a la ventana. También puedes traerlos desde Google Drive." },
+      { sel: ["#docs", ".lib .drop"], before: tab("lib"), title: "2. Tu biblioteca", text: "Aquí están tus documentos. Toca uno para abrirlo. Arriba puedes filtrar Pendientes o Leídos y crear carpetas." },
+      { sel: "#driveBtn", before: tab("lib"), title: "Guardado en tu Google Drive", text: "Tus libros, marcas y notas se guardan solos en tu Drive. Así los tienes en cualquier dispositivo." },
+      { sel: ["#playBtn", "#mpPlay"], before: reader, title: "3. Escucha el documento", text: "Toca ▶ para que Atril lea en voz alta. Puedes cambiar la voz y la velocidad en las opciones de audio." },
+      { sel: "#readModeBtn", before: reader, title: "4. Modo lectura", text: "Cambia a colores de libro (papel cálido y letra oscura). Cansa menos la vista al leer mucho rato. Tócalo de nuevo para volver a los colores normales." },
+      { sel: "#moreBtn", before: reader, title: "5. Más opciones", text: "Aquí están las demás herramientas: crear un PDF, editarlo, dividir la pantalla con el cuaderno, transmitir a la TV, descargar y reiniciar el avance." },
+      { sel: "#askBtn", before: reader, title: "6. Pregúntale al PDF", text: "Haz preguntas o pide resúmenes del documento. Gemma responde dentro de tu dispositivo." },
+      { sel: "#pfWhoChip", title: "Tu cuenta", text: "Aquí ves con qué cuenta de Google entraste. Cada cuenta ve solo su propia biblioteca." },
+      { sel: "#pfOutBtn", title: "Cerrar sesión", text: "Al terminar, cierra sesión: tus cambios se guardan en Drive y no queda nada en este dispositivo." },
+      { sel: "#helpBtn", title: "¿Dudas?", text: "Toca «?» cuando quieras para repetir esta guía." },
+    ], { onEnd: () => { try { localStorage.setItem(GUIDE_KEY, "1"); } catch {} } });
   }
   function askLogout() {
     let d = document.getElementById("pfOut");
