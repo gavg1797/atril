@@ -3766,10 +3766,14 @@ const dotPos = () => bmOf() || S.pos;
 function setBookmark(pos, quiet) {
   if (!S.doc) return;
   S.bm[S.doc.id] = { pi: pos.pi, ai: pos.ai, si: pos.si || 0, at: Date.now() };
+  // la lectura en voz alta también sigue desde la marca
+  const same = S.pos.pi === pos.pi && S.pos.ai === pos.ai && (S.pos.si || 0) === (pos.si || 0);
+  S.pos = { pi: pos.pi, ai: pos.ai, si: pos.si || 0 }; S.posByDoc[S.doc.id] = { ...S.pos };
+  if (S.playing && !same) play(); else { try { highlight(); } catch {} try { updateProgress(); } catch {} }
   savePrefs(); try { scheduleSync(600); } catch {}
   renderResumeDot();
   requestAnimationFrame(() => { const t = pageMode() ? document.querySelector(".resdot") : document.querySelector(".para.resume"); if (t) { t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash"); } });
-  if (!quiet) toast("Marca de lectura guardada en la página " + (pos.pi + 1) + ".");
+  if (!quiet) toast("Marca guardada en la página " + (pos.pi + 1) + ". La lectura en voz alta sigue desde aquí.");
 }
 function clearBookmark() { if (!S.doc) return; delete S.bm[S.doc.id]; savePrefs(); try { scheduleSync(600); } catch {} renderResumeDot(); toast("Marca de lectura quitada."); }
 // posición del documento en un punto de la pantalla (sin reproducir)
