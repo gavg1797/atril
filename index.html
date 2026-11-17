@@ -480,9 +480,9 @@ body.focus .menubtn.hint{animation:nudge 1s ease-in-out 3}
 @media (max-width:560px){.fsbtn span{display:none}.fsbtn{padding:7px}.ask.full .askhead{padding:10px 14px 4px}.ask.full .answers .msgs{padding:8px 12px 14px}.ask.full .composer{padding:6px 10px 10px}}
 /* PDF en pantalla completa */
 .rightgrp{justify-self:end;display:flex;align-items:center;gap:8px}
-.pdffull{padding:6px 10px;font-size:.78rem}
+.pdffull{padding:6px 10px;font-size:.78rem;white-space:nowrap;align-items:center;gap:6px}
 .pdffull[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
-body.fullpdf .top,body.fullpdf .tabs,body.fullpdf .lib,body.fullpdf .ask,body.fullpdf .rhead,body.fullpdf .modenote,body.fullpdf .trnote,body.fullpdf #showMenu{display:none!important}
+body.fullpdf .top,body.fullpdf .tabs,body.fullpdf .lib,body.fullpdf .rhead,body.fullpdf .modenote,body.fullpdf .trnote,body.fullpdf #showMenu{display:none!important}
 body.fullpdf .app{grid-template-columns:minmax(0,1fr)}
 body.fullpdf .app > .reader{display:flex!important}
 body.fullpdf .menustrip{display:grid!important}
@@ -2692,7 +2692,7 @@ function setPdfFull(on) {
   b.title = "Salir de pantalla completa";
   if (on) { if (isNarrow()) setTab("read"); try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch {} }
   else { try { if (document.fullscreenElement) document.exitFullscreen?.()?.catch?.(() => {}); } catch {} }
-  requestAnimationFrame(() => { dispatchEvent(new Event("resize")); requestAnimationFrame(() => scrollToPos(false)); });
+  requestAnimationFrame(() => { dispatchEvent(new Event("resize")); placeAskSide(); placeAskFloat(); requestAnimationFrame(() => scrollToPos(false)); });
 }
 $("#pdfFull").addEventListener("click", () => setPdfFull(false));
 $("#pdfFullMenu").addEventListener("click", () => setPdfFull(true));
