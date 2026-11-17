@@ -131,6 +131,9 @@
     async trash_file(i) {
       return mapF(await gfetch(DAPI + "files/" + encodeURIComponent(i.fileId) + "?fields=" + FIELDS, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashed: true }) }).then(json));
     },
+    async file_version(i) {
+      return gfetch(DAPI + "files/" + encodeURIComponent(i.fileId) + "?fields=version,modifiedTime").then(json);
+    },
     async download_file_content(i) {
       const r = await gfetch(DAPI + "files/" + encodeURIComponent(i.fileId) + "?alt=media");
       return { content: new Uint8Array(await r.arrayBuffer()) };

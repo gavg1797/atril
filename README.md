@@ -28,6 +28,7 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 
 - **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
 - **Dónde se guardan tus libros:** en este navegador (IndexedDB) y en la carpeta **«Atril - biblioteca»** de tu Google Drive.
+- **En vivo:** cada libro, carpeta, marca o nota se guarda en Drive al instante, y los demás dispositivos conectados a la misma cuenta lo reciben en unos segundos (aparece «Actualizado desde otro dispositivo»). Si estás escuchando un libro, la lectura no se interrumpe.
 - **Quién los ve:** esa carpeta es privada. La app no tiene servidor propio y los datos van directo de tu navegador a Google.
 - **Preguntas y traducciones:** las responde Gemma 4 dentro del navegador de tu dispositivo (o, si lo eliges, Ollama en tu computadora). El texto no se envía a ningún servicio de IA.
 - **Este repositorio es público, pero solo contiene el código.** Nunca contiene tus libros.

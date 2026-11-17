@@ -1314,7 +1314,7 @@ const idb = () => dbp ??= new Promise((res, rej) => { try { const r = indexedDB.
 async function fileGet(id) { try { const d = await idb(); return await new Promise((res) => { const q = d.transaction("files").objectStore("files").get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch { return null; } }
 async function filePut(id, buf) { try { const d = await idb(); await new Promise((res, rej) => { const tx = d.transaction("files", "readwrite"); tx.objectStore("files").put(buf, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; } catch { return false; } }
 async function idbAll() { try { const d = await idb(); return await new Promise((res, rej) => { const q = d.transaction("docs").objectStore("docs").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); } catch { return []; } }
-async function idbPut(doc) { if (doc.sample) return; if (!window.__importing) doc.updatedAt = Date.now(); try { const d = await idb(); await new Promise((res, rej) => { const tx = d.transaction("docs", "readwrite"); tx.objectStore("docs").put(doc); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch {} if (!window.__driveQuiet) { try { scheduleSync(4000); } catch {} } }
+async function idbPut(doc) { if (doc.sample) return; if (!window.__importing) doc.updatedAt = Date.now(); try { const d = await idb(); await new Promise((res, rej) => { const tx = d.transaction("docs", "readwrite"); tx.objectStore("docs").put(doc); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch {} if (!window.__driveQuiet) { try { scheduleSync(600); } catch {} } }
 async function idbDel(id) { try { const d = await idb(); await new Promise((res) => { const tx = d.transaction(["docs", "files"], "readwrite"); tx.objectStore("docs").delete(id); tx.objectStore("files").delete(id); tx.oncomplete = res; tx.onerror = res; }); } catch {} }
 
 /* ---------- Utilidades de texto ---------- */
@@ -1458,7 +1458,7 @@ function setDone(d, v) {
 /* ---------- Carpetas ---------- */
 const FOLDER_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
 let FOLDERS = (() => { try { const v = JSON.parse(localStorage.getItem("atril-folders") || "[]"); return Array.isArray(v) ? v.filter(f => f && f.id && typeof f.name === "string") : []; } catch { return []; } })();
-const saveFolders = (quiet) => { try { localStorage.setItem("atril-folders", JSON.stringify(FOLDERS)); } catch {} if (!quiet) { try { scheduleSync(3000); } catch {} } };
+const saveFolders = (quiet) => { try { localStorage.setItem("atril-folders", JSON.stringify(FOLDERS)); } catch {} if (!quiet) { try { scheduleSync(600); } catch {} } };
 const fById = (id) => id ? FOLDERS.find(f => f.id === id) || null : null;
 const fParent = (f) => fById(f.parent) ? f.parent : "";
 const fKids = (pid) => FOLDERS.filter(f => fParent(f) === (pid || "")).sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true, sensitivity: "base" }));
@@ -2036,23 +2036,24 @@ async function writeManifest() {
   if (DS.manId && DS.manId !== nid) { try { await gd("trash_file", { fileId: DS.manId }); } catch (e) { if (e?.code !== "tool_error") throw e; } }
   DS.manId = nid; DS.manHash = hash; DS.lastSync = Date.now(); DS.lastRemote = JSON.parse(text).saved; saveDS();
 }
-async function drivePull(force) {
+async function drivePull(force, live) {
   const r = await gd("search_files", { query: `parentId = '${q(DS.root)}' and title = '${q(MAN_TITLE)}' and trashed = false`, excludeContentSnippets: true, pageSize: 10 });
   const files = r?.files || []; if (!files.length) return { found: false };
   const dels = delSet();
   const missingOf = (m) => (m?.docs || []).filter(rd => rd?.id && !dels.has(rd.id) && !S.docs.some(d => d.id === rd.id) && (force || !failedSession.has(rd.id)));
-  if (!force && REMOTE && files.length === 1 && files[0].id === DS.manId && !missingOf(REMOTE).length) return { found: true, added: 0, updated: 0 };
+  // atajo: si el manifiesto no cambió desde la última vez, no hace falta descargarlo
+  if (!force && !live && REMOTE && files.length === 1 && files[0].id === DS.manId && !missingOf(REMOTE).length && liveVer && (await manVersion()) === liveVer) return { found: true, added: 0, updated: 0 };
   let best = null, bestId = null;
   for (const f of files) { try { const dl = await gd("download_file_content", { fileId: f.id }); const m = JSON.parse(new TextDecoder().decode(b64ToU8(dl?.content || ""))); if (m?.app === "Atril" && (!best || (m.saved || 0) > (best.saved || 0))) { best = m; bestId = f.id; } } catch (e) { if (e?.code !== "tool_error" && !(e instanceof SyntaxError)) throw e; } }
   for (const f of files) if (f.id !== bestId) { try { await gd("trash_file", { fileId: f.id }); } catch {} }
   if (!best) return { found: false };
   DS.manId = bestId; REMOTE = best;
   if (!force && (best.saved || 0) <= (DS.lastRemote || 0) && !missingOf(best).length) { saveDS(); return { found: true, added: 0, updated: 0 }; }
-  let added = 0, updated = 0, failed = [];
+  let added = 0, updated = 0, failed = [], fchg = 0;
   for (const rf of best.folders || []) {
     if (!rf?.id || dels.has(rf.id)) continue; const lf = fById(rf.id);
-    if (!lf) { FOLDERS.push({ id: rf.id, name: rf.name, parent: rf.parent || "", added: rf.added || Date.now(), upd: rf.upd || 0, gid: rf.gid || null, gpar: null, gname: rf.name }); continue; }
-    if ((rf.upd || 0) > (lf.upd || 0)) Object.assign(lf, { name: rf.name, parent: rf.parent || "", upd: rf.upd });
+    if (!lf) { FOLDERS.push({ id: rf.id, name: rf.name, parent: rf.parent || "", added: rf.added || Date.now(), upd: rf.upd || 0, gid: rf.gid || null, gpar: null, gname: rf.name }); fchg++; continue; }
+    if ((rf.upd || 0) > (lf.upd || 0)) { Object.assign(lf, { name: rf.name, parent: rf.parent || "", upd: rf.upd }); fchg++; }
     if (!lf.gid && rf.gid) { lf.gid = rf.gid; lf.gpar = null; lf.gname = rf.name; }
   }
   for (const f of FOLDERS) if (f.gid && !f.gpar) { const p = fById(f.parent); f.gpar = p ? p.gid : DS.root; }
@@ -2102,8 +2103,11 @@ async function drivePull(force) {
   row.hidden = true;
   if (failed.length) DS.pullFail = failed; else delete DS.pullFail;
   DS.lastRemote = best.saved || Date.now(); saveDS(); savePrefs(); renderDocs();
-  if (S.doc && !S.doc.sample) openDoc(S.doc.id); else if (added) { const last = S.docs.filter(d => !d.sample && !d.draft).slice(-1)[0]; if (last) openDoc(last.id); }
-  return { found: true, added, updated, failed };
+  if (live) {
+    // en vivo: no se interrumpe la lectura; solo se repintan las marcas y notas del libro abierto
+    if (S.doc && !S.doc.sample && (updated || added) && !S.playing) { const sc = $("#readerScroll"), top = sc?.scrollTop; try { renderHead(); renderMarkCount(); renderReader(); renderChat(); renderNb(); } catch {} if (sc) sc.scrollTop = top; }
+  } else if (S.doc && !S.doc.sample) openDoc(S.doc.id); else if (added) { const last = S.docs.filter(d => !d.sample && !d.draft).slice(-1)[0]; if (last) openDoc(last.id); }
+  return { found: true, added, updated, failed, folders: fchg };
 }
 const STOP_CODES = ["needs_reauth", "server_not_connected", "selection_required", "not_in_manifest", "approval_required", "blocked_by_policy", "no_mcp", "not_granted", "capability_disabled", "server_not_found"];
 function driveErrText(e) {
@@ -2160,13 +2164,13 @@ async function driveSync(opts = {}) {
   }
   return driveSyncInner(opts);
 }
-async function driveSyncInner({ manual = false, pull = false } = {}) {
+async function driveSyncInner({ manual = false, pull = false, live = false } = {}) {
   syncing = true; clearTimeout(syncT); syncT = null; DS.err = null; setDriveUI("busy", "Conectando con Google Drive…");
   let res = null;
   try {
     await refreshFromStore();
     await ensureRoot();
-    setDriveUI("busy", "Revisando tu biblioteca en Drive…"); res = await drivePull(manual || (pull && !REMOTE));
+    setDriveUI("busy", "Revisando tu biblioteca en Drive…"); res = await drivePull(manual || (pull && !REMOTE), live);
     setDriveUI("busy", "Guardando carpetas…");
     const order = [...FOLDERS].sort((a, b) => fPath(a.id).length - fPath(b.id).length);
     for (const f of order) await syncFolder(f);
@@ -2179,6 +2183,7 @@ async function driveSyncInner({ manual = false, pull = false } = {}) {
     await writeManifest();
     if (!cleaned || manual) { setDriveUI("busy", "Quitando copias repetidas en Drive…"); await cleanupDuplicates(); cleaned = true; }
     DS.lastSync = Date.now(); saveDS();
+    liveVer = await manVersion();   // punto de partida para detectar cambios de otros dispositivos
   } catch (e) {
     console.error(e); DS.err = { code: errCode(e), message: e?.message || "" };
     if (e?.code === "tool_error" && /not ?found|notFound|404/i.test(e?.message || "") && DS.root) { DS.root = null; saveDS(); }
@@ -2230,6 +2235,18 @@ $("#drvPull").addEventListener("click", async () => {
   toast(`Desde Drive: ${parts.join(", ") || "ya estaba todo al día"}.${r.failed?.length ? ` No se pudo traer ${r.failed.map(n => "«" + n + "»").join(", ")}.` : ""}`);
 });
 setInterval(() => { if (!$("#drvModal").hidden && !syncing) setDriveUI(); }, 30000);
+/* En vivo: cada 5 s pregunta a Google Drive si la biblioteca cambió en otro dispositivo (consulta muy liviana) y trae los cambios */
+let liveVer = "", liveBusy = false;
+async function manVersion() { if (!DS.manId) return ""; try { return (await gd("file_version", { fileId: DS.manId }))?.version || ""; } catch { return ""; } }
+setInterval(async () => {
+  if (liveBusy || syncing || !DS.on || DS.err || document.hidden || !navigator.onLine || !DS.manId) return;
+  liveBusy = true;
+  try {
+    const v = await manVersion();
+    if (v && liveVer && v !== liveVer) { liveVer = v; const r = await driveSync({ live: true }); if (r && (r.added || r.updated || r.folders)) toast("Actualizado desde otro dispositivo"); }
+    else if (v) liveVer = v;
+  } finally { liveBusy = false; }
+}, 5000);
 function driveBoot() { setDriveUI(); if (DS.on) setTimeout(() => driveSync({ pull: true }), 600); }
 window.__atrilDriveResume = () => { DS.on = true; DS.err = null; saveDS(); driveSync({ pull: true }); };
 window.__atrilPending = () => !!syncT || syncing;
