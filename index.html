@@ -18,6 +18,7 @@
 <style>
 /* Layout: biblioteca | atril de lectura con reproductor | preguntas. En pantallas angostas, pestañas. */
 :root{
+  --readline:rgba(214,84,80,.72);
   --bg:#E9EDEC; --surface:#F5F7F6; --paper:#FFFFFF; --ink:#18201F; --muted:#5A6764; --line:#D3DBD9;
   --accent:#2B47D4; --accent-ink:#FFFFFF; --accent-soft:#E3E8FC;
   --mark:#FFE36E; --mark-ink:#18201F; --ok:#1F7A4D; --warn:#9A5B00;
@@ -133,7 +134,8 @@ button{cursor:pointer}
 .pbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .pbox:not(.ready)::after{content:"Cargando página…";position:absolute;inset:0;display:grid;place-items:center;color:#7a8582;font-size:.85rem}
 .hl{position:absolute;inset:0;pointer-events:none}
-.hl i{position:absolute;background:rgba(255,214,0,.42);mix-blend-mode:multiply;border-radius:2px;outline:1px solid rgba(214,170,0,.35)}
+.hl i{position:absolute;background:none;border-bottom:2px solid var(--readline);border-radius:0}
+body.wordmode .hl i.sent{border-bottom-color:transparent}
 .modenote{padding:8px 20px;font-size:.82rem;color:var(--muted);border-bottom:1px solid var(--line);background:var(--surface)}
 .caption{border-top:1px solid var(--line);background:var(--paper);padding:10px 20px;font-family:var(--f-read);font-size:1.02rem;line-height:1.5}
 .caption::before{content:"Traducción · ";font-family:var(--f-ui);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -290,7 +292,9 @@ body.tv .caption{font-size:1.4rem}
 .para:last-child{margin-bottom:0}
 .para .s{border-radius:3px;padding:1px 0;transition:background .15s}
 .para .s:hover{background:var(--accent-soft)}
-.para .s.on{background:var(--mark);color:var(--mark-ink);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.para .s.on{text-decoration:underline;text-decoration-color:var(--readline);text-decoration-thickness:2px;text-underline-offset:4px}
+body.wordmode .para .s.on{text-decoration:none}
+::highlight(atril-word){text-decoration:underline;text-decoration-color:var(--readline);text-decoration-thickness:2px;text-underline-offset:4px}
 .para.faded{opacity:.5}
 .empty-page{font-style:italic;color:var(--muted);font-family:var(--f-read)}
 .pending-tr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;font-size:.85rem;color:var(--muted)}
@@ -1300,7 +1304,7 @@ const SAMPLE = {
       "Para empezar, toca el botón Subir PDF o arrastra uno o varios archivos a la biblioteca. Cada archivo se procesa dentro de tu navegador, página por página."
     ]},
     { paras: [
-      "Escuchar un documento. Pulsa el botón de reproducir y la voz leerá desde el punto en que te quedaste. La frase que se está leyendo aparece resaltada, como si la marcaras con un rotulador.",
+      "Escuchar un documento. Pulsa el botón de reproducir y la voz leerá desde el punto en que te quedaste. Una línea roja fina subraya cada palabra mientras la voz la lee, para que sigas la lectura.",
       "Si tocas dos veces cualquier frase del texto (doble clic en computadora), la lectura empieza desde ese punto. Un solo toque no inicia el audio, así puedes seleccionar y subrayar con calma. Puedes elegir entre voces en español y en inglés, y ajustar la velocidad entre 0,75 y 2 veces.",
       "Si el documento está en un idioma y quieres escucharlo en el otro, activa la opción Traducir. Gemma traduce cada página justo antes de leerla y guarda la traducción para la próxima vez."
     ]},
@@ -4021,6 +4025,7 @@ async function downloadMarked() {
 
 function highlight() {
   $$(".s.on").forEach(x => x.classList.remove("on"));
+  try { CSS.highlights?.delete("atril-word"); } catch {}
   $$(".hl").forEach(h => { if (h.childElementCount) h.replaceChildren(); });
   const { pi, ai, si } = S.pos;
   try { renderResumeDot(); } catch {}
@@ -4031,7 +4036,7 @@ function highlight() {
     let rs = 0, re = Infinity;
     if (!trActive()) { const rg = sentRanges(pi, ai)[si]; if (rg) [rs, re] = rg; }
     for (const [x, by, w, bh] of segRects(pg, ai, rs, re)) {
-      hl.append(el("i", { style: `left:${x / pg.W * 100}%;top:${by / pg.H * 100}%;width:${w / pg.W * 100}%;height:${bh / pg.H * 100}%` }));
+      hl.append(el("i", { class: "sent", style: `left:${x / pg.W * 100}%;top:${by / pg.H * 100}%;width:${w / pg.W * 100}%;height:${bh / pg.H * 100}%` }));
     }
     return hl.firstElementChild;
   }
@@ -4149,6 +4154,38 @@ async function translatePage(pi) {
 
 /* reproducción */
 let currentUtter = null, keepAlive = null;
+/* Subrayado fino que sigue palabra por palabra lo que dice la voz (si la voz informa cada palabra; si no, se subraya la frase) */
+let wordT = null;
+function rangeIn(node, a, b) {
+  const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT); let pos = 0, r = document.createRange(), started = false, t;
+  while ((t = w.nextNode())) {
+    const L = t.data.length;
+    if (!started && a <= pos + L) { r.setStart(t, Math.max(0, a - pos)); started = true; }
+    if (started && b <= pos + L) { r.setEnd(t, Math.max(0, b - pos)); return r; }
+    pos += L;
+  }
+  return started ? r : null;
+}
+function markWord(text, ci, cl) {
+  if (!S.playing || ci == null || ci < 0) return;
+  let len = cl;
+  if (!len) { const m = /^[\p{L}\p{N}'’\-]+/u.exec(text.slice(ci)); len = m ? m[0].length : 1; }
+  const { pi, ai, si } = S.pos;
+  if (pageMode()) {
+    if (trActive()) return;   // traducción: la frase queda subrayada
+    const pg = S.doc.pages[pi], hl = document.querySelector(`#pg-${pi} .hl`), rg = sentRanges(pi, ai)[si];
+    if (!pg || !hl || !rg) return;
+    const sub = (S.doc.pages[pi].paras[ai] || "").slice(rg[0], rg[1]), off = Math.max(0, sub.indexOf(text));
+    hl.querySelectorAll("i.word").forEach(n => n.remove());
+    for (const [x, by, w, bh] of segRects(pg, ai, rg[0] + off + ci, rg[0] + off + ci + len))
+      hl.append(el("i", { class: "word", style: `left:${x / pg.W * 100}%;top:${by / pg.H * 100}%;width:${w / pg.W * 100}%;height:${bh / pg.H * 100}%` }));
+  } else {
+    const n = document.getElementById(`s-${pi}-${ai}-${si}`); if (!n || !window.CSS?.highlights || typeof Highlight === "undefined") return;
+    const off = Math.max(0, n.textContent.indexOf(text));
+    const r = rangeIn(n, off + ci, off + ci + len); if (r) CSS.highlights.set("atril-word", new Highlight(r));
+  }
+  document.body.classList.add("wordmode");
+}
 function setPlayIcon() {
   $("#liveDot").hidden = !S.playing; try { updateProgress(); } catch {}
   $("#playIcon").innerHTML = S.playing ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
@@ -4209,6 +4246,9 @@ async function speakNext(tok) {
   const v = pickVoice(S.readLang); if (v) u.voice = v;
   u.lang = v?.lang || (S.readLang === "es" ? "es-ES" : "en-US");
   u.rate = S.rate;
+  // si la voz no avisa cada palabra, se muestra el subrayado de la frase completa
+  u.onstart = () => { clearTimeout(wordT); wordT = setTimeout(() => document.body.classList.remove("wordmode"), 900); };
+  u.onboundary = (e) => { if (tok !== S.token || (e.name && e.name !== "word")) return; clearTimeout(wordT); markWord(text, e.charIndex, e.charLength); };
   u.onend = () => { if (tok !== S.token) return; S.pos.si++; if (S.pos.si === 0 || S.pos.si % 3 === 0) savePos(); speakNext(tok); };
   u.onerror = (e) => { if (tok !== S.token || e.error === "interrupted" || e.error === "canceled") return; if (e.error === "not-allowed") { stop(); toast("Toca reproducir para empezar la lectura."); return; } S.pos.si++; speakNext(tok); };
   currentUtter = u;
