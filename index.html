@@ -1286,7 +1286,7 @@ const hasTTS = "speechSynthesis" in window;
 
 /* ---------- IndexedDB ---------- */
 let dbp = null;
-const idb = () => dbp ??= new Promise((res, rej) => { try { const r = indexedDB.open("atril", 2); r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains("docs")) d.createObjectStore("docs", { keyPath: "id" }); if (!d.objectStoreNames.contains("files")) d.createObjectStore("files"); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
+const idb = () => dbp ??= new Promise((res, rej) => { try { const r = indexedDB.open(window.__atrilDbName || "atril", 2); r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains("docs")) d.createObjectStore("docs", { keyPath: "id" }); if (!d.objectStoreNames.contains("files")) d.createObjectStore("files"); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
 async function fileGet(id) { try { const d = await idb(); return await new Promise((res) => { const q = d.transaction("files").objectStore("files").get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch { return null; } }
 async function filePut(id, buf) { try { const d = await idb(); await new Promise((res, rej) => { const tx = d.transaction("files", "readwrite"); tx.objectStore("files").put(buf, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; } catch { return false; } }
 async function idbAll() { try { const d = await idb(); return await new Promise((res, rej) => { const q = d.transaction("docs").objectStore("docs").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); } catch { return []; } }

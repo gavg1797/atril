@@ -498,6 +498,7 @@
       <ul class="pfpoints">
         <li><b>Privado.</b> Tus libros se guardan en este navegador y en la carpeta «Atril - biblioteca» de tu Google Drive. Nadie más tiene acceso.</li>
         <li><b>Gemma 4 en tu dispositivo.</b> Las preguntas y traducciones las responde Gemma dentro de tu celular, tableta o computadora; el texto no va a otros servicios.</li>
+        <li><b>Varias cuentas.</b> Cada cuenta de Google tiene su propia biblioteca en este navegador; cambiar de cuenta no borra nada.</li>
         <li><b>Cada vez que abres Atril</b> tienes que iniciar sesión.</li>
       </ul>
       <button class="pflink" id="pfOpenSet" type="button">Ajustes de Google y Gemma</button>
@@ -768,9 +769,59 @@
     } catch (e) { bar.firstElementChild.textContent = e.message || "No se pudo renovar la sesión."; }
     finally { b.disabled = false; }
   }
+  /* ---------- Varias cuentas en el mismo navegador ----------
+   * Los libros de cada cuenta viven en su propia base de datos (IndexedDB).
+   * Las preferencias (claves «atril-…» de localStorage) se guardan aparte al cambiar de cuenta y se restauran al volver. */
+  const ACCTS_KEY = "atril@cuentas";
+  const accts = () => { try { return JSON.parse(localStorage.getItem(ACCTS_KEY) || "{}"); } catch { return {}; } };
+  const saveAccts = (a) => { try { localStorage.setItem(ACCTS_KEY, JSON.stringify(a)); } catch {} };
+  const shortHash = (t) => { let x = 5381; for (const c of String(t)) x = ((x * 33) ^ c.charCodeAt(0)) >>> 0; return x.toString(36); };
+  function dbFor(sub, email) {
+    const a = accts();
+    if (!a[sub]) {
+      const used = new Set(Object.values(a).map(x => x.db));
+      const own = ownerRec();
+      // la primera cuenta (la que ya usaba Atril) conserva la base de datos original «atril»
+      const legacy = !used.has("atril") && (!own || own.sub === sub);
+      a[sub] = { db: legacy ? "atril" : "atril-u-" + shortHash(sub) };
+    }
+    if (email) a[sub].email = email;
+    saveAccts(a); return a[sub].db;
+  }
+  const personalKeys = () => Object.keys(localStorage).filter(k => k.startsWith("atril-") && k !== CFG_KEY && k !== OWNER_KEY);
+  function kv(mode, fn) {
+    return new Promise((res) => {
+      try {
+        const r = indexedDB.open("atril-cuentas", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("ls");
+        r.onsuccess = () => { const db = r.result; const tx = db.transaction("ls", mode); const st = tx.objectStore("ls"); const out = fn(st); tx.oncomplete = () => { db.close(); res(out && "result" in out ? out.result : undefined); }; tx.onerror = tx.onabort = () => { db.close(); res(undefined); }; };
+        r.onerror = () => res(undefined);
+      } catch { res(undefined); }
+    });
+  }
+  async function stashLs(sub) {
+    const snap = {}; for (const k of personalKeys()) snap[k] = localStorage.getItem(k);
+    await kv("readwrite", (st) => { st.put(snap, sub); });
+    for (const k of Object.keys(snap)) localStorage.removeItem(k);
+  }
+  async function restoreLs(sub) {
+    const snap = await kv("readonly", (st) => st.get(sub));
+    if (!snap || typeof snap !== "object") return;
+    for (const [k, v] of Object.entries(snap)) { try { if (v != null) localStorage.setItem(k, v); } catch {} }
+    await kv("readwrite", (st) => { st.delete(sub); });
+  }
+  async function switchAccount(from, to) {
+    dbFor(from.sub, from.email);       // registra la cuenta anterior con su base de datos
+    await stashLs(from.sub);           // guarda aparte sus preferencias y su estado de Drive
+    await restoreLs(to.sub);           // y trae las de la cuenta que entra, si ya había usado Atril aquí
+  }
   async function wipeDevice() {
-    await new Promise((res) => { try { const r = indexedDB.deleteDatabase("atril"); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
-    try { for (const k of Object.keys(localStorage)) if (k.startsWith("atril-") && k !== CFG_KEY) localStorage.removeItem(k); } catch {}
+    // borra solo la biblioteca de la cuenta activa; las de otras cuentas quedan intactas
+    const sub = user?.sub || ownerRec()?.sub;
+    const name = window.__atrilDbName || (sub ? dbFor(sub) : "atril");
+    await new Promise((res) => { try { const r = indexedDB.deleteDatabase(name); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+    try { for (const k of personalKeys()) localStorage.removeItem(k); localStorage.removeItem(OWNER_KEY); } catch {}
+    if (sub) { const a = accts(); delete a[sub]; saveAccts(a); await kv("readwrite", (st) => { st.delete(sub); }); }
     try { for (const k of await caches.keys()) if (k.startsWith("atril-data")) await caches.delete(k); } catch {}
   }
   async function logout(wipe) {
@@ -789,13 +840,15 @@
       msg("Comprobando tu cuenta…");
       const me = await whoAmI();
       const owner = (() => { try { return JSON.parse(localStorage.getItem(OWNER_KEY) || "null"); } catch { return null; } })();
+      // Cada cuenta tiene su propio espacio en este navegador: al cambiar de cuenta no se borra nada.
       if (owner && owner.sub !== me.sub) {
-        $("#pfMain").hidden = true; $("#pfOwner").hidden = false;
-        $("#pfOwnerText").textContent = `Este navegador guarda la biblioteca de otra cuenta (${owner.email || "otra persona"}). Para proteger su privacidad, se borrará de este dispositivo antes de abrir la tuya. Su copia en Google Drive no se toca.`;
-        const ok = await new Promise((res) => { $("#pfOwnerYes").onclick = () => res(true); $("#pfOwnerNo").onclick = () => res(false); });
-        if (!ok) { try { google.accounts.oauth2.revoke(token, () => {}); } catch {} token = null; $("#pfOwner").hidden = true; $("#pfMain").hidden = false; msg(""); b.disabled = false; return; }
-        await wipeDevice();
+        msg(`Guardando aparte la biblioteca de ${owner.email || "la otra cuenta"}…`);
+        await switchAccount(owner, me);
+        setTimeout(() => toast(`La biblioteca de ${owner.email || "la otra cuenta"} sigue guardada en este dispositivo. Vuelve a ella iniciando sesión con esa cuenta.`), 900);
+      } else {
+        await restoreLs(me.sub); // por si esta cuenta tenía preferencias guardadas aparte
       }
+      window.__atrilDbName = dbFor(me.sub, me.email);
       user = me;
       try { localStorage.setItem(OWNER_KEY, JSON.stringify({ sub: me.sub, email: me.email })); } catch {}
       start();
@@ -806,6 +859,7 @@
   }
   function start() {
     if (started) return; started = true;
+    if (user?.sub) window.__atrilDbName = dbFor(user.sub, user.email);
     try { const st = JSON.parse(localStorage.getItem("atril-drive") || "{}"); st.on = true; localStorage.setItem("atril-drive", JSON.stringify(st)); } catch {}
     gate.remove();
     document.documentElement.classList.add("pf-in");
