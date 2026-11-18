@@ -1254,6 +1254,70 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
 .nbeqact .btn{padding:5px 12px;font-size:.78rem}
 .nbeqerr{flex:1;font-size:.72rem;color:#B3261E}
 #nb.toolshide .nbeqbar{display:flex!important}
+/* Insertar: tablas, audio, video y archivos; color de página; fondo oscuro; lector inmersivo */
+.nbmedia,.nbtable{position:absolute;border:1px solid #D5DCE6;border-radius:10px;background:#fff;color:#1D2321;box-shadow:0 1px 3px rgba(0,0,0,.08);font-family:var(--f-ui)}
+.nbmedia{padding:8px 10px 10px 14px}
+.nbmhead{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+.nbmhead b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nbmhead small{color:#6B7774;font-size:11px;flex:none}
+.nbmic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#EEF2FB;color:#2B47D4;font-size:14px;flex:none}
+.nbmbody{margin-top:8px}
+.nbmbody audio{width:100%;height:40px}
+.nbmbody video,.nbmbody iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:6px;background:#000;display:block}
+.nbmbody .nbmact{display:flex;gap:6px;flex-wrap:wrap}
+.nbmbody .nbmact button,.nbmbody .nbmact a{border:1px solid #D5DCE6;background:#F6F8FB;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;color:#1D2321;text-decoration:none}
+.nbmbody .nbmnote{font-size:12px;color:#6B7774}
+.nbmedia .nbgrip,.nbtable .nbgrip{position:absolute;left:0;top:0;bottom:0;width:10px;cursor:grab;border-radius:10px 0 0 10px}
+.nbmedia:hover .nbgrip,.nbtable:hover .nbgrip{background:repeating-linear-gradient(#B9C4D6 0 2px,transparent 2px 5px) center/3px 60% no-repeat}
+.nbmedia .nbdel,.nbtable .nbdel{display:none}
+.nbinner:not(.drawing) .nbmedia:hover .nbdel,.nbinner:not(.drawing) .nbtable:hover .nbdel{display:grid}
+.nbinner.drawing .nbmedia,.nbinner.drawing .nbtable{pointer-events:none}
+.nbtable{padding:8px 8px 8px 14px}
+.nbtable table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:15px;line-height:1.4}
+.nbtable td{border:1px solid #B9C4D6;padding:5px 7px;vertical-align:top;height:30px;word-wrap:break-word;outline:none}
+.nbtable td:focus{box-shadow:inset 0 0 0 2px #2B47D4}
+.nbtable.head tr:first-child td{background:#EEF2F7;font-weight:700}
+.nbtctl{display:none;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.nbtable:focus-within .nbtctl{display:flex}
+.nbtctl button{border:1px solid #D5DCE6;background:#F6F8FB;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600;color:#1D2321}
+.nbtctl button:hover{border-color:#2B47D4}
+.nbpgcols{display:flex;gap:5px}
+.nbpgcols button{width:20px;height:20px;border-radius:50%;padding:0;border:1px solid #B9C4D6;background:var(--c)}
+.nbpgcols button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+#nb:not(.nbmode) .nbpgcolor,#nb:not(.nbmode) #nbIrBtn{display:none!important}
+#nb.nbdark .nbview{background:#121618}
+#nb.nbdark .nbinner{filter:invert(.92) hue-rotate(180deg)}
+#nb.nbdark .nbinner img,#nb.nbdark .nbinner video,#nb.nbdark .nbinner iframe{filter:invert(1) hue-rotate(180deg)}
+.nbrec{display:flex;align-items:center;gap:10px;padding:6px 12px;background:#FDECEC;border-bottom:1px solid #F3C2C2;font-size:.84rem;color:#8A1C1C}
+.nbrec i{width:10px;height:10px;border-radius:50%;background:#D93025;animation:nbrec 1s infinite}
+@keyframes nbrec{50%{opacity:.25}}
+.nbrec b{font-family:var(--f-mono);font-weight:600}
+.nbrec span{flex:1}
+.nbrec .btn{padding:4px 10px;font-size:.78rem}
+.nbask{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.35);display:grid;place-items:center;padding:16px}
+.nbask form{background:var(--surface);border-radius:14px;padding:16px;width:min(440px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.nbask h3{margin:0;font-size:1rem}
+.nbask p{margin:0;font-size:.8rem;color:var(--muted)}
+.nbask input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.9rem;background:var(--paper)}
+.nbask .row{display:flex;gap:8px;justify-content:flex-end}
+.nbir{position:fixed;inset:0;z-index:135;display:flex;flex-direction:column;--irbg:#FBF7EE;--irfg:#2A2620;background:var(--irbg);color:var(--irfg)}
+.nbir[data-theme="light"]{--irbg:#fff;--irfg:#1D2321}
+.nbir[data-theme="dark"]{--irbg:#15191B;--irfg:#E8ECEA}
+.nbirbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid color-mix(in srgb,var(--irfg) 15%,transparent)}
+.nbirbar b{flex:1;font-size:.9rem;min-width:120px}
+.nbirbar button,.nbirbar select{border:1px solid color-mix(in srgb,var(--irfg) 25%,transparent);background:transparent;color:inherit;border-radius:8px;padding:5px 10px;font-size:.8rem;font-weight:600}
+.nbirbar select option{color:#1D2321}
+.nbirbar .play{background:#2B47D4;border-color:#2B47D4;color:#fff}
+.nbirbody{flex:1;overflow-y:auto;padding:28px 20px 80px}
+.nbirtext{max-width:var(--irw,720px);margin:0 auto;font-size:var(--irfs,26px);line-height:var(--irlh,1.8);font-family:var(--irff,Figtree,system-ui,sans-serif)}
+.nbirtext h1{font-size:1.3em;margin:0 0 .6em}
+.nbirtext p{margin:0 0 .9em;padding:2px 6px;border-radius:8px;cursor:pointer}
+.nbirtext p.on{background:color-mix(in srgb,#2B47D4 12%,transparent)}
+.nbirtext p.empty{opacity:.6;font-style:italic;cursor:default}
+::highlight(nb-ir){background:#FFD400;color:#1D2321}
+/* al dibujar, el lápiz no desplaza la página (evita trazos cortados) */
+.nbinner.drawing{touch-action:none;-webkit-user-select:none;user-select:none}
+#nbView:has(.nbinner.drawing){overscroll-behavior:contain}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1456,6 +1520,8 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbgrp" role="group" aria-label="Tipo de lápiz" id="nbPens">
         <button type="button" class="nbopt" data-pen="pencil" title="Lápiz: trazo fino y suave"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l3-1 11-11-2-2L5 17z"/><path d="M14 6l2 2" /></svg></button>
         <button type="button" class="nbopt" data-pen="pen" title="Pluma: trazo firme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3l4 8-4 10-4-10z"/><circle cx="12" cy="11" r="1.3" fill="currentColor"/></svg></button>
+        <button type="button" class="nbopt" id="nbBeauty" aria-haspopup="menu" title="Mejorar escritura: suavizar el trazo y convertir dibujos en formas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20L15 9M14 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM19 11l.7 1.3 1.3.7-1.3.7L19 15l-.7-1.3-1.3-.7 1.3-.7z"/></svg><span>Mejorar</span></button>
+        <button type="button" class="nbopt" id="nbFinger" aria-pressed="false" title="Dibujar también con el dedo. Si está apagado y usas lápiz digital, el dedo solo desplaza la página."><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5M12 10V8.5a1.5 1.5 0 0 1 3 0V11M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a5 5 0 0 1-4-2l-3-4a1.5 1.5 0 0 1 2.3-2L9 15"/></svg></button>
         <button type="button" class="nbopt" data-pen="marker" title="Marcador: trazo grueso"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7 21h10M9 17h6l1-6H8z"/><path d="M10 11V4h4v7"/></svg></button>
       </div>
       <div class="nbgrp" role="group" aria-label="Forma" id="nbShapes">
@@ -1487,6 +1553,9 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbgrp">
         <button type="button" class="nbt" id="nbImg" title="Insertar imagen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg><span>Imagen</span></button>
         <input type="file" id="nbFile" accept="image/*" multiple hidden>
+        <button type="button" class="nbt" id="nbInsBtn" aria-haspopup="menu" title="Insertar: tabla, audio, video, PDF o copia impresa de un archivo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Insertar</span></button>
+        <input type="file" id="nbMediaFile" hidden>
+        <input type="file" id="nbPrintFile" accept="application/pdf,.pdf,image/*" hidden>
         <button type="button" class="nbt" id="nbEqBtn" title="Insertar ecuación (escrita en LaTeX)"><b style="font-family:Georgia,serif;font-style:italic">∑</b><span>Ecuación</span></button>
       </div>
       <div class="nbgrp">
@@ -1494,6 +1563,7 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
         <button type="button" class="nbt" id="nbRedo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
       </div>
       <div class="nbgrp">
+        <button type="button" class="nbt" id="nbIrBtn" title="Lector inmersivo: leer la página con texto grande y voz"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4z"/><path d="M12 7a2 2 0 0 1 2-2h3"/><path d="M17 10a3 3 0 0 1 0 5M19.5 8a6 6 0 0 1 0 9"/></svg><span>Lector inmersivo</span></button>
         <button type="button" class="nbt" id="nbViewBtn" aria-expanded="false" aria-controls="nbViewBar" title="Vista y ajuste de página"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span>Vista: <em id="nbViewLabel">Infinito</em></span></button>
         <div class="nbzoom"><button type="button" id="nbZoomOut" aria-label="Alejar cuaderno">−</button><button type="button" id="nbZoomVal" title="Volver a 100%">100%</button><button type="button" id="nbZoomIn" aria-label="Acercar cuaderno">+</button></div>
       </div>
@@ -1527,6 +1597,8 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbvrow"><span class="nbxl">Tamaño</span><select id="nbVSize" aria-label="Tamaño de hoja"></select></div>
       <div class="nbvrow"><span class="nbxl">Orientación</span><div class="seg" id="nbVOrient"><button type="button" data-v="portrait">Vertical</button><button type="button" data-v="landscape">Horizontal</button></div></div>
       <div class="nbvrow"><button type="button" class="linkbtn" id="nbVAll">Usar en todas las páginas</button></div>
+      <div class="nbvrow nbpgcolor"><span class="nbxl">Color de página</span><div class="nbpgcols" id="nbPgCols" role="group" aria-label="Color de página"></div></div>
+      <div class="nbvrow"><span class="nbxl">Fondo</span><div class="seg" id="nbTheme"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Oscuro</button></div></div>
       <p class="nbvinfo" id="nbVInfo"></p>
     </div>
     <div class="nbbody">
@@ -2746,6 +2818,7 @@ async function driveSyncInner({ manual = false, pull = false, live = false } = {
       catch (e) { if (STOP_CODES.includes(e?.code) || AMBIGUOUS.includes(e?.code)) throw e; console.error(e); d.gerr = "upload"; d.gerrInfo = `${errCode(e)}${e?.message ? " · " + String(e.message).slice(0, 140) : ""}`; await quietPut(d); }
     }
     for (const g of [...DS.trash]) { try { await gd("trash_file", { fileId: g }); } catch (e) { if (e?.code !== "tool_error") throw e; } DS.trash = DS.trash.filter(x => x !== g); saveDS(); }
+    await nbMediaSync();
     setDriveUI("busy", "Guardando marcas y avance…");
     await writeManifest();
     if (!cleaned || manual) { setDriveUI("busy", "Quitando copias repetidas en Drive…"); await cleanupDuplicates(); cleaned = true; }
@@ -3188,9 +3261,9 @@ const NB_COLORS = [["#1D2321", "Negro"], ["#2B47D4", "Azul"], ["#D9363E", "Rojo"
 const HL_COLORS = [["#FFD400", "Amarillo"], ["#5FD068", "Verde"], ["#FF7EB6", "Rosa"], ["#7CB8FF", "Azul"], ["#FFA94D", "Naranja"], ["#C9A7FF", "Lila"]];
 const NBWIN = document.documentElement.classList.contains("nbwin");
 const NBWIN_ID = NBWIN ? decodeURIComponent(location.hash.slice(4)) : "";
-const NB = { open: false, tool: "text", color: { pen: "#1D2321", hl: "#FFD400" }, size: 4, k: 1, hist: [], fut: [], saveT: null, own: null, nav: null, full: false, pen: "pen", shape: "line", erase: "stroke" };
-try { const v = JSON.parse(localStorage.getItem("atril-nb") || "{}"); if (typeof v.nav === "boolean") NB.nav = v.nav; if (v.pen) NB.pen = v.pen; if (v.shape) NB.shape = v.shape; if (v.erase) NB.erase = v.erase; if (v.tool) NB.tool = v.tool; if (v.color) NB.color = { ...NB.color, ...v.color }; if (v.size) NB.size = v.size; if (v.w) document.documentElement.style.setProperty("--nbw", v.w + "px"); } catch {}
-const nbPrefs = () => { try { localStorage.setItem("atril-nb", JSON.stringify({ tool: NB.tool, color: NB.color, size: NB.size, w: NB.w, z: NB.z, nav: NB.nav ?? undefined, pen: NB.pen, shape: NB.shape, erase: NB.erase })); } catch {} };
+const NB = { open: false, tool: "text", color: { pen: "#1D2321", hl: "#FFD400" }, size: 4, k: 1, hist: [], fut: [], saveT: null, own: null, nav: null, full: false, pen: "pen", shape: "line", erase: "stroke", smooth: 1, ink2shape: false };
+try { const v = JSON.parse(localStorage.getItem("atril-nb") || "{}"); if (typeof v.nav === "boolean") NB.nav = v.nav; if (v.pen) NB.pen = v.pen; if (v.dark) NB.dark = true; if (v.penSeen) NB.penSeen = true; if (v.smooth != null) NB.smooth = v.smooth; if (v.ink2shape) NB.ink2shape = true; if (v.fingerDraw) NB.fingerDraw = true; if (v.shape) NB.shape = v.shape; if (v.erase) NB.erase = v.erase; if (v.tool) NB.tool = v.tool; if (v.color) NB.color = { ...NB.color, ...v.color }; if (v.size) NB.size = v.size; if (v.w) document.documentElement.style.setProperty("--nbw", v.w + "px"); } catch {}
+const nbPrefs = () => { try { localStorage.setItem("atril-nb", JSON.stringify({ tool: NB.tool, color: NB.color, size: NB.size, w: NB.w, z: NB.z, nav: NB.nav ?? undefined, pen: NB.pen, shape: NB.shape, erase: NB.erase, dark: NB.dark || undefined, penSeen: NB.penSeen || undefined, smooth: NB.smooth, ink2shape: NB.ink2shape || undefined, fingerDraw: NB.fingerDraw || undefined })); } catch {} };
 const uid = () => Math.random().toString(36).slice(2, 9);
 const SEC_COLORS = ["#2F6FD6", "#D9622B", "#1F8A4C", "#8E44AD", "#C0392B", "#0E8A9A", "#B7950B", "#C2185B"];
 /* documento cuyo cuaderno se muestra: el del PDF abierto o un cuaderno independiente (NB.own) */
@@ -3248,6 +3321,8 @@ function renderNb() {
   $("#nbSizes").hidden = !(NB.tool === "pen" || NB.tool === "shape");
   $("#nbPens").hidden = NB.tool !== "pen"; $("#nbShapes").hidden = NB.tool !== "shape"; $("#nbErasers").hidden = NB.tool !== "eraser";
   $$("#nbPens [data-pen]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.pen === NB.pen)));
+  $("#nbFinger").setAttribute("aria-pressed", String(!!NB.fingerDraw || !NB.penSeen));
+  $("#nbBeauty").setAttribute("aria-pressed", String(!!(NB.smooth || NB.ink2shape)));
   $$("#nbShapes [data-shape]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.shape === NB.shape)));
   $$("#nbErasers [data-erase]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.erase === NB.erase)));
   $("#nbFmt").hidden = NB.tool !== "text";
@@ -3612,7 +3687,7 @@ addEventListener("keydown", (e) => {
 });
 /* ---------- Panel lateral: búsqueda y resumen de etiquetas ---------- */
 NB.side = null;
-function nbItemText(it) { return it.type === "text" ? (it.text || "") : it.type === "eq" ? (it.tex || "") : ""; }
+function nbItemText(it) { return it.type === "text" ? (it.text || "") : it.type === "eq" ? (it.tex || "") : it.type === "table" ? (it.cells || []).map(r => r.join(" · ")).join("\n") : it.type === "media" ? (it.name || it.url || "") : ""; }
 function nbSnippet(text, qn) {
   const t = text.replace(/\s+/g, " ").trim(); if (!qn) return document.createTextNode(t.length > 140 ? t.slice(0, 140) + "…" : t);
   const nt = normTxt(t), at = nt.indexOf(qn); if (at < 0) return document.createTextNode(t.slice(0, 140));
@@ -3731,7 +3806,10 @@ $("#nbView").addEventListener("wheel", (e) => {
 }, { passive: false });
 /* panel Vista: infinito o tamaño de hoja */
 $("#nbVSize").append(...NB_PAPERS.map(([id, name, w, h]) => el("option", { value: id, text: `${name} · ${w} × ${h} mm` })));
+const PG_COLORS = [["", "Blanco", "#FFFFFF"], ["#FBF5E6", "Crema", "#FBF5E6"], ["#FFF8C9", "Amarillo", "#FFF8C9"], ["#E7F6EA", "Verde", "#E7F6EA"], ["#E6F0FB", "Azul", "#E6F0FB"], ["#FBE9EF", "Rosa", "#FBE9EF"], ["#EEF0F2", "Gris", "#EEF0F2"]];
 function renderNbViewBar() {
+  if (!NB.target) { const box = $("#nbPgCols"), cur = nbPage().color || ""; box.replaceChildren(); for (const [v, name, c] of PG_COLORS) { const b = el("button", { type: "button", style: `--c:${c}`, title: name, "aria-label": "Página " + name.toLowerCase(), "aria-pressed": String(v === cur) }); b.addEventListener("click", () => { nbSnap(); const pg = nbPage(); if (v) pg.color = v; else delete pg.color; nbSave(); renderNbPage(); renderNbViewBar(); }); box.append(b); } }
+  $$("#nbTheme button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.v === "dark") === !!NB.dark)));
   const pg = nbPage(), v = pg.view || { mode: "infinite" };
   $$("#nbVMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === (v.mode || "infinite"))));
   $("#nbVSize").value = v.size || "a4";
@@ -3759,11 +3837,32 @@ function strokePath(pts) {
   const l = pts[pts.length - 1]; return d + ` L${l[0]} ${l[1]}`;
 }
 const polyPath = (pts) => pts.length ? "M" + pts.map(([x, y]) => `${x} ${y}`).join(" L") : "";
-const stPath = (st, pts = st.pts) => st.shape ? polyPath(pts) : strokePath(pts);
+const stPath = (st, pts = st.pts) => st.shape ? polyPath(pts) : st.pr ? outlinePath(pts, st.size, st.kind) : strokePath(pts);
+const nbPress = (ev) => Math.round(Math.max(0.05, Math.min(1, ev.pressure || 0.5)) * 100) / 100;
+/* contorno de un trazo con presión (más grueso al apretar), relleno y con extremos redondeados */
+function outlinePath(pts, size, kind) {
+  const n = pts.length; if (!n) return "";
+  const thin = kind === "pencil" ? 0.5 : 0.7;
+  const pr = pts.map((p, i) => { let s2 = 0, c = 0; for (let j = Math.max(0, i - 2); j <= Math.min(n - 1, i + 2); j++) { s2 += pts[j][2] ?? 0.5; c++; } return s2 / c; });
+  const rad = (i) => Math.max(0.3, size / 2 * ((1 - thin) + thin * Math.min(1.25, pr[i] * 1.5)));
+  const f = (v) => Math.round(v * 100) / 100;
+  if (n === 1 || (n === 2 && Math.hypot(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]) < 0.5)) { const [x, y] = pts[0], r = rad(0); return `M${f(x - r)} ${f(y)} a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0 a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`; }
+  const L = [], R = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 2)], b = pts[Math.min(n - 1, i + 2)];
+    let dx = b[0] - a[0], dy = b[1] - a[1]; const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    const r = rad(i), [x, y] = pts[i];
+    L.push([x - dy * r, y + dx * r]); R.push([x + dy * r, y - dx * r]);
+  }
+  const through = (arr) => { let d = ""; for (let i = 1; i < arr.length - 1; i++) { const [x1, y1] = arr[i], [x2, y2] = arr[i + 1]; d += ` Q${f(x1)} ${f(y1)} ${f((x1 + x2) / 2)} ${f((y1 + y2) / 2)}`; } const l = arr[arr.length - 1]; return d + ` L${f(l[0])} ${f(l[1])}`; };
+  const re = rad(n - 1), rs = rad(0), Rr = R.slice().reverse();
+  return `M${f(L[0][0])} ${f(L[0][1])}` + through(L) + ` A${f(re)} ${f(re)} 0 0 0 ${f(Rr[0][0])} ${f(Rr[0][1])}` + through(Rr) + ` A${f(rs)} ${f(rs)} 0 0 0 ${f(L[0][0])} ${f(L[0][1])}Z`;
+}
 function svgStroke(st) {
   const ns = "http://www.w3.org/2000/svg", p = document.createElementNS(ns, "path");
   p.setAttribute("d", stPath(st));
-  if (st.op) p.setAttribute("stroke-opacity", String(st.op)); p.setAttribute("fill", "none"); p.setAttribute("stroke", st.color);
+  if (st.op) p.setAttribute("stroke-opacity", String(st.op));
+  if (st.pr) { p.setAttribute("fill", st.color); p.setAttribute("stroke", "none"); if (st.op) p.setAttribute("fill-opacity", String(st.op)); p.dataset.id = st.id; return p; } p.setAttribute("fill", "none"); p.setAttribute("stroke", st.color);
   p.setAttribute("stroke-width", st.size); p.setAttribute("stroke-linecap", st.tool === "hl" ? "butt" : "round"); p.setAttribute("stroke-linejoin", "round");
   if (st.tool === "hl") { p.setAttribute("stroke-opacity", "0.38"); p.style.mixBlendMode = "multiply"; }
   p.dataset.id = st.id; return p;
@@ -3771,9 +3870,11 @@ function svgStroke(st) {
 function renderNbPage() {
   if (!NB.open) return;
   const pg = nbPage();
+  if (pg.items.some(it => it.type === "eq" && !(it.tex || "").trim() && it !== NB.eq)) pg.items = pg.items.filter(it => !(it.type === "eq" && !(it.tex || "").trim() && it !== NB.eq));
   $("#nbBgLayer").className = "nbbg bg-" + (pg.bg || "lines");
   const items = $("#nbItems"); items.replaceChildren();
-  for (const it of pg.items) items.append(it.type === "img" ? nbImgNode(it) : it.type === "eq" ? nbEqNode(it) : nbTextNode(it));
+  for (const it of pg.items) items.append(it.type === "img" ? nbImgNode(it) : it.type === "eq" ? nbEqNode(it) : it.type === "media" ? nbMediaNode(it) : it.type === "table" ? nbTableNode(it) : nbTextNode(it));
+  $("#nbInner").style.background = (!NB.target && pg.color) || "#fff";
   if (NB.eq && !pg.items.includes(NB.eq)) closeEqBar(true); else if (NB.eq) document.querySelector(`.nbeq[data-id="${NB.eq.id}"]`)?.classList.add("editing");
   const svg = $("#nbInk"); svg.replaceChildren(); for (const st of pg.strokes) svg.append(svgStroke(st));
   $("#nbInner").classList.toggle("drawing", NB.tool !== "text");
@@ -3923,11 +4024,12 @@ function nbDraggable(handle, it, node, mode) {
     handle.addEventListener("pointermove", mv); handle.addEventListener("pointerup", up); handle.addEventListener("pointercancel", up);
   });
 }
-function nbPoint(e) { const r = $("#nbInner").getBoundingClientRect(); return [Math.round((e.clientX - r.left) / NB.k), Math.round((e.clientY - r.top) / NB.k)]; }
+let nbRect = null;
+function nbPoint(e) { const r = nbRect || $("#nbInner").getBoundingClientRect(); return [Math.round((e.clientX - r.left) / NB.k * 10) / 10, Math.round((e.clientY - r.top) / NB.k * 10) / 10]; }
 /* tocar la página con Texto crea una nota; con Lápiz/Resaltador dibuja; con Borrador borra trazos */
 let curStroke = null;
 $("#nbInner").addEventListener("pointerdown", (e) => {
-  if (e.button > 0) return;
+  if (e.button > 0 && !(e.pointerType === "pen" && e.button === 5)) return;
   const inner = $("#nbInner");
   if (NB.tool === "text") {
     if (e.target !== inner && !e.target.classList.contains("nbbg") && e.target.id !== "nbItems") return;
@@ -3940,32 +4042,63 @@ $("#nbInner").addEventListener("pointerdown", (e) => {
     const ed = document.querySelector(`.nbtxt[data-id="${it.id}"] .nbed`); ed?.focus({ preventScroll: true });
     return;
   }
+  if (curStroke) return;   // otro dedo o la palma mientras se dibuja
   e.preventDefault(); inner.setPointerCapture(e.pointerId);
+  nbRect = inner.getBoundingClientRect();
+  if (e.pointerType === "pen" && !NB.penSeen) { NB.penSeen = true; nbPrefs(); }
+  // con lápiz digital, el dedo desplaza la página (como en OneNote) salvo que se active «Dibujar con el dedo»
+  if (e.pointerType === "touch" && NB.penSeen && !NB.fingerDraw) { const v = $("#nbView"); curStroke = { pan: true, pid: e.pointerId, sx: e.clientX, sy: e.clientY, sl: v.scrollLeft, st: v.scrollTop }; return; }
   const p0 = nbPoint(e);
-  if (NB.tool === "eraser") { nbSnap(); nbEraseAt(p0); curStroke = { erasing: true }; return; }
+  const penErase = e.pointerType === "pen" && (e.button === 5 || (e.buttons & 32));   // goma del lápiz
+  if (NB.tool === "eraser" || penErase) { nbSnap(); nbEraseAt(p0); curStroke = { erasing: true, pid: e.pointerId }; return; }
   nbSnap();
   const isHl = NB.tool === "hl";
   if (NB.tool === "shape") curStroke = { id: uid(), tool: "shape", shape: NB.shape, color: NB.color.pen, size: NB.size, a: [p0, p0], pts: [p0] };
   else if (isHl) curStroke = { id: uid(), tool: "hl", color: NB.color.hl, size: 18, pts: [p0] };
-  else { const k = PEN_KINDS[NB.pen] || PEN_KINDS.pen; curStroke = { id: uid(), tool: "pen", kind: NB.pen, color: NB.color.pen, size: Math.max(1, Math.round(NB.size * k.w * 10) / 10), pts: [p0] }; if (k.op < 1) curStroke.op = k.op; }
+  else {
+    const k = PEN_KINDS[NB.pen] || PEN_KINDS.pen; curStroke = { id: uid(), tool: "pen", kind: NB.pen, color: NB.color.pen, size: Math.max(1, Math.round(NB.size * k.w * 10) / 10), pts: [p0] }; if (k.op < 1) curStroke.op = k.op;
+    if (e.pointerType === "pen" && NB.pen !== "marker") { curStroke.pr = 1; p0.push(nbPress(e)); }   // presión del lápiz
+  }
+  curStroke.pid = e.pointerId;
   curStroke.node = svgStroke(curStroke); $("#nbInk").append(curStroke.node);
 });
 $("#nbInner").addEventListener("pointermove", (e) => {
-  if (!curStroke) return;
+  if (!curStroke || (curStroke.pid != null && e.pointerId !== curStroke.pid)) return;
+  if (curStroke.pan) { const v = $("#nbView"); v.scrollLeft = curStroke.sl - (e.clientX - curStroke.sx); v.scrollTop = curStroke.st - (e.clientY - curStroke.sy); return; }
+  // todos los puntos que manda el lápiz entre un cuadro y otro, no solo el último
+  const evs = (typeof e.getCoalescedEvents === "function" && e.getCoalescedEvents()) || []; const list = evs.length ? evs : [e];
+  if (curStroke.erasing) { for (const ev of list) nbEraseAt(nbPoint(ev)); return; }
   const p = nbPoint(e);
-  if (curStroke.erasing) { nbEraseAt(p); return; }
   if (curStroke.shape) { curStroke.a[1] = e.shiftKey ? nbConstrain(curStroke.shape, curStroke.a[0], p) : p; curStroke.pts = shapePts(curStroke.shape, curStroke.a[0], curStroke.a[1], curStroke.size); curStroke.node.setAttribute("d", polyPath(curStroke.pts)); return; }
-  const l = curStroke.pts[curStroke.pts.length - 1]; if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 1.5) return;
-  curStroke.pts.push(p); curStroke.node.setAttribute("d", strokePath(curStroke.pts));
+  let added = false;
+  for (const ev of list) {
+    const q = nbPoint(ev), l = curStroke.pts[curStroke.pts.length - 1];
+    if (Math.hypot(q[0] - l[0], q[1] - l[1]) < 0.6) { if (curStroke.pr) l[2] = Math.max(l[2], nbPress(ev)); continue; }
+    if (curStroke.pr) q.push(nbPress(ev));
+    curStroke.pts.push(q); added = true;
+  }
+  if (added && !curStroke.raf) curStroke.raf = requestAnimationFrame(() => { if (!curStroke || curStroke.erasing) return; curStroke.raf = 0; curStroke.node.setAttribute("d", stPath(curStroke)); });
 });
-const endStroke = () => {
-  if (!curStroke) return;
+const endStroke = (e) => {
+  if (!curStroke || (e && curStroke.pid != null && e.pointerId !== curStroke.pid)) return;
+  nbRect = null;
+  if (curStroke.pan) { curStroke = null; return; }
+  if (curStroke.raf) cancelAnimationFrame(curStroke.raf);
   if (curStroke.shape && Math.hypot(curStroke.a[1][0] - curStroke.a[0][0], curStroke.a[1][1] - curStroke.a[0][1]) < 4) { curStroke.node.remove(); curStroke = null; NB.hist.pop(); nbUndoUI(); return; }
-  if (!curStroke.erasing && curStroke.pts.length) { const { node, a, ...st } = curStroke; nbPage().strokes.push(st); $("#nbHint").hidden = true; }
+  if (!curStroke.erasing && curStroke.pts.length) {
+    const { node, a, raf, pid, ...st } = curStroke;
+    if (st.tool === "pen" && st.pts.length > 4) {
+      const shp = NB.ink2shape ? recognizeShape(st.pts) : null;
+      if (shp) { delete st.pr; delete st.kind; delete st.op; st.tool = "shape"; st.shape = shp.shape; st.pts = shp.pts; node.remove(); curStroke = null; const nn = svgStroke(st); $("#nbInk").append(nn); nbPage().strokes.push(st); $("#nbHint").hidden = true; nbSave(); nbScale(); toast(`Convertido en ${shp.name}. Ctrl+Z para deshacer.`); return; }
+      if (NB.smooth) st.pts = smoothPts(st.pts, NB.smooth);
+    }
+    node.setAttribute("d", stPath(st)); nbPage().strokes.push(st); $("#nbHint").hidden = true; }
   curStroke = null; nbSave(); nbScale();
 };
 $("#nbInner").addEventListener("pointerup", endStroke);
 $("#nbInner").addEventListener("pointercancel", endStroke);
+$("#nbInner").addEventListener("lostpointercapture", endStroke);
+$("#nbInner").addEventListener("contextmenu", (e) => { if (NB.tool !== "text") e.preventDefault(); });
 function nbEraseAt([x, y]) {
   const pg = nbPage(), r = NB.erase === "point" ? 9 : 14; const before = pg.strokes.length;
   const hit = (st, [a, b]) => Math.abs(a - x) < r + st.size / 2 && Math.abs(b - y) < r + st.size / 2;
@@ -3986,13 +4119,71 @@ function nbEraseAt([x, y]) {
   if (changed || pg.strokes.length !== before) { const svg = $("#nbInk"); svg.replaceChildren(); for (const st of pg.strokes) svg.append(svgStroke(st)); }
 }
 
+
+/* ---------- Mejorar escritura: suavizado y conversión de dibujos en formas ---------- */
+function smoothPts(pts, level) {
+  const it = level >= 2 ? 4 : 2; let a = pts.map(p => p.slice());
+  for (let k = 0; k < it; k++) {
+    const b = a.map(p => p.slice());
+    for (let i = 1; i < a.length - 1; i++) { b[i][0] = Math.round((a[i - 1][0] + 2 * a[i][0] + a[i + 1][0]) / 4 * 10) / 10; b[i][1] = Math.round((a[i - 1][1] + 2 * a[i][1] + a[i + 1][1]) / 4 * 10) / 10; }
+    a = b;
+  }
+  return a;
+}
+function rdp(P, eps) {
+  if (P.length < 3) return P.slice();
+  const [a, z] = [P[0], P[P.length - 1]], L = Math.hypot(z[0] - a[0], z[1] - a[1]) || 1e-9;
+  let md = -1, mi = 0;
+  for (let i = 1; i < P.length - 1; i++) { const d = L > 1e-6 ? Math.abs((z[0] - a[0]) * (a[1] - P[i][1]) - (a[0] - P[i][0]) * (z[1] - a[1])) / L : Math.hypot(P[i][0] - a[0], P[i][1] - a[1]); if (d > md) { md = d; mi = i; } }
+  if (md <= eps) return [a, z];
+  return [...rdp(P.slice(0, mi + 1), eps).slice(0, -1), ...rdp(P.slice(mi), eps)];
+}
+function recognizeShape(pts) {
+  const P = pts.map(p => [p[0], p[1]]), n = P.length;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, len = 0;
+  P.forEach((p, i) => { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); if (i) len += Math.hypot(p[0] - P[i - 1][0], p[1] - P[i - 1][1]); });
+  const w = x1 - x0, h = y1 - y0, diag = Math.hypot(w, h); if (diag < 30 || n < 6) return null;
+  const a = P[0], z = P[n - 1], chord = Math.hypot(z[0] - a[0], z[1] - a[1]);
+  if (chord > 0.88 * len) {
+    let md = 0; for (const p of P) md = Math.max(md, Math.abs((z[0] - a[0]) * (a[1] - p[1]) - (a[0] - p[0]) * (z[1] - a[1])) / chord);
+    if (md < Math.max(4, chord * 0.07)) return { shape: "line", name: "línea", pts: shapePts("line", a, z, 0) };
+    return null;
+  }
+  if (chord > Math.max(22, len * 0.2) || len < 70) return null;
+  // esquinas: simplifica el contorno cerrado y quita vértices casi rectos
+  let c = rdp([...P, P[0]], diag * 0.08).slice(0, -1);
+  const turn = (p, q, r) => { const a1 = Math.atan2(q[1] - p[1], q[0] - p[0]), a2 = Math.atan2(r[1] - q[1], r[0] - q[0]); let d = Math.abs(a2 - a1); if (d > Math.PI) d = 2 * Math.PI - d; return d; };
+  for (let changed = true; changed && c.length > 2;) { changed = false; for (let i = 0; i < c.length; i++) { const p = c[(i - 1 + c.length) % c.length], q = c[i], r = c[(i + 1) % c.length]; if (turn(p, q, r) < 0.45 || Math.hypot(q[0] - p[0], q[1] - p[1]) < diag * 0.1) { c.splice(i, 1); changed = true; break; } } }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = Math.max(1, w / 2), ry = Math.max(1, h / 2);
+  const err = P.reduce((s2, p) => s2 + Math.abs(Math.hypot((p[0] - cx) / rx, (p[1] - cy) / ry) - 1), 0) / n;
+  const R = (q) => [Math.round(q[0] * 10) / 10, Math.round(q[1] * 10) / 10];
+  if (c.length === 3 && err > 0.09) return { shape: "poly", name: "triángulo", pts: densify([...c, c[0]].map(R), 8) };
+  if (c.length === 4 && err > 0.07) {
+    const axis = c.every((q, i) => { const r = c[(i + 1) % 4], ang = Math.abs(Math.atan2(r[1] - q[1], r[0] - q[0])) % (Math.PI / 2); return ang < 0.27 || ang > Math.PI / 2 - 0.27; });
+    if (axis) return { shape: "rect", name: "rectángulo", pts: shapePts("rect", [x0, y0], [x1, y1], 0) };
+    return { shape: "poly", name: "cuadrilátero", pts: densify([...c, c[0]].map(R), 8) };
+  }
+  if (err < 0.14) {
+    if (Math.abs(w - h) / Math.max(w, h) < 0.15) { const r = (w + h) / 4; return { shape: "ellipse", name: "círculo", pts: shapePts("ellipse", [cx - r, cy - r], [cx + r, cy + r], 0) }; }
+    return { shape: "ellipse", name: "elipse", pts: shapePts("ellipse", [x0, y0], [x1, y1], 0) };
+  }
+  return null;
+}
+$("#nbBeauty").addEventListener("click", () => nbPop($("#nbBeauty"), [
+  { head: "Suavizar el trazo" },
+  { label: "Sin suavizado", sub: "El trazo queda tal cual lo haces", checked: !NB.smooth, act: () => { NB.smooth = 0; nbPrefs(); renderNb(); } },
+  { label: "Suave", sub: "Quita el temblor sin cambiar tu letra", checked: NB.smooth === 1, act: () => { NB.smooth = 1; nbPrefs(); renderNb(); } },
+  { label: "Fuerte", sub: "Letra más redondeada y pareja", checked: NB.smooth === 2, act: () => { NB.smooth = 2; nbPrefs(); renderNb(); } },
+  "-",
+  { label: "Convertir dibujos en formas", sub: "Líneas, rectángulos, triángulos, círculos y elipses hechos a mano quedan perfectos", checked: !!NB.ink2shape, act: () => { NB.ink2shape = !NB.ink2shape; nbPrefs(); renderNb(); toast(NB.ink2shape ? "Lo que dibujes con forma de línea, rectángulo, triángulo o círculo se convertirá en esa forma." : "Conversión a formas desactivada."); } }
+]));
 /* ---------- Tipos de lápiz y formas ---------- */
 const PEN_KINDS = { pencil: { w: 0.7, op: 0.78 }, pen: { w: 1, op: 1 }, marker: { w: 2.4, op: 0.9 } };
 function densify(pts, step) {
   const out = [pts[0]];
   for (let i = 1; i < pts.length; i++) {
     const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], d = Math.hypot(x1 - x0, y1 - y0), n = Math.floor(d / step);
-    for (let k = 1; k < n; k++) out.push([Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n)]);
+    for (let k = 1; k < n; k++) { const q = [Math.round((x0 + (x1 - x0) * k / n) * 10) / 10, Math.round((y0 + (y1 - y0) * k / n) * 10) / 10]; if (pts[i].length > 2) q.push(pts[i - 1][2] + (pts[i][2] - pts[i - 1][2]) * k / n); out.push(q); }
     out.push(pts[i]);
   }
   return out;
@@ -4017,6 +4208,7 @@ function shapePts(shape, [x0, y0], [x1, y1], size) {
   return [...line, w1, [x1, y1], w2];
 }
 $$("#nbPens [data-pen]").forEach(b => b.addEventListener("click", () => { NB.pen = b.dataset.pen; if (NB.pen === "marker" && NB.size < 4) NB.size = 4; nbPrefs(); renderNb(); }));
+$("#nbFinger").addEventListener("click", () => { NB.fingerDraw = !(NB.fingerDraw || !NB.penSeen); NB.penSeen = true; nbPrefs(); renderNb(); toast(NB.fingerDraw ? "El dedo también dibuja." : "El dedo desplaza la página; dibuja con el lápiz."); });
 $$("#nbShapes [data-shape]").forEach(b => b.addEventListener("click", () => { NB.shape = b.dataset.shape; nbPrefs(); renderNb(); }));
 $$("#nbErasers [data-erase]").forEach(b => b.addEventListener("click", () => { NB.erase = b.dataset.erase; nbPrefs(); renderNb(); }));
 
@@ -4104,7 +4296,7 @@ $("#nbEqBtn").addEventListener("click", () => {
   const v = $("#nbView"), k = NB.k || 1;
   nbSnap();
   const it = { id: uid(), type: "eq", x: Math.max(0, Math.round((v.scrollLeft + 30) / k)), y: Math.max(0, Math.round((v.scrollTop + v.clientHeight * 0.3) / k)), tex: "", fs: 24, color: NB.color.pen };
-  nbPage().items.push(it); renderNbPage(); openEqBar(it);
+  nbPage().items.push(it); if (NB.eq) closeEqBar(true); NB.eq = it; renderNbPage(); openEqBar(it);
 });
 /* dibuja una ecuación en un lienzo (para descargar en PDF); si el navegador no lo permite, devuelve null */
 async function nbEqCanvas(it, sc) {
@@ -4124,6 +4316,299 @@ async function nbEqCanvas(it, sc) {
     return { c, w, h };
   } catch { return null; }
 }
+
+/* ---------- Fondo claro u oscuro del cuaderno ---------- */
+function applyNbTheme() { $("#nb").classList.toggle("nbdark", !!NB.dark); }
+$$("#nbTheme button").forEach(b => b.addEventListener("click", () => { NB.dark = b.dataset.v === "dark"; nbPrefs(); applyNbTheme(); renderNbViewBar(); }));
+applyNbTheme();
+/* ---------- Insertar: tabla, audio, video, archivos y copia impresa ---------- */
+const NB_URLS = new Map();
+const fmtSize = (n) => n > 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+function nbInsertAt(w) {
+  const v = $("#nbView"), k = NB.k || 1, pg = nbPage(), lim = nbPaper(pg) ? NBW : v.clientWidth / k;
+  return { x: Math.max(0, Math.round((v.scrollLeft + 30) / k)), y: Math.max(0, Math.round((v.scrollTop + v.clientHeight * 0.22) / k)), w: Math.max(220, Math.min(w, Math.round(lim - 50))) };
+}
+function nbAddItem(it) { if (NB.tool !== "text") { NB.tool = "text"; nbPrefs(); renderNb(); } nbSnap(); nbPage().items.push(it); nbSave(); renderNbPage(); return it; }
+function nbMeasure(it, n) { requestAnimationFrame(() => { if (n.isConnected) it.h = Math.round(n.offsetHeight); }); }
+function nbBoxShell(it, cls, ...kids) {
+  const n = el("div", { class: cls, "data-id": it.id, style: `left:${it.x}px;top:${it.y}px;width:${it.w}px` }, el("div", { class: "nbgrip", title: "Arrastra para mover" }), ...kids,
+    el("button", { type: "button", class: "nbdel", title: "Quitar", "aria-label": "Quitar del cuaderno", text: "✕" }), el("div", { class: "nbrz", title: "Arrastra para cambiar el ancho" }));
+  n.querySelector(".nbdel").addEventListener("pointerdown", (e) => e.stopPropagation());
+  n.querySelector(".nbdel").addEventListener("click", (e) => { e.stopPropagation(); nbRemoveItem(it); });
+  nbDraggable(n.querySelector(".nbgrip"), it, n, "move");
+  nbDraggable(n.querySelector(".nbrz"), it, n, "width");
+  return n;
+}
+/* tablas */
+function nbTableNode(it) {
+  it.cells ??= [["", ""], ["", ""]];
+  const tb = el("table"), ctl = el("div", { class: "nbtctl", role: "toolbar", "aria-label": "Tabla" });
+  let cur = [0, 0], snapped = false;
+  const n = nbBoxShell(it, "nbtable" + (it.head ? " head" : ""), ctl, tb);
+  const draw = (focus) => {
+    tb.replaceChildren();
+    it.cells.forEach((row, r) => {
+      const tr = el("tr");
+      row.forEach((txt, c) => {
+        const td = el("td", { contenteditable: "true", spellcheck: "true", "aria-label": `Fila ${r + 1}, columna ${c + 1}` }); td.textContent = txt;
+        td.addEventListener("focus", () => { cur = [r, c]; snapped = false; });
+        td.addEventListener("input", () => { if (!snapped) { nbSnap(); snapped = true; } it.cells[r][c] = td.innerText.replace(/\n$/, ""); nbSave(); nbMeasure(it, n); });
+        td.addEventListener("keydown", (e) => {
+          if (e.key !== "Tab") return; e.preventDefault();
+          const cols = it.cells[0].length; let i = r * cols + c + (e.shiftKey ? -1 : 1);
+          if (i >= it.cells.length * cols) { nbSnap(); it.cells.push(Array(cols).fill("")); nbSave(); draw(); }
+          i = Math.max(0, i); tb.rows[Math.floor(i / cols)]?.cells[i % cols]?.focus();
+        });
+        td.addEventListener("paste", (e) => { const t = e.clipboardData?.getData("text/plain"); if (t != null) { e.preventDefault(); document.execCommand("insertText", false, t); } });
+        tr.append(td);
+      });
+      tb.append(tr);
+    });
+    nbMeasure(it, n);
+    if (focus) tb.rows[focus[0]]?.cells[focus[1]]?.focus();
+  };
+  const act = (label, fn, title) => { const b = el("button", { type: "button", text: label, title }); b.addEventListener("pointerdown", (e) => e.preventDefault()); b.addEventListener("click", () => { nbSnap(); fn(); nbSave(); n.classList.toggle("head", !!it.head); draw(cur); }); ctl.append(b); };
+  act("+ Fila", () => { it.cells.splice(cur[0] + 1, 0, Array(it.cells[0].length).fill("")); cur = [cur[0] + 1, cur[1]]; }, "Agregar fila debajo");
+  act("+ Columna", () => { it.cells.forEach(r => r.splice(cur[1] + 1, 0, "")); cur = [cur[0], cur[1] + 1]; }, "Agregar columna a la derecha");
+  act("− Fila", () => { if (it.cells.length > 1) { it.cells.splice(cur[0], 1); cur = [Math.min(cur[0], it.cells.length - 1), cur[1]]; } }, "Quitar esta fila");
+  act("− Columna", () => { if (it.cells[0].length > 1) { it.cells.forEach(r => r.splice(cur[1], 1)); cur = [cur[0], Math.min(cur[1], it.cells[0].length - 1)]; } }, "Quitar esta columna");
+  act("Encabezado", () => { it.head = !it.head; }, "Resaltar la primera fila como encabezado");
+  draw();
+  return n;
+}
+function nbInsertTable(rows, cols) { const at = nbInsertAt(Math.min(620, cols * 150)); const it = nbAddItem({ id: uid(), type: "table", ...at, head: true, cells: Array.from({ length: rows }, () => Array(cols).fill("")) }); requestAnimationFrame(() => document.querySelector(`.nbtable[data-id="${it.id}"] td`)?.focus()); }
+/* audio, video y archivos */
+async function nbMediaBlob(it) {
+  const b = await fileGet("m:" + it.mid);
+  if (b) return b instanceof Blob ? b : new Blob([b], { type: it.mime || "" });
+  if (it.gid && DS.on && navigator.onLine) {
+    try { const r = await gd("download_file_content", { fileId: it.gid }); const u8 = b64ToU8(r?.content || ""); if (u8.byteLength) { const blob = new Blob([u8], { type: it.mime || "" }); await filePut("m:" + it.mid, blob); return blob; } } catch (e) { console.warn("archivo del cuaderno", e); }
+  }
+  return null;
+}
+const ytId = (u) => (String(u).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/) || [])[1];
+const vimeoId = (u) => (String(u).match(/vimeo\.com\/(?:video\/)?(\d+)/) || [])[1];
+function nbMediaNode(it) {
+  const icon = { audio: "🎙", video: "🎬", link: "▶", pdf: "📄", file: "📎" }[it.kind] || "📎";
+  const meta = it.kind === "link" ? (ytId(it.url) ? "YouTube" : vimeoId(it.url) ? "Vimeo" : "Enlace") : [it.dur ? it.dur : "", it.size ? fmtSize(it.size) : ""].filter(Boolean).join(" · ");
+  const body = el("div", { class: "nbmbody" });
+  const n = nbBoxShell(it, "nbmedia k-" + it.kind, el("div", { class: "nbmhead" }, el("span", { class: "nbmic", "aria-hidden": "true", text: icon }), el("b", { text: it.name || "Archivo", title: it.name || "" }), meta ? el("small", { text: meta }) : null), body);
+  if (it.kind === "link") {
+    const y = ytId(it.url), v = vimeoId(it.url);
+    if (y || v) body.append(el("iframe", { src: y ? `https://www.youtube-nocookie.com/embed/${y}` : `https://player.vimeo.com/video/${v}`, title: it.name || "Video", allow: "fullscreen; picture-in-picture; encrypted-media", allowfullscreen: "", loading: "lazy", referrerpolicy: "strict-origin-when-cross-origin" }));
+    else body.append(el("div", { class: "nbmact" }, el("a", { href: it.url, target: "_blank", rel: "noopener", text: "Abrir el video" })));
+    nbMeasure(it, n); return n;
+  }
+  body.append(el("div", { class: "nbmnote", text: "Cargando…" }));
+  (async () => {
+    let url = NB_URLS.get(it.mid);
+    if (!url) { const blob = await nbMediaBlob(it); if (blob) { url = URL.createObjectURL(blob); NB_URLS.set(it.mid, url); } }
+    body.replaceChildren();
+    if (!url) { body.append(el("div", { class: "nbmnote", text: it.gid ? "Se descargará de tu Google Drive cuando haya conexión." : "Este archivo está en otro dispositivo y aún no se ha subido a Google Drive." })); nbMeasure(it, n); return; }
+    if (it.kind === "audio") body.append(el("audio", { controls: "", preload: "metadata", src: url }));
+    else if (it.kind === "video") body.append(el("video", { controls: "", preload: "metadata", playsinline: "", src: url }));
+    else {
+      const open = el("button", { type: "button", text: "Abrir" }); open.addEventListener("click", () => window.open(url, "_blank", "noopener"));
+      const save = el("a", { href: url, download: it.name || "archivo", text: "Descargar" });
+      const row = el("div", { class: "nbmact" }, open, save);
+      if (it.kind === "pdf") { const pr = el("button", { type: "button", text: "Insertar copia impresa", title: "Agrega las páginas del PDF como imágenes en el cuaderno" }); pr.addEventListener("click", async () => nbPrintout(await nbMediaBlob(it), it.name, { x: it.x, y: it.y + (it.h || 90) + 50 })); row.append(pr); }
+      body.append(row);
+    }
+    const md = body.querySelector("audio,video"); if (md) md.addEventListener("loadeddata", () => nbMeasure(it, n), { once: true });
+    nbMeasure(it, n);
+  })();
+  return n;
+}
+const MEDIA_MAX = 200 * 1048576;
+async function nbAddMediaBlob(blob, name, kind, extra = {}) {
+  if (blob.size > MEDIA_MAX) { toast(`El archivo pesa ${fmtSize(blob.size)}; el máximo para el cuaderno es ${fmtSize(MEDIA_MAX)}.`); return null; }
+  const mid = uid() + uid(), ok = await filePut("m:" + mid, blob);
+  if (!ok) { toast("No hay espacio en este dispositivo para guardar el archivo."); return null; }
+  const at = nbInsertAt(kind === "audio" ? 380 : kind === "video" ? 520 : 400);
+  const it = nbAddItem({ id: uid(), type: "media", kind, ...at, name, mime: blob.type || "application/octet-stream", size: blob.size, mid, ...extra });
+  if (DS.on) { try { scheduleSync(1500); } catch {} }
+  return it;
+}
+$("#nbMediaFile").addEventListener("change", async (e) => {
+  const f = e.target.files?.[0]; e.target.value = ""; if (!f) return;
+  const kind = /^audio\//.test(f.type) ? "audio" : /^video\//.test(f.type) ? "video" : (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) ? "pdf" : "file";
+  if (await nbAddMediaBlob(f, f.name, kind)) toast(DS.on ? "Archivo agregado. Se guardará también en tu Google Drive." : "Archivo agregado al cuaderno.");
+});
+/* sube a Drive los audios, videos y archivos del cuaderno que aún no están allí */
+async function nbMediaSync() {
+  for (const d of [...S.docs]) {
+    const nb = d.notebook; if (d.sample || !nb?.pages) continue; let ch = false;
+    for (const pg of nb.pages) for (const it of pg.items || []) {
+      if (it.type !== "media" || !it.mid || it.gid || it.gerr) continue;
+      const b = await fileGet("m:" + it.mid); if (!b) continue;
+      setDriveUI("busy", `Guardando «${it.name}» del cuaderno en Drive…`);
+      try { const blob = b instanceof Blob ? b : new Blob([b]); const r = await gdUpload(it.name || "archivo", DS.root, new Uint8Array(await blob.arrayBuffer()), it.mime || "application/octet-stream"); const id = idOf(r); if (id) { it.gid = id; ch = true; } }
+      catch (e) { if (STOP_CODES.includes(e?.code) || AMBIGUOUS.includes(e?.code)) throw e; console.error(e); it.gerr = errCode(e); ch = true; }
+    }
+    if (ch) { await quietPut(d); d.updatedAt = Date.now(); await quietPut(d); nbBroadcast(d); }
+  }
+}
+/* grabar audio */
+let nbRec = null;
+async function nbStartRec() {
+  if (nbRec) return;
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { toast("Este navegador no permite grabar audio."); return; }
+  let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch { toast("No se pudo usar el micrófono. Revisa el permiso del navegador."); return; }
+  const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported?.(t)) || "";
+  const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined), chunks = [], t0 = Date.now();
+  const bar = el("div", { class: "nbrec", role: "status" }, el("i"), el("span", { text: "Grabando audio…" }), el("b", { text: "0:00" }));
+  const stopB = el("button", { type: "button", class: "btn primary", text: "Detener y guardar" }), cancelB = el("button", { type: "button", class: "btn", text: "Cancelar" });
+  bar.append(cancelB, stopB); $(".nbmain").prepend(bar);
+  const tick = setInterval(() => { const s2 = Math.floor((Date.now() - t0) / 1000); bar.querySelector("b").textContent = `${Math.floor(s2 / 60)}:${String(s2 % 60).padStart(2, "0")}`; }, 500);
+  nbRec = { mr, keep: true };
+  mr.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
+  mr.onstop = async () => {
+    clearInterval(tick); bar.remove(); stream.getTracks().forEach(tr => tr.stop());
+    const keep = nbRec?.keep; nbRec = null; if (!keep || !chunks.length) return;
+    const secs = Math.round((Date.now() - t0) / 1000), type = chunks[0].type || mime || "audio/webm";
+    const ext = /mp4/.test(type) ? "m4a" : /ogg/.test(type) ? "ogg" : "webm", when = new Date();
+    const name = `Grabación ${when.toLocaleDateString("es")} ${when.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}.${ext}`.replace(/\//g, "-").replace(/:/g, ".");
+    if (await nbAddMediaBlob(new Blob(chunks, { type }), name, "audio", { dur: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}` })) toast("Grabación guardada en el cuaderno.");
+  };
+  stopB.addEventListener("click", () => mr.state !== "inactive" && mr.stop());
+  cancelB.addEventListener("click", () => { if (nbRec) nbRec.keep = false; mr.state !== "inactive" && mr.stop(); });
+  mr.start(1000);
+}
+/* pequeño cuadro para pedir un enlace */
+function nbAsk(title, text, placeholder) {
+  return new Promise((res) => {
+    const inp = el("input", { type: "url", placeholder, "aria-label": title });
+    const ok = el("button", { type: "submit", class: "btn primary", text: "Insertar" }), no = el("button", { type: "button", class: "btn", text: "Cancelar" });
+    const f = el("form", {}, el("h3", { text: title }), el("p", { text }), inp, el("div", { class: "row" }, no, ok));
+    const m = el("div", { class: "nbask", role: "dialog", "aria-modal": "true", "aria-label": title }, f);
+    const done = (v) => { m.remove(); res(v); };
+    f.addEventListener("submit", (e) => { e.preventDefault(); done(inp.value.trim()); });
+    no.addEventListener("click", () => done(""));
+    m.addEventListener("click", (e) => { if (e.target === m) done(""); });
+    m.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); done(""); } });
+    document.body.append(m); inp.focus();
+  });
+}
+async function nbAddVideoLink() {
+  const u = await nbAsk("Video desde un enlace", "Pega el enlace de YouTube, Vimeo u otro sitio.", "https://www.youtube.com/watch?v=…");
+  if (!u) return;
+  if (!/^https?:\/\//i.test(u)) { toast("El enlace debe empezar con https://"); return; }
+  const at = nbInsertAt(520), y = ytId(u), v = vimeoId(u);
+  nbAddItem({ id: uid(), type: "media", kind: "link", ...at, url: u, name: y ? "Video de YouTube" : v ? "Video de Vimeo" : u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60) });
+}
+/* copia impresa: cada página del archivo como imagen en el cuaderno */
+async function nbPrintout(blob, name, pos) {
+  if (!blob) { toast("No se encontró el archivo."); return; }
+  if (/^image\//.test(blob.type)) { await nbInsertImages([new File([blob], name || "imagen", { type: blob.type })]); return; }
+  if (!window.pdfjsLib) { toast("El lector de PDF no está disponible."); return; }
+  let pdf; try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise; } catch { toast("No se pudo abrir ese archivo. Usa un PDF o una imagen."); return; }
+  const MAXP = 30, n = Math.min(pdf.numPages, MAXP), at = pos ? { ...nbInsertAt(760), ...pos } : nbInsertAt(760);
+  const w = Math.max(300, Math.min(760, at.w)); let y = at.y + 4; const add = [];
+  for (let i = 1; i <= n; i++) {
+    toast(`Insertando copia impresa: página ${i} de ${n}…`);
+    const page = await pdf.getPage(i), vp0 = page.getViewport({ scale: 1 }), sc = Math.min(2, 1100 / vp0.width), vp = page.getViewport({ scale: sc });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    const h = Math.round(w * c.height / c.width);
+    add.push({ id: uid(), type: "img", x: at.x, y: y + 36, w, h, src: c.toDataURL("image/jpeg", 0.72) }); y += h + 14;
+  }
+  const total = pdf.numPages; try { pdf.destroy(); } catch {}
+  nbSnap(); nbPage().items.push({ id: uid(), type: "text", x: at.x, y: at.y, w: Math.min(460, w), text: `Copia impresa: ${name || "archivo"}${total > MAXP ? ` (primeras ${MAXP} de ${total} páginas)` : ""}`, color: "#6B7774", fs: 15 }, ...add);
+  nbSave(); renderNbPage();
+  toast(`Copia impresa insertada: ${n} ${n === 1 ? "página" : "páginas"}.`);
+}
+$("#nbPrintFile").addEventListener("change", async (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) nbPrintout(f, f.name); });
+$("#nbInsBtn").addEventListener("click", () => nbPop($("#nbInsBtn"), [
+  { head: "Insertar en la página" },
+  { label: "Tabla", sub: "3 × 3; luego agrega o quita filas y columnas", act: () => nbInsertTable(3, 3) },
+  { label: "Grabar audio", sub: "Con el micrófono del dispositivo", act: nbStartRec },
+  { label: "Video desde un enlace", sub: "YouTube, Vimeo u otro sitio", act: nbAddVideoLink },
+  { label: "Video o audio desde un archivo", act: () => { const f = $("#nbMediaFile"); f.accept = "video/*,audio/*"; f.click(); } },
+  { label: "Adjuntar PDF u otro archivo", sub: "Se guarda con el cuaderno y en tu Drive", act: () => { const f = $("#nbMediaFile"); f.accept = ""; f.click(); } },
+  { label: "Copia impresa de un archivo", sub: "Las páginas de un PDF como imágenes", act: () => $("#nbPrintFile").click() },
+  "-",
+  { label: "Imagen", act: () => $("#nbFile").click() },
+  { label: "Ecuación", act: () => $("#nbEqBtn").click() }
+]));
+/* dibujo de tablas y archivos para el PDF descargado */
+function nbBoxCanvas(it, sc) {
+  const w = it.w || 300, font = (b, px) => `${b ? "700 " : ""}${px}px Figtree, system-ui, sans-serif`;
+  const meas = document.createElement("canvas").getContext("2d");
+  const wrap = (t, maxW, px, b) => { meas.font = font(b, px); const out = []; for (const para of String(t || "").split("\n")) { let line = ""; for (const word of para.split(/\s+/)) { const tryL = line ? line + " " + word : word; if (meas.measureText(tryL).width > maxW && line) { out.push(line); line = word; } else line = tryL; } out.push(line); } return out; };
+  let h, draw;
+  if (it.type === "table") {
+    const rows = it.cells || [[""]], cols = rows[0].length, cw = (w - 22) / cols, px = 15, lh = 21;
+    const rh = rows.map((r, ri) => Math.max(1, ...r.map(t => wrap(t, cw - 14, px, it.head && !ri).length)) * lh + 10);
+    h = rh.reduce((a, b) => a + b, 0) + 16;
+    draw = (g) => {
+      let y = 8;
+      rows.forEach((r, ri) => {
+        if (it.head && !ri) { g.fillStyle = "#EEF2F7"; g.fillRect(14, y, cw * cols, rh[ri]); }
+        r.forEach((t, ci) => { const x = 14 + ci * cw; g.strokeStyle = "#B9C4D6"; g.lineWidth = 1; g.strokeRect(x, y, cw, rh[ri]); g.fillStyle = "#1D2321"; g.font = font(it.head && !ri, px); wrap(t, cw - 14, px, it.head && !ri).forEach((ln, k) => g.fillText(ln, x + 7, y + 5 + (k + 0.78) * lh)); });
+        y += rh[ri];
+      });
+    };
+  } else {
+    const label = { audio: "Audio", video: "Video", link: "Video (enlace)", pdf: "PDF adjunto", file: "Archivo adjunto" }[it.kind] || "Archivo";
+    const sub = it.kind === "link" ? it.url : [it.dur, it.size ? fmtSize(it.size) : ""].filter(Boolean).join(" · ") + (it.kind === "audio" || it.kind === "video" ? " · se reproduce en Atril" : "");
+    h = 64;
+    draw = (g) => { g.fillStyle = "#F6F8FB"; g.strokeStyle = "#D5DCE6"; g.lineWidth = 1; g.beginPath(); if (g.roundRect) g.roundRect(0.5, 0.5, w - 1, h - 1, 10); else g.rect(0.5, 0.5, w - 1, h - 1); g.fill(); g.stroke(); g.fillStyle = "#2B47D4"; g.font = font(true, 12); g.fillText(label.toUpperCase(), 14, 22); g.fillStyle = "#1D2321"; g.font = font(true, 15); g.fillText((it.name || "").slice(0, 70), 14, 42); g.fillStyle = "#6B7774"; g.font = font(false, 12); g.fillText(String(sub || "").slice(0, 90), 14, 58); };
+  }
+  const c = document.createElement("canvas"); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
+  const g = c.getContext("2d"); g.scale(sc, sc); draw(g);
+  return { c, w, h };
+}
+/* ---------- Lector inmersivo ---------- */
+const IR = { fs: 26, lh: 1.8, ff: "sans", theme: "cream", rate: 1, w: 720 };
+try { Object.assign(IR, JSON.parse(localStorage.getItem("atril-ir") || "{}")); } catch {}
+const irSave = () => { try { localStorage.setItem("atril-ir", JSON.stringify(IR)); } catch {} };
+function nbOpenReader() {
+  const pg = nbPage(), items = [...pg.items].filter(it => it.type === "text" || it.type === "table").sort((a, b) => (a.y - b.y) || (a.x - b.x));
+  const paras = []; for (const it of items) { if (it.type === "table") { for (const r of it.cells || []) { const t = r.filter(Boolean).join(". "); if (t.trim()) paras.push(t); } } else for (const t of (it.text || "").split(/\n+/)) if (t.trim()) paras.push(t.trim()); }
+  try { stop(); } catch {}
+  const text = el("div", { class: "nbirtext", lang: "es" }, el("h1", { text: pg.title || "Sin título" }));
+  if (!paras.length) text.append(el("p", { class: "empty", text: "Esta página no tiene texto para leer." }));
+  paras.forEach((t, i) => { const p = el("p", { "data-i": String(i), text: t }); p.addEventListener("click", () => speakFrom(i)); text.append(p); });
+  const playB = el("button", { type: "button", class: "play", text: "▶ Leer" });
+  const sel = (opts, val, on, label) => { const s2 = el("select", { "aria-label": label, title: label }); for (const [v, t] of opts) s2.append(el("option", { value: String(v), text: t })); s2.value = String(val); s2.addEventListener("change", () => on(s2.value)); return s2; };
+  let speaking = false, curP = 0, gen = 0;
+  const ov = el("div", { class: "nbir", role: "dialog", "aria-modal": "true", "aria-label": "Lector inmersivo" },
+    el("div", { class: "nbirbar" }, el("b", { text: "Lector inmersivo" }), playB,
+      sel([[0.75, "Lento"], [0.9, "Pausado"], [1, "Normal"], [1.15, "Rápido"], [1.35, "Muy rápido"]], IR.rate, (v) => { IR.rate = +v; irSave(); if (speaking) speakFrom(curP); }, "Velocidad de la voz"),
+      sel([[20, "Texto pequeño"], [26, "Texto mediano"], [32, "Texto grande"], [40, "Texto muy grande"]], IR.fs, (v) => { IR.fs = +v; irSave(); style(); }, "Tamaño del texto"),
+      sel([[1.5, "Espaciado normal"], [1.8, "Espaciado amplio"], [2.2, "Espaciado muy amplio"]], IR.lh, (v) => { IR.lh = +v; irSave(); style(); }, "Espaciado de líneas"),
+      sel([["sans", "Letra sin serifa"], ["serif", "Letra con serifa"], ["mono", "Letra de máquina"]], IR.ff, (v) => { IR.ff = v; irSave(); style(); }, "Tipo de letra"),
+      sel([["cream", "Fondo crema"], ["light", "Fondo blanco"], ["dark", "Fondo oscuro"]], IR.theme, (v) => { IR.theme = v; irSave(); style(); }, "Color de fondo"),
+      sel([[560, "Columna angosta"], [720, "Columna media"], [960, "Columna ancha"]], IR.w, (v) => { IR.w = +v; irSave(); style(); }, "Ancho de la columna"),
+      el("button", { type: "button", class: "irclose", text: "Cerrar ✕" })),
+    el("div", { class: "nbirbody" }, text));
+  const style = () => { ov.dataset.theme = IR.theme; text.style.setProperty("--irfs", IR.fs + "px"); text.style.setProperty("--irlh", IR.lh); text.style.setProperty("--irw", IR.w + "px"); text.style.setProperty("--irff", IR.ff === "serif" ? "Georgia, 'Times New Roman', serif" : IR.ff === "mono" ? "'Courier New', monospace" : "Figtree, system-ui, sans-serif"); };
+  const mark = (p, a, z) => { try { CSS.highlights?.delete("nb-ir"); if (p && window.Highlight && p.firstChild) { const r = new Range(); r.setStart(p.firstChild, a); r.setEnd(p.firstChild, Math.min(p.firstChild.length, z)); CSS.highlights.set("nb-ir", new Highlight(r)); } } catch {} };
+  const stopSpeak = () => { gen++; speaking = false; try { speechSynthesis.cancel(); } catch {} playB.textContent = "▶ Leer"; mark(null); text.querySelectorAll("p.on").forEach(x => x.classList.remove("on")); };
+  function speakFrom(i) {
+    if (!("speechSynthesis" in window) || !paras.length) { toast("Este navegador no tiene voz para leer en voz alta."); return; }
+    stopSpeak(); const my = ++gen; speaking = true; playB.textContent = "⏸ Pausa";
+    const next = (k) => {
+      if (my !== gen) return; if (k >= paras.length) { stopSpeak(); curP = 0; return; }
+      curP = k; const p = text.querySelector(`p[data-i="${k}"]`);
+      text.querySelectorAll("p.on").forEach(x => x.classList.remove("on")); p.classList.add("on"); p.scrollIntoView({ block: "center", behavior: "smooth" });
+      const u = new SpeechSynthesisUtterance(paras[k]); u.lang = "es"; u.rate = IR.rate;
+      try { const v = pickVoice("es"); if (v) { u.voice = v; u.lang = v.lang; } } catch {}
+      u.onboundary = (e) => { if (e.name && e.name !== "word") return; const t = paras[k], a = e.charIndex; const z = a + (e.charLength || (t.slice(a).match(/^[\p{L}\p{N}'’-]+/u) || [""])[0].length || 1); mark(p, a, z); };
+      u.onend = () => { if (my === gen) next(k + 1); };
+      u.onerror = () => { if (my === gen) stopSpeak(); };
+      speechSynthesis.speak(u);
+    };
+    next(i);
+  }
+  playB.addEventListener("click", () => speaking ? stopSpeak() : speakFrom(curP));
+  const close = () => { stopSpeak(); ov.remove(); removeEventListener("keydown", esc, true); };
+  const esc = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+  ov.querySelector(".irclose").addEventListener("click", close); addEventListener("keydown", esc, true);
+  style(); document.body.append(ov); playB.focus();
+}
+$("#nbIrBtn").addEventListener("click", nbOpenReader);
 /* imágenes: botón, pegar o arrastrar */
 $("#nbImg").addEventListener("click", () => $("#nbFile").click());
 $("#nbFile").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) nbInsertImages(fs); });
@@ -4169,7 +4654,7 @@ function nbAddText(text, extra = {}) {
   nbSave(); renderNbPage();
   requestAnimationFrame(() => { const n = document.querySelector(`.nbtxt[data-id="${pg.items[pg.items.length - 1].id}"]`); n?.scrollIntoView({ block: "nearest", behavior: "smooth" }); });
 }
-function nbTextHeight(it) { if (it.type === "eq") return it.h || 60; const n = document.querySelector(`.nbtxt[data-id="${it.id}"]`); if (n) return n.offsetHeight; const lines = (it.text || "").split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length * 9.5 / it.w)), 0); return lines * 27 + 20; }
+function nbTextHeight(it) { if (it.type === "eq" || it.type === "media" || it.type === "table") { const n = document.querySelector(`[data-id="${it.id}"].nb${it.type}`); return n ? n.offsetHeight : it.h || 80; } const n = document.querySelector(`.nbtxt[data-id="${it.id}"]`); if (n) return n.offsetHeight; const lines = (it.text || "").split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length * 9.5 / it.w)), 0); return lines * 27 + 20; }
 $("#selNb").addEventListener("click", () => {
   const segs = lastSegs, q = quote;
   const text = q?.text || lastSelText || getSelection().toString().trim(); if (!text) return;
@@ -4180,8 +4665,8 @@ $("#selNb").addEventListener("click", () => {
   toast("Texto copiado al cuaderno.");
 });
 /* deshacer con teclado dentro del cuaderno */
-$("#nb").addEventListener("keydown", (e) => {
-  if (e.target.closest(".nbed,input,select")) return;
+document.addEventListener("keydown", (e) => {
+  if (!NB.open || e.target.closest?.(".nbed,input,select,textarea,[contenteditable]") || !(e.target === document.body || e.target.closest?.("#nb"))) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); (e.shiftKey ? $("#nbRedo") : $("#nbUndo")).click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); $("#nbRedo").click(); }
 });
@@ -4202,11 +4687,12 @@ function nbExpW(pg) { const P = nbPaper(pg); return P ? P.w : Math.max(800, Math
 async function nbRenderCanvas(pg, opt = {}) {
   const NBW = opt.w || nbExpW(pg), fullH = nbContentH(pg), y0 = opt.y0 || 0, H = opt.h || fullH, sc = opt.sc || 2;
   const c = document.createElement("canvas"); c.width = Math.round(NBW * sc); c.height = Math.round(H * sc);
-  const ctx = c.getContext("2d"); ctx.scale(sc, sc); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, NBW, H);
+  const ctx = c.getContext("2d"); ctx.scale(sc, sc); ctx.fillStyle = pg.color || "#fff"; ctx.fillRect(0, 0, NBW, H);
   ctx.translate(0, -y0);
   if (pg.bg !== "plain") { ctx.strokeStyle = pg.bg === "grid" ? "#E3E8EE" : "#DDE6F0"; ctx.lineWidth = 1; for (let y = 64; y < y0 + H; y += 32) { if (y < y0) continue; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(NBW, y); ctx.stroke(); } if (pg.bg === "grid") for (let x = 32; x < NBW; x += 32) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + H); ctx.stroke(); } }
   for (const it of pg.items) {
     if (it.type === "img") { const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = it.src; }); if (im) ctx.drawImage(im, it.x, it.y, it.w, it.h); continue; }
+    if (it.type === "table" || it.type === "media") { const r = nbBoxCanvas(it, 2); ctx.drawImage(r.c, it.x, it.y, r.w, r.h); continue; }
     if (it.type === "eq") { const r = await nbEqCanvas(it, 3); if (r) ctx.drawImage(r.c, it.x + 14, it.y + 4, r.w, r.h); else { ctx.font = `${Math.round((it.fs || 24) * 0.7)}px monospace`; ctx.fillStyle = it.color || "#1D2321"; ctx.fillText(it.tex || "", it.x + 14, it.y + (it.fs || 24)); } continue; }
     let y = it.y + 8;
     if (it.tag) { ctx.font = "600 13px Figtree, system-ui, sans-serif"; ctx.fillStyle = "#6B7774"; ctx.fillText(it.tag.toUpperCase(), it.x + 10, y + 12); y += 20; }
@@ -4238,7 +4724,7 @@ async function nbRenderCanvas(pg, opt = {}) {
       y += h;
     }
   }
-  for (const st of pg.strokes) { ctx.save(); ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = st.tool === "hl" ? "butt" : "round"; ctx.lineJoin = "round"; if (st.tool === "hl") { ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = "multiply"; } if (st.op) ctx.globalAlpha = st.op; ctx.stroke(new Path2D(stPath(st))); ctx.restore(); }
+  for (const st of pg.strokes) { ctx.save(); ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = st.tool === "hl" ? "butt" : "round"; ctx.lineJoin = "round"; if (st.tool === "hl") { ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = "multiply"; } if (st.op) ctx.globalAlpha = st.op; if (st.pr) { ctx.fillStyle = st.color; ctx.fill(new Path2D(stPath(st))); } else ctx.stroke(new Path2D(stPath(st))); ctx.restore(); }
   return c;
 }
 /* Descarga del cuaderno con tamaño a elegir */
@@ -4582,6 +5068,10 @@ async function buildVectorPdf(book, title) {
     const Y = (py, k) => H - (py - k * P.h) * PT;
     if (pg.bg === "lines" || pg.bg === "grid") for (const page of pages) { const c = rgb(0.87, 0.9, 0.94); for (let y = 64; y < P.h; y += 32) page.drawLine({ start: { x: 0, y: H - y * PT }, end: { x: P.w * PT, y: H - y * PT }, thickness: 0.6, color: c }); if (pg.bg === "grid") for (let x = 32; x < P.w; x += 32) page.drawLine({ start: { x: x * PT, y: 0 }, end: { x: x * PT, y: H }, thickness: 0.6, color: c }); }
     for (const it of pg.items) {
+      if (it.type === "table" || it.type === "media") {
+        try { const r = nbBoxCanvas(it, 3), img = await pdf.embedPng(unb64x(r.c.toDataURL("image/png").split(",")[1])); const k = at(it.y); pages[k].drawImage(img, { x: it.x * PT, y: Y(it.y + r.h, k), width: r.w * PT, height: r.h * PT }); } catch (e) { console.warn("tabla", e); }
+        continue;
+      }
       if (it.type === "eq") {
         try { const r = await nbEqCanvas(it, 3); if (r) { const img = await pdf.embedPng(unb64x(r.c.toDataURL("image/png").split(",")[1])); const k = at(it.y); pages[k].drawImage(img, { x: (it.x + 14) * PT, y: Y(it.y + 4 + r.h, k), width: r.w * PT, height: r.h * PT }); } } catch (e) { console.warn("ecuación", e); }
         continue;
@@ -4637,6 +5127,7 @@ async function buildVectorPdf(book, title) {
       for (const [kS, pts] of Object.entries(groups)) {
         const k = +kS, local = pts.map(([x, py]) => [x, py - k * P.h]);
         const d = stPath(st, local);
+        if (st.pr) { pages[k].drawSvgPath(d, { x: 0, y: H, scale: PT, color: hexRgb(st.color), opacity: st.op || 1, borderWidth: 0 }); continue; }
         pages[k].drawSvgPath(d, { x: 0, y: H, scale: PT, borderColor: hexRgb(st.color), borderWidth: st.size, borderOpacity: st.tool === "hl" ? 0.38 : (st.op || 1), borderLineCap: st.tool === "hl" ? PDFLib.LineCapStyle?.Butt : PDFLib.LineCapStyle?.Round });
       }
     }

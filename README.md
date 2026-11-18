@@ -28,6 +28,10 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
   - búsqueda en todas las secciones y páginas (Ctrl+F), con resaltado de lo encontrado;
   - lápiz, pluma y marcador; formas (línea, flecha, rectángulo y elipse; Mayús para ángulos rectos, cuadrados y círculos); borrador de trazo completo o parcial;
   - ecuaciones escritas en LaTeX con teclas de símbolos y vista previa (Temml, incluido en `lib/` con licencia MIT); salen también en el PDF descargado;
+  - escritura con lápiz digital o tableta gráfica: toma todos los puntos del lápiz y la presión; el lápiz no desplaza la página; con lápiz, el dedo desplaza (o dibuja, si se activa «Dibujar con el dedo»); la goma del lápiz borra;
+  - «Mejorar escritura»: suavizado del trazo y conversión de dibujos a mano en líneas, rectángulos, triángulos, círculos y elipses;
+  - insertar tablas, grabaciones de audio, videos (enlace de YouTube o Vimeo, o archivo), PDF y otros archivos adjuntos (se guardan también en Google Drive) y copias impresas de un PDF como imágenes;
+  - color de página, fondo claro u oscuro y lector inmersivo (texto grande, tipo de letra, espaciado, fondo y lectura en voz alta con la palabra resaltada);
   - barra de herramientas compacta que se oculta con un botón, en pantalla completa o al desplazarse hacia abajo, y vuelve al subir.
 - Crear un PDF desde cero: títulos, texto, imágenes y enlaces.
 - Preguntas sobre el documento con citas de página. Las respuestas se pueden escuchar y descargar en PDF, Word o Markdown.
