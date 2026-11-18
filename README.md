@@ -121,3 +121,4 @@ Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Go
 | `config.js` | ID de cliente de Google y clave del selector de Drive. |
 | `privacidad.html` | Política de privacidad (la pide la pantalla de consentimiento de Google). |
 | `sw.js`, `manifest.webmanifest` | Permiten instalar Atril como app en el celular o la computadora. |
+| `lib/` | Librerías alojadas aquí mismo para no depender de servidores externos: pdf.js 4.10.38 (lector de PDF), pdf-lib, JSZip, docx y Temml. |

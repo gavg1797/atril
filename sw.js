@@ -1,17 +1,15 @@
 /* Atril sin conexión.
  * - La app (este sitio) se sirve primero desde la red y, si no hay internet, desde la copia guardada.
- * - Las librerías de los CDN (pdf.js, pdf-lib, JSZip, docx y las fuentes) se guardan
+ * - pdf.js, pdf-lib, JSZip y docx están alojados en este mismo sitio (carpeta lib/) y se guardan con la app.
+ * - Las fuentes de Google se guardan
  *   la primera vez y después se sirven desde aquí: tienen versión fija, así que nunca cambian.
  * - No se guardan aquí Google (inicio de sesión, Drive).
  */
-const APP = "atril-app-v39", LIBS = "atril-libs-v1";
-const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html", "guia.js", "lib/temml.min.js", "lib/temml.css", "lib/Temml.woff2"];
+const APP = "atril-app-v40", LIBS = "atril-libs-v2";
+const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html", "guia.js", "lib/temml.min.js", "lib/temml.css", "lib/Temml.woff2",
+  "lib/pdfjs-4.10.38/cargar.js", "lib/pdfjs-4.10.38/pdf.min.js", "lib/pdfjs-4.10.38/pdf.worker.min.js",
+  "lib/pdf-lib-1.17.1.min.js", "lib/jszip-3.10.1.min.js", "lib/docx-8.5.0.umd.js"];
 const CORE_LIBS = [
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
-  "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js",
   "https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
 ];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
