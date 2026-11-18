@@ -1166,6 +1166,64 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
   .nbpghead{padding:6px 10px 4px}
   .nbpghead input{font-size:1.05rem}
 }
+/* Etiquetas, resumen y búsqueda del cuaderno */
+.nbtags{position:absolute;left:-26px;top:6px;display:flex;flex-direction:column;gap:3px;align-items:center}
+.nbtg{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font:700 13px/1 var(--f-ui);border:0;padding:0;background:var(--tc);color:#fff;cursor:default;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.nbtg.todo{background:#fff;color:#1F8A4C;border:2px solid #1F8A4C;cursor:pointer;font-size:14px}
+.nbtg.todo.on{background:#1F8A4C;color:#fff}
+.nbtxt.has-tags{margin-left:0}
+.nbtxt.tdone .nbed{text-decoration:line-through;text-decoration-color:rgba(31,138,76,.6);opacity:.65}
+.nbtxt.flash{animation:nbflash 1.8s ease}
+@keyframes nbflash{0%,60%{background:rgba(255,212,0,.35);box-shadow:0 0 0 3px rgba(255,212,0,.6)}100%{background:transparent;box-shadow:none}}
+::highlight(nb-find){background:rgba(255,212,0,.55);color:inherit}
+.nbside{flex:none;order:2;width:300px;border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;min-height:0}
+.nbside[hidden]{display:none}
+.nbmain{order:1}
+.nbsideh{display:flex;align-items:center;gap:6px;padding:9px 10px 6px 12px}
+.nbsideh b{flex:1;font-size:.86rem}
+.nbsideh button{border:0;background:transparent;color:var(--muted);width:26px;height:26px;border-radius:6px}
+.nbsideh button:hover{background:var(--paper);color:var(--ink)}
+.nbsidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 10px 8px}
+.nbsidebar[hidden]{display:none}
+.nbsidebar input[type=search],.nbsidebar select{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 9px;font-size:.84rem}
+.nbsidebar input[type=search]:focus{outline:none;border-color:var(--accent)}
+.nbchk{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;color:var(--muted)}
+.nbsidelist{flex:1;overflow-y:auto;padding:0 6px 12px}
+.nbres{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:7px 8px;font-size:.8rem;color:var(--ink);line-height:1.4}
+.nbres:hover{background:var(--surface)}
+.nbres small{display:flex;align-items:center;gap:5px;font-size:.66rem;color:var(--muted);margin-bottom:2px}
+.nbres small i{width:8px;height:8px;border-radius:2px;background:var(--sc);flex:none}
+.nbres mark{background:rgba(255,212,0,.55);color:inherit;border-radius:2px}
+.nbres .nbtg{display:inline-grid;width:18px;height:18px;font-size:11px;vertical-align:-3px;margin-right:4px}
+.nbgrouph{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);padding:10px 8px 3px;display:flex;gap:6px;align-items:center}
+.nbempty{padding:14px 10px;font-size:.8rem;color:var(--muted)}
+.nbpop .nbtg{width:20px;height:20px;font-size:12px;flex:none}
+.nbpop kbd{margin-left:auto;font:500 .66rem var(--f-mono);color:var(--muted)}
+#nb:not(.nbmode) #nbFindBtn,#nb:not(.nbmode) #nbTagBtn,#nb:not(.nbmode) .nbside{display:none!important}
+@media (max-width:759px){.nbside{position:absolute;right:0;top:0;bottom:0;z-index:7;width:min(320px,88vw);box-shadow:-4px 0 18px rgba(0,0,0,.16)}}
+/* Barra de herramientas del cuaderno compacta y ocultable */
+.nb .nbtools{gap:3px 4px;padding:3px 8px;transition:opacity .15s}
+.nb .nbtools .nbt span{display:none}
+.nb .nbtools .nbt{padding:4px 5px;font-size:.7rem;min-height:26px}
+.nb .nbtools .nbt svg{width:14px;height:14px}
+.nb .nbtools .nbt b{font-size:.85rem}
+.nb .nbtools .nbgrp{padding-right:4px;gap:1px}
+.nb .nbtools .nbsel,.nb .nbtools #nbBg{font-size:.7rem;padding:2px 3px;height:24px;border-radius:6px;max-width:110px}
+.nb .nbtools #nbFont{max-width:96px}.nb .nbtools #nbStyle{max-width:78px}.nb .nbtools #nbFs{max-width:52px}
+.nb .nbtools .nbf{width:24px;height:24px;font-size:.8rem;padding:0}
+.nb .nbtools .nbcol{width:16px;height:16px}
+.nb .nbtools .nbsz{width:22px;height:22px}
+.nb .nbtools .nbzoom button{height:22px;min-width:20px;font-size:.78rem}
+.nb .nbtools .nbzoom #nbZoomVal{min-width:34px;font-size:.62rem}
+.nb .nbtools #nbViewBtn em,.nb .nbtools #nbViewLabel{display:none}
+.nb .nbviewbar{gap:6px 12px;padding:5px 10px 6px;align-items:center}
+.nb .nbvrow{flex-direction:row;align-items:center;gap:6px}
+.nb .nbvrow .nbxl{font-size:.6rem}
+.nb .nbvrow .seg button{padding:3px 7px;font-size:.7rem}
+.nb .nbvrow select{font-size:.72rem;padding:3px 4px;max-width:180px}
+.nb .nbvinfo{font-size:.68rem}
+#nb.toolshide .nbtools,#nb.toolshide .nbviewbar{display:none!important}
+#nb.toolshide #nbToolsBtn svg{transform:rotate(180deg)}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1351,6 +1409,8 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <button class="btn primary edsave" id="edSave" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg><span>Guardar como PDF</span></button>
       <button class="btn edclose" id="edClose" type="button" title="Cerrar el editor; el borrador queda guardado">Cerrar</button>
       <button class="nbsplit" id="nbSplit" type="button" title="Dividir secciones: PDF y cuaderno en pantalla completa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg><span>Dividir</span></button>
+      <button class="nbhbtn" id="nbToolsBtn" type="button" aria-pressed="false" title="Ocultar herramientas para escribir" aria-label="Ocultar herramientas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button class="nbhbtn" id="nbFindBtn" type="button" aria-pressed="false" title="Buscar en el cuaderno (Ctrl+F)" aria-label="Buscar en el cuaderno"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
       <button class="nbhbtn" id="nbFullBtn" type="button" aria-pressed="false" title="Vista de página completa" aria-label="Vista de página completa"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button class="nbhbtn" id="nbWinBtn" type="button" aria-haspopup="menu" title="Abrir en pestaña aparte, nueva ventana o acoplar al escritorio" aria-label="Opciones de ventana"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="13" height="13" rx="2"/><path d="M14 3h7v7M21 3l-8 8"/></svg></button>
       <button class="icon-btn nbclose" id="nbClose" type="button" aria-label="Cerrar cuaderno">✕</button>
@@ -1371,6 +1431,7 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
         <button type="button" class="nbf nbx" id="nbLink" title="Insertar enlace" aria-label="Insertar enlace"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
         <button type="button" class="nbf nbx" id="nbBullet" title="Viñeta" aria-label="Insertar viñeta"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="5" cy="7" r="1.4" fill="currentColor"/><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="5" cy="17" r="1.4" fill="currentColor"/><path d="M10 7h10M10 12h10M10 17h10"/></svg></button>
         <button type="button" class="nbf" data-cmd="underline" title="Subrayado (Ctrl+U)" aria-label="Subrayado" aria-pressed="false"><u>S</u></button>
+        <button type="button" class="nbt nbtagbtn" id="nbTagBtn" aria-haspopup="menu" title="Etiquetas: Por hacer, Importante, Pregunta, Idea, Definición (Ctrl+1 a Ctrl+5)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4" fill="currentColor"/></svg><span>Etiquetas</span></button>
       </div>
       <div class="nbgrp nbcolors" role="group" aria-label="Color" id="nbColors"></div>
       <div class="nbgrp" role="group" aria-label="Grosor" id="nbSizes">
@@ -1416,6 +1477,12 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbnavh"><span>Páginas</span><button type="button" id="nbAddPg" title="Nueva página" aria-label="Nueva página">+</button><button type="button" id="nbAddSub" title="Nueva subpágina" aria-label="Nueva subpágina"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 4v9a3 3 0 0 0 3 3h9M14 12l4 4-4 4"/></svg></button></div>
       <div class="nbpages" id="nbPages" role="list"></div>
     </nav>
+    <aside class="nbside" id="nbSide" hidden aria-label="Resultados">
+      <div class="nbsideh"><b id="nbSideTitle">Buscar</b><button type="button" id="nbSideClose" aria-label="Cerrar" title="Cerrar">✕</button></div>
+      <div class="nbsidebar" id="nbFindBar"><input id="nbFindQ" type="search" placeholder="Buscar en todas las secciones…" aria-label="Buscar en el cuaderno" autocomplete="off"></div>
+      <div class="nbsidebar" id="nbTagBar"><select id="nbTagFilter" aria-label="Filtrar etiquetas"></select><label class="nbchk"><input type="checkbox" id="nbTagOpen"> Solo pendientes</label></div>
+      <div class="nbsidelist" id="nbSideList" role="list"></div>
+    </aside>
     <div class="nbmain">
     <div class="nbpghead" id="nbPgHead">
       <input id="nbPgTitle" type="text" maxlength="80" placeholder="Título de la página" aria-label="Título de la página">
@@ -3107,7 +3174,7 @@ $("#nbClose").addEventListener("click", () => { if (NBWIN) { window.close(); ret
 function renderNb() {
   if (!NB.open || !nbDoc()) return;
   $("#nb").classList.toggle("nbmode", !NB.target);
-  if (!NB.target) renderNbNav();
+  if (!NB.target) { renderNbNav(); if (NB.side && !$("#nbSide").hidden) renderNbSide(); }
   const b = nbBook(), tabs = $("#nbTabs"); tabs.replaceChildren();
   b.pages.forEach((pg, i) => {
     const t = el("button", { type: "button", role: "tab", class: "nbtab", "aria-selected": String(i === b.cur), title: "Doble toque para cambiar el nombre", text: pg.title });
@@ -3353,9 +3420,30 @@ function newNotebook(rename) {
 }
 $("#newNbLib").addEventListener("click", () => newNotebook(true));
 function openNotebookDoc(d) { NB.own = d; try { setLibFull(false); } catch {} if (NB.open) nbSwitch(d); else setNb(true); }
+
+/* ---------- Ocultar herramientas: botón, pantalla completa y al desplazarse hacia abajo ---------- */
+NB.toolsMan = false; NB.toolsAuto = false;
+function nbToolsUI() {
+  const hide = NB.toolsMan || NB.toolsAuto;
+  const v = $("#nbView"), top = v.scrollTop, was = $("#nb").classList.contains("toolshide");
+  $("#nb").classList.toggle("toolshide", hide);
+  const b = $("#nbToolsBtn"); b.setAttribute("aria-pressed", String(hide));
+  b.title = hide ? "Mostrar herramientas" : "Ocultar herramientas para escribir"; b.setAttribute("aria-label", b.title);
+  if (was !== hide) { v.scrollTop = top; nbScrollLast = top; }
+}
+function setNbTools(hidden) { NB.toolsMan = !!hidden; NB.toolsAuto = false; nbToolsUI(); }
+$("#nbToolsBtn").addEventListener("click", () => setNbTools(!(NB.toolsMan || NB.toolsAuto)));
+let nbScrollLast = 0, nbScrollIgnore = 0;
+$("#nbView").addEventListener("scroll", () => {
+  const top = $("#nbView").scrollTop, d = top - nbScrollLast;
+  if (Date.now() < nbScrollIgnore || NB.toolsMan) { nbScrollLast = top; return; }
+  if (d > 28 && top > 60 && !NB.toolsAuto) { NB.toolsAuto = true; nbScrollIgnore = Date.now() + 250; nbToolsUI(); }
+  else if ((d < -28 || top < 8) && NB.toolsAuto) { NB.toolsAuto = false; nbScrollIgnore = Date.now() + 250; nbToolsUI(); }
+  if (Math.abs(d) > 28 || top < 8) nbScrollLast = top;
+}, { passive: true });
 /* Vista normal / página completa */
 function setNbFull(on) {
-  NB.full = !!on; $("#nb").classList.toggle("full", NB.full); $("#nbFullBtn").setAttribute("aria-pressed", String(NB.full));
+  NB.full = !!on; $("#nb").classList.toggle("full", NB.full); setNbTools(NB.full); $("#nbFullBtn").setAttribute("aria-pressed", String(NB.full));
   $("#nbFullBtn").title = NB.full ? "Volver a la vista normal" : "Vista de página completa"; renderNb();
 }
 $("#nbFullBtn").addEventListener("click", () => setNbFull(!NB.full));
@@ -3408,6 +3496,140 @@ document.addEventListener("focusout", () => setTimeout(nbFlushRemote, 50));
 addEventListener("blur", () => setTimeout(nbFlushRemote, 50));
 addEventListener("pointerup", () => setTimeout(nbFlushRemote, 50));
 /* el cuaderno abierto en una ventana aparte pide a la principal los datos más recientes */
+/* ---------- Etiquetas (como en OneNote) ---------- */
+const NB_TAGS = [
+  { id: "todo", label: "Por hacer", icon: "✓", color: "#1F8A4C" },
+  { id: "imp", label: "Importante", icon: "★", color: "#E0A100" },
+  { id: "q", label: "Pregunta", icon: "?", color: "#8E44AD" },
+  { id: "idea", label: "Idea", icon: "💡", color: "#F26B1D" },
+  { id: "def", label: "Definición", icon: "D", color: "#2B47D4" }
+];
+const nbTagDef = (id) => NB_TAGS.find(t => t.id === id);
+function nbTagIcon(t, it, live) {
+  if (t.id === "todo") {
+    const on = !!it?.tdone, b = el(live ? "button" : "span", { class: "nbtg todo" + (on ? " on" : ""), title: on ? "Hecho · toca para marcar como pendiente" : "Por hacer · toca para marcar como hecho", "aria-label": on ? "Tarea hecha" : "Tarea pendiente", text: on ? "✓" : "" });
+    if (live) { b.type = "button"; b.setAttribute("aria-pressed", String(on)); b.addEventListener("pointerdown", (e) => e.stopPropagation()); b.addEventListener("click", (e) => { e.stopPropagation(); nbSnap(); it.tdone = !it.tdone; nbSave(); renderNbPage(); if (!$("#nbSide").hidden && NB.side === "tags") renderNbSide(); }); }
+    return b;
+  }
+  return el("span", { class: "nbtg", style: `--tc:${t.color}`, title: t.label, "aria-label": t.label, text: t.icon });
+}
+function nbTagsNode(it) {
+  if (!it.tags?.length) return null;
+  const box = el("div", { class: "nbtags" });
+  for (const id of it.tags) { const t = nbTagDef(id); if (t) box.append(nbTagIcon(t, it, true)); }
+  return box;
+}
+function nbCurItem() {
+  const ed = NB.lastEd; if (!ed || !ed.isConnected) return null;
+  const id = ed.closest(".nbtxt")?.dataset.id; return nbPage().items.find(x => x.id === id) || null;
+}
+function nbToggleTag(id) {
+  const it = nbCurItem(); if (!it) { toast("Toca una nota para ponerle una etiqueta."); return; }
+  nbSnap(); it.tags = it.tags || [];
+  if (it.tags.includes(id)) { it.tags = it.tags.filter(x => x !== id); if (id === "todo") delete it.tdone; } else it.tags.push(id);
+  if (!it.tags.length) delete it.tags;
+  nbSave(); renderNbPage(); if (!$("#nbSide").hidden && NB.side === "tags") renderNbSide();
+  requestAnimationFrame(() => { const ed = document.querySelector(`.nbtxt[data-id="${it.id}"] .nbed`); if (ed) { NB.lastEd = ed; ed.focus({ preventScroll: true }); } });
+}
+$("#nbTagBtn").addEventListener("pointerdown", (e) => e.preventDefault());   // no quita el foco de la nota
+$("#nbTagBtn").addEventListener("click", () => {
+  const it = nbCurItem(), has = new Set(it?.tags || []);
+  nbPop($("#nbTagBtn"), [
+    { head: it ? "Etiquetar la nota" : "Toca una nota y elige una etiqueta" },
+    ...NB_TAGS.map((t, i) => ({ label: el("span", { style: "display:inline-flex;align-items:center;gap:8px" }, nbTagIcon(t, null, false), t.label), sub: "Ctrl+" + (i + 1), checked: has.has(t.id), act: () => nbToggleTag(t.id) })),
+    it?.tags?.length ? { label: "Quitar todas las etiquetas", act: () => { nbSnap(); delete it.tags; delete it.tdone; nbSave(); renderNbPage(); } } : null,
+    "-",
+    { label: "Resumen de etiquetas", sub: "Todas las notas etiquetadas del cuaderno", act: () => openNbSide("tags") }
+  ]);
+});
+addEventListener("keydown", (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || !NB.open || NB.target) return;
+  if (/^[1-5]$/.test(e.key) && e.target.closest?.(".nbed")) { e.preventDefault(); NB.lastEd = e.target.closest(".nbed"); nbToggleTag(NB_TAGS[+e.key - 1].id); }
+  else if ((e.key === "f" || e.key === "F") && (NBWIN || e.target.closest?.("#nb"))) { e.preventDefault(); openNbSide("find"); }
+});
+/* ---------- Panel lateral: búsqueda y resumen de etiquetas ---------- */
+NB.side = null;
+function nbItemText(it) { return it.type === "text" ? (it.text || "") : ""; }
+function nbSnippet(text, qn) {
+  const t = text.replace(/\s+/g, " ").trim(); if (!qn) return document.createTextNode(t.length > 140 ? t.slice(0, 140) + "…" : t);
+  const nt = normTxt(t), at = nt.indexOf(qn); if (at < 0) return document.createTextNode(t.slice(0, 140));
+  const a = Math.max(0, at - 50), b = Math.min(t.length, at + qn.length + 70);
+  return el("span", {}, (a ? "…" : "") + t.slice(a, at), el("mark", { text: t.slice(at, at + qn.length) }), t.slice(at + qn.length, b) + (b < t.length ? "…" : ""));
+}
+function openNbSide(kind) {
+  NB.side = kind; $("#nbSide").hidden = false;
+  $("#nbSideTitle").textContent = kind === "find" ? "Buscar en el cuaderno" : "Resumen de etiquetas";
+  $("#nbFindBar").hidden = kind !== "find"; $("#nbTagBar").hidden = kind !== "tags";
+  $("#nbFindBtn").setAttribute("aria-pressed", String(kind === "find"));
+  if (kind === "tags") { const f = $("#nbTagFilter"); if (!f.options.length) { f.append(el("option", { value: "", text: "Todas las etiquetas" })); for (const t of NB_TAGS) f.append(el("option", { value: t.id, text: t.icon + "  " + t.label })); } }
+  renderNbSide();
+  if (kind === "find") { $("#nbFindQ").focus(); $("#nbFindQ").select(); }
+}
+function closeNbSide() { NB.side = null; $("#nbSide").hidden = true; $("#nbFindBtn").setAttribute("aria-pressed", "false"); nbClearFind(); }
+$("#nbSideClose").addEventListener("click", closeNbSide);
+$("#nbFindBtn").addEventListener("click", () => NB.side === "find" ? closeNbSide() : openNbSide("find"));
+let nbFindT = 0;
+$("#nbFindQ").addEventListener("input", () => { clearTimeout(nbFindT); nbFindT = setTimeout(renderNbSide, 160); });
+$("#nbFindQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#nbSideList .nbres")?.click(); } if (e.key === "Escape") { e.stopPropagation(); closeNbSide(); } });
+$("#nbTagFilter").addEventListener("change", renderNbSide);
+$("#nbTagOpen").addEventListener("change", renderNbSide);
+function nbResRow(b, pi, it, body) {
+  const pg = b.pages[pi], sec = b.sections.find(x => x.id === pg.sec) || b.sections[0];
+  const r = el("button", { type: "button", class: "nbres", role: "listitem" }, el("small", { style: `--sc:${sec.color}` }, el("i"), `${sec.name} › ${pg.title || "Sin título"}`), body);
+  r.addEventListener("click", () => nbGoItem(pi, it?.id, NB.side === "find" ? $("#nbFindQ").value : ""));
+  return r;
+}
+function renderNbSide() {
+  if (!NB.side || !NB.open || NB.target) return;
+  const b = nbBook(), list = $("#nbSideList"); list.replaceChildren();
+  if (NB.side === "find") {
+    const qn = normTxt($("#nbFindQ").value);
+    if (!qn) { list.append(el("div", { class: "nbempty", text: "Escribe para buscar en los títulos y las notas de todas las secciones y páginas." })); nbClearFind(); return; }
+    let n = 0;
+    b.pages.forEach((pg, pi) => {
+      if (normTxt(pg.title).includes(qn)) { list.append(nbResRow(b, pi, null, el("b", {}, nbSnippet(pg.title || "", qn)))); n++; }
+      for (const it of pg.items) { const t = nbItemText(it); if (t && normTxt(t).includes(qn)) { list.append(nbResRow(b, pi, it, nbSnippet(t, qn))); n++; } }
+    });
+    list.prepend(el("div", { class: "nbgrouph", text: n ? `${n} ${n === 1 ? "resultado" : "resultados"}` : "Sin resultados" }));
+    nbMarkFind();
+    return;
+  }
+  const only = $("#nbTagFilter").value, open = $("#nbTagOpen").checked;
+  let total = 0;
+  for (const t of NB_TAGS) {
+    if (only && t.id !== only) continue;
+    const rows = [];
+    b.pages.forEach((pg, pi) => { for (const it of pg.items) if (it.tags?.includes(t.id) && !(open && t.id === "todo" && it.tdone)) rows.push(nbResRow(b, pi, it, el("span", {}, nbTagIcon(t, it, false), nbSnippet(nbItemText(it) || "(nota sin texto)", "")))); });
+    if (!rows.length) continue;
+    total += rows.length;
+    list.append(el("div", { class: "nbgrouph" }, nbTagIcon(t, null, false), `${t.label} · ${rows.length}`), ...rows);
+  }
+  if (!total) list.append(el("div", { class: "nbempty", text: open ? "No hay tareas pendientes." : "Aún no hay notas etiquetadas. Toca una nota y usa «Etiquetas» (o Ctrl+1 a Ctrl+5)." }));
+}
+function nbGoItem(pi, itemId, q) {
+  nbGo(pi, true);
+  if (isNarrow()) { $("#nbSide").hidden = true; }
+  requestAnimationFrame(() => {
+    const node = itemId ? document.querySelector(`.nbtxt[data-id="${itemId}"]`) : null, v = $("#nbView");
+    if (node) { const r = node.getBoundingClientRect(), vr = v.getBoundingClientRect(); v.scrollTop += r.top - vr.top - v.clientHeight / 3; v.scrollLeft += Math.min(0, r.left - vr.left - 20); node.classList.remove("flash"); void node.offsetWidth; node.classList.add("flash"); }
+    else v.scrollTo(0, 0);
+    nbMarkFind();
+  });
+}
+function nbClearFind() { try { CSS.highlights?.delete("nb-find"); } catch {} }
+function nbMarkFind() {
+  nbClearFind();
+  const q = NB.side === "find" ? normTxt($("#nbFindQ").value) : ""; if (!q || !window.Highlight || !CSS.highlights) return;
+  const ranges = [];
+  for (const ed of document.querySelectorAll("#nbItems .nbed")) {
+    const w = document.createTreeWalker(ed, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const t = normTxt(n.data); let i = t.indexOf(q);
+      while (i >= 0) { const r = new Range(); r.setStart(n, i); r.setEnd(n, Math.min(n.data.length, i + q.length)); ranges.push(r); i = t.indexOf(q, i + q.length); }
+    }
+  }
+  if (ranges.length) CSS.highlights.set("nb-find", new Highlight(...ranges));
+}
 window.__atrilT = { get S() { return S; }, NB, nbDoc, nbBook, openNotebookDoc: (d) => openNotebookDoc(d), setNb: (v) => setNb(v), newNotebook: (r) => newNotebook(r) };
 window.__atrilNbDoc = (id) => { const d = S.docs.find(x => x.id === id); return d ? JSON.parse(JSON.stringify(d)) : null; };
 
@@ -3491,6 +3713,7 @@ function renderNbPage() {
   $("#nbInner").dataset.tool = NB.tool;
   $("#nbHint").hidden = pg.items.length + pg.strokes.length > 0;
   nbScale();
+  if (NB.side === "find") requestAnimationFrame(nbMarkFind);
 }
 const NB_FONTS = { "": ["Predeterminada", "Figtree, system-ui, sans-serif"], arial: ["Arial", "Arial, Helvetica, sans-serif"], times: ["Times New Roman", "'Times New Roman', Times, serif"], georgia: ["Georgia", "Georgia, 'Times New Roman', serif"], verdana: ["Verdana", "Verdana, Geneva, sans-serif"], courier: ["Courier New", "'Courier New', Courier, monospace"] };
 const NB_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72];
@@ -3591,8 +3814,8 @@ document.addEventListener("selectionchange", () => { if (NB.open) nbFmtState(); 
 function nbTextNode(it) {
   const ed = el("div", { class: "nbed", contenteditable: "true", spellcheck: "true", "aria-label": "Nota" });
   if (it.html) ed.innerHTML = nbClean(it.html); else ed.textContent = it.text || "";
-  const n = el("div", { class: "nbtxt" + (it.quote ? " quote" : ""), "data-id": it.id, style: `left:${it.x}px;top:${it.y}px;width:${it.w}px;color:${it.color || "#1D2321"};font-family:${NB_FONTS[it.font || ""][1]};font-size:${HPX[it.h] || it.fs || DEF_PX}px;font-weight:${it.h ? 700 : 400}` },
-    el("div", { class: "nbgrip", title: "Arrastra para mover" }), it.tag ? el("div", { class: "nbtag", text: it.tag }) : null, ed,
+  const n = el("div", { class: "nbtxt" + (it.quote ? " quote" : "") + (it.tags?.length ? " has-tags" : "") + (it.tags?.includes("todo") && it.tdone ? " tdone" : ""), "data-id": it.id, style: `left:${it.x}px;top:${it.y}px;width:${it.w}px;color:${it.color || "#1D2321"};font-family:${NB_FONTS[it.font || ""][1]};font-size:${HPX[it.h] || it.fs || DEF_PX}px;font-weight:${it.h ? 700 : 400}` },
+    el("div", { class: "nbgrip", title: "Arrastra para mover" }), nbTagsNode(it), it.tag ? el("div", { class: "nbtag", text: it.tag }) : null, ed,
     el("button", { type: "button", class: "nbdel", title: "Eliminar nota", "aria-label": "Eliminar nota", text: "✕" }), el("div", { class: "nbrz", title: "Arrastra para cambiar el ancho" }));
   let snapped = false;
   ed.addEventListener("focus", () => { snapped = false; NB.lastEd = ed; nbFmtState(); });

@@ -23,7 +23,10 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
   - secciones de colores, páginas y subpáginas con fecha de creación (panel ☰);
   - cuadernos independientes además del cuaderno de cada PDF («⋯ Más → Nuevo cuaderno»), sincronizados con Google Drive;
   - abrir el cuaderno en una pestaña aparte, en una ventana nueva o acoplado a la derecha del escritorio; los cambios pasan al instante entre ventanas;
-  - vista normal o de página completa.
+  - vista normal o de página completa;
+  - etiquetas Por hacer (casilla), Importante, Pregunta, Idea y Definición (Ctrl+1 a Ctrl+5), con resumen de etiquetas y filtro de pendientes;
+  - búsqueda en todas las secciones y páginas (Ctrl+F), con resaltado de lo encontrado;
+  - barra de herramientas compacta que se oculta con un botón, en pantalla completa o al desplazarse hacia abajo, y vuelve al subir.
 - Crear un PDF desde cero: títulos, texto, imágenes y enlaces.
 - Preguntas sobre el documento con citas de página. Las respuestas se pueden escuchar y descargar en PDF, Word o Markdown.
 - Traducción de la lectura entre español e inglés.
