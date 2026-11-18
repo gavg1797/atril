@@ -18,6 +18,13 @@
   const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch {} };
 
   let token = null, tokenExp = 0, user = null, started = false, offlineMode = false;
+  // Ventana o pestaña aparte del cuaderno (index.html#nb=…): usa la sesión ya abierta en Atril, sin volver a iniciar sesión.
+  const NBWIN = /^#nb=/.test(location.hash);
+  if (NBWIN) document.documentElement.classList.add("nbwin");
+  const fromOpener = () => { try { const o = window.opener; if (o && o !== window && !o.closed && o.location.origin === location.origin && typeof o.__atrilHandoff === "function") return o.__atrilHandoff(); } catch {} return null; };
+  window.__atrilHandoff = () => started && user ? { token: token && Date.now() < tokenExp ? token : null, tokenExp, user: { ...user }, offlineMode } : null;
+  window.__atrilOpenerAlive = () => !!fromOpener();
+  function takeOpenerToken() { const hd = fromOpener(); if (hd?.token && user && hd.user?.sub === user.sub) { token = hd.token; tokenExp = hd.tokenExp; offlineMode = !!hd.offlineMode; bar && (bar.hidden = true); return true; } return false; }
   const READ_KEY = "atril@lectura", GUIDE_KEY = "atril@guia-v1";
   try { if (localStorage.getItem(READ_KEY) === "1") document.documentElement.dataset.read = "libro"; } catch {}
   const OFF_KEY = "atril-offline";
@@ -61,6 +68,7 @@
   const mapF = (f) => f && { id: f.id, title: f.name, mimeType: f.mimeType, fileSize: f.size, modifiedTime: f.modifiedTime, parents: f.parents };
   async function gfetch(url, opt = {}) {
     if (!navigator.onLine) throw { code: "offline" };
+    if ((!token || Date.now() > tokenExp) && NBWIN) takeOpenerToken();
     if (!token || Date.now() > tokenExp) { if (offlineMode && !navigator.onLine) throw { code: "offline" }; showReauth(offlineMode ? "Volviste a tener internet. Inicia sesión para guardar tus cambios en Drive." : ""); throw { code: "needs_reauth" }; }
     let r;
     try { r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + token } }); }
@@ -276,6 +284,10 @@
     $("#pfLogout").addEventListener("click", () => { closeSettings(); askLogout(); });
     $("#pfSyncNow").addEventListener("click", async () => { const b = $("#pfSyncNow"); b.disabled = true; b.textContent = "Guardando…"; try { await window.__atrilSyncNow?.(); } finally { b.disabled = false; b.textContent = "Guardar en Drive ahora"; } });
     if (!cfg.googleClientId) msg("Primero pega tu ID de cliente de Google en «Ajustes de Google».", true);
+    if (NBWIN) {
+      const hd = fromOpener(), own = ownerRec();
+      if (hd?.user && (!own || own.sub === hd.user.sub)) { token = hd.token; tokenExp = hd.tokenExp || 0; user = hd.user; offlineMode = !!hd.offlineMode; start(); }
+    }
   }
   const b64 = (u8) => btoa(String.fromCharCode(...u8));
   async function pinHash(pin, salt) {
@@ -416,7 +428,7 @@
     document.documentElement.classList.add("pf-in");
     const src = document.getElementById("atrilMain");
     const s = document.createElement("script"); s.textContent = src.textContent; document.body.append(s);
-    setInterval(() => { if (token && Date.now() > tokenExp) { token = null; showReauth(); } }, 30000);
+    setInterval(() => { if (token && Date.now() > tokenExp) { if (NBWIN && takeOpenerToken()) return; token = null; showReauth(); } }, 30000);
     try { navigator.storage?.persist?.(); } catch {}
     addLogoutButton();
     setTimeout(setupReaderUI, 0);
@@ -515,7 +527,7 @@
     }
     // La primera vez, el recorrido arranca solo
     let seen = false; try { seen = localStorage.getItem(GUIDE_KEY) === "1"; } catch {}
-    if (!seen) setTimeout(startGuide, 900);
+    if (!seen && !NBWIN) setTimeout(startGuide, 900);
   }
   const tab = (t) => () => { const b = document.querySelector(`.tabs [data-tab="${t}"]`); if (b && getComputedStyle(b.parentElement).display !== "none") b.click(); };
   // Para los pasos del lector: si no hay un documento abierto, abre el primero de la biblioteca (por ejemplo, la guía de Atril)
