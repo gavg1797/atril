@@ -1021,6 +1021,84 @@ body.askside .ask:has(#quoteBox:not([hidden])) .chips{display:none}
 @media (max-width:760px){.aibar .aitx{display:none}}
 .ask .fsbtn span{display:none}
 .ask .fsbtn{padding:6px}
+
+/* Barra de búsqueda y filtros (botones pequeños) */
+.libbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 12px 8px}
+.pill{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);font-size:.76rem;font-weight:600;white-space:nowrap}
+.pill svg{color:var(--muted);flex:none}
+.pill:focus-within{border-color:var(--accent)}
+.addpdf{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.addpdf svg{color:var(--accent-ink)}
+.psearch{flex:1 1 140px;max-width:280px;cursor:text}
+.psearch input{border:0;background:transparent;outline:none;min-width:0;width:100%;font:inherit;font-weight:500;color:var(--ink);padding:0}
+.psel{padding-right:4px;cursor:pointer}
+.psel .plbl{color:var(--muted);font-weight:600}
+.psel select{border:0;background:transparent;font:inherit;font-weight:700;color:var(--ink);padding:0 2px;cursor:pointer;outline:none}
+.pclear{color:var(--muted)}
+.pclear:hover{color:var(--ink);border-color:var(--muted)}
+@media (max-width:560px){.libbar{gap:5px}.pill{padding:0 8px}.psearch{flex-basis:100%;max-width:none;order:-1}.addpdf{font-size:0;gap:0;padding:0 9px}.addpdf svg{width:14px;height:14px}.psel:last-of-type .plbl{display:none}}
+@media (min-width:1080px){ body.libfull .libbar{margin:0 4px 10px} }
+/* ---------- Vista de la biblioteca: cuadrícula o lista ---------- */
+.viewseg{flex:none}
+.viewseg button{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;font-size:.76rem}
+.viewseg .vlbl{display:none}
+.cover{display:none}
+.lib[data-view="grid"] .docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 12px;padding:4px 12px 28px;align-content:start}
+.lib[data-view="grid"] .docs > .nodocs{grid-column:1/-1}
+.lib[data-view="grid"] .doc{display:flex;flex-direction:column;align-items:stretch;gap:7px;padding:8px 8px 10px;position:relative;background:var(--paper);border:1px solid var(--line);border-radius:12px;min-height:0}
+.lib[data-view="grid"] .doc:hover{border-color:var(--muted)}
+.lib[data-view="grid"] .doc[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.lib[data-view="grid"] .doc .cover{display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:3/4;border-radius:7px 9px 9px 7px;padding:12px 12px 10px 16px;color:#fff;background:linear-gradient(155deg,hsl(var(--cv) 48% 56%),hsl(var(--cv) 52% 33%));box-shadow:inset 5px 0 0 rgba(0,0,0,.16),inset 6px 0 0 rgba(255,255,255,.12),0 3px 8px rgba(0,0,0,.14);overflow:hidden}
+.lib[data-view="grid"] .doc .cvi{font-family:var(--f-read);font-weight:600;font-size:2.1rem;line-height:1;letter-spacing:.02em;text-shadow:0 1px 3px rgba(0,0,0,.25);margin-top:auto;margin-bottom:auto}
+.lib[data-view="grid"] .doc .cvn{font-family:var(--f-mono);font-size:.66rem;opacity:.85}
+.lib[data-view="grid"] .doc.is-done .cover{filter:saturate(.45)}
+.lib[data-view="grid"] .doc .chk{position:absolute;top:14px;left:20px;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.lib[data-view="grid"] .doc .meta{padding:0 2px}
+.lib[data-view="grid"] .doc .name{white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:.88rem;line-height:1.28;min-height:2.56em}
+.lib[data-view="grid"] .doc .sub{font-size:.68rem;gap:4px 6px}
+.lib[data-view="grid"] .doc .sub .tag{font-size:.6rem;padding:1px 5px}
+.lib[data-view="grid"] .doc .rowact{position:absolute;top:12px;right:12px;transform:none;z-index:3;background:color-mix(in srgb,var(--paper) 92%,transparent);border-radius:8px}
+.lib[data-view="grid"] .folder{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:8px;padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--accent-soft) 45%,var(--paper));min-height:110px;position:relative}
+.lib[data-view="grid"] .folder .fic svg{width:30px;height:30px}
+.lib[data-view="grid"] .folder .name{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lib[data-view="grid"] .folder .rowact{position:absolute;top:8px;right:8px;transform:none}
+.lib[data-view="list"] .docs{display:flex!important;flex-direction:column;gap:6px}
+@media (min-width:1080px){
+  body.libfull .lib[data-view="grid"] .docs{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px 14px;padding:4px 4px 32px}
+  body.libfull .viewseg .vlbl{display:inline}
+  body.libfull .lib[data-view="list"] .doc,body.libfull .lib[data-view="list"] .folder{min-height:0;align-items:center;padding:10px 12px}
+  body.libfull .lib[data-view="list"] .doc .name{-webkit-line-clamp:1}
+}
+@media (max-width:560px){.lib[data-view="grid"] .docs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px 10px 24px}}
+/* ---------- Biblioteca compacta: más espacio para los libros ---------- */
+.ph{flex-wrap:wrap;row-gap:8px}
+.ph .filter{margin:0;flex:0 1 auto}
+.ph .filter button{padding:4px 10px;font-size:.76rem}
+.phsp{flex:1}
+.libmorebtn{position:relative;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font-size:.78rem;font-weight:600}
+.libmorebtn svg{color:var(--muted)}
+.libdot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 2px var(--surface)}
+#nfSlot:empty{display:none}
+.libio{display:none!important}
+.drop{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;margin:0 12px 8px;font-size:.82rem}
+.drop strong{display:inline;margin:0}
+.drop svg{color:var(--accent);flex:none}
+#libMoreMenu .newf{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;padding:9px 10px;border-radius:9px;font-size:.88rem;font-weight:600;color:var(--ink);text-align:left}
+#libMoreMenu .newf:hover,#libMoreMenu .btn:hover{background:var(--surface)}
+#libMoreMenu .btn{display:flex;align-items:center;gap:8px;width:100%;justify-content:flex-start;border:0;background:transparent;padding:9px 10px;border-radius:9px;font-size:.88rem;font-weight:600;color:var(--ink);white-space:nowrap}
+#libMoreMenu .btn svg,#libMoreMenu .newf svg{color:var(--accent)}
+#libMoreMenu .newlib{color:var(--send)}
+#libMoreMenu .newlib svg{color:var(--send)}
+#libMoreMenu .drivebtn em{margin-left:auto}
+#libMoreMenu #nfSlot{display:block}
+@media (min-width:1080px){
+  body.libfull .ph{padding:14px 4px 10px;gap:12px}
+  body.libfull .ph h2{font-size:1.35rem}
+  body.libfull .ph .filter{max-width:none;margin:0}
+  body.libfull .libmorebtn,body.libfull .libfullbtn{padding:7px 12px;font-size:.84rem;margin-block:0}
+  body.libfull .drop{margin:0 4px 10px;padding:9px 14px}
+  body.libfull .crumbs{margin:0 0 8px}
+}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1046,13 +1124,21 @@ body.askside .ask:has(#quoteBox:not([hidden])) .chips{display:none}
 
 <main class="app" id="app" data-tab="lib">
   <aside class="panel lib" aria-label="Biblioteca">
-    <div class="ph"><h2>Mis documentos</h2><span id="nfSlot" style="margin-left:auto"></span><button class="libfullbtn" id="libFullBtn" type="button" title="Volver al libro que estabas leyendo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Volver a la lectura</span></button></div>
+    <div class="ph"><h2>Mis documentos</h2>
     <div class="seg filter" id="filterSeg" role="group" aria-label="Filtrar documentos">
       <button type="button" data-f="todos" aria-pressed="true">Todos <em>0</em></button>
       <button type="button" data-f="pendientes" aria-pressed="false">Pendientes <em>0</em></button>
       <button type="button" data-f="leidos" aria-pressed="false">Leídos <em>0</em></button>
     </div>
-    <button class="drop" id="dropBtn" type="button"><strong>Agregar PDF</strong>Arrastra aquí o toca para elegir</button>
+    <span class="phsp"></span><div class="seg viewseg" id="viewSeg" role="group" aria-label="Vista de la biblioteca"><button type="button" data-v="grid" aria-pressed="true" title="Cuadrícula"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span class="vlbl">Cuadrícula</span></button><button type="button" data-v="list" aria-pressed="false" title="Lista"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg><span class="vlbl">Lista</span></button></div><button class="btn libmorebtn" id="libMoreBtn" type="button" aria-haspopup="menu" aria-expanded="false" title="Más opciones de la biblioteca"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>Más</span><i class="libdot" id="libDot" hidden></i></button><span id="nfSlot"></span><button class="libfullbtn" id="libFullBtn" type="button" title="Volver al libro que estabas leyendo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Volver a la lectura</span></button></div>
+    <div class="libbar" role="search">
+      <button class="pill addpdf" id="dropBtn" type="button" title="Agregar PDF: toca para elegir o arrastra archivos a la ventana"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar PDF</button>
+      <label class="pill psearch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="libQ" type="search" placeholder="Buscar" aria-label="Buscar documentos" autocomplete="off"></label>
+      <label class="pill psel" title="Filtrar por fecha en que se agregó"><span class="plbl">Fecha</span><select id="libDate" aria-label="Filtrar por fecha"><option value="">Todas</option><option value="7">7 días</option><option value="30">30 días</option><option value="year">Este año</option><option value="older">Más antiguos</option></select></label>
+      <label class="pill psel" title="Filtrar por tamaño del documento"><span class="plbl">Tamaño</span><select id="libSize" aria-label="Filtrar por tamaño"><option value="">Todos</option><option value="s">&lt; 1 MB</option><option value="m">1–10 MB</option><option value="l">&gt; 10 MB</option></select></label>
+      <label class="pill psel" title="Ordenar"><span class="plbl">Orden</span><select id="libSort" aria-label="Ordenar"><option value="recent">Recientes</option><option value="old">Antiguos</option><option value="name">Nombre A–Z</option><option value="big">Más grandes</option><option value="small">Más pequeños</option></select></label>
+      <button class="pill pclear" id="libClear" type="button" hidden title="Quitar búsqueda y filtros">✕ Limpiar</button>
+    </div>
     <div class="libio">
       <button class="btn" id="expBtn" type="button" title="Guardar tus libros, marcas, avance y cuaderno en un archivo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Exportar biblioteca</button>
       <button class="btn newlib" id="newPdfLib" type="button" title="Crear un documento PDF desde cero"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg>Crear PDF nuevo</button>
@@ -1778,14 +1864,45 @@ function renderFilter() {
   $$("#filterSeg button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.f === S.filter)); b.querySelector("em").textContent = counts[b.dataset.f]; });
 }
 $$("#filterSeg button").forEach(b => b.addEventListener("click", () => { S.filter = b.dataset.f; savePrefs(); renderDocs(); }));
+/* Portada de cada libro para la vista en cuadrícula (color según el nombre e iniciales) */
+function coverOf(d) {
+  let h = 0; for (const ch of d.name || "") h = (h * 31 + ch.charCodeAt(0)) % 360;
+  const words = (d.name || "PDF").replace(/[^\p{L}\p{N} ]+/gu, " ").trim().split(/\s+/).filter(Boolean);
+  const ini = (words.slice(0, 2).map(w => w[0]).join("") || "P").toUpperCase();
+  return el("div", { class: "cover", "aria-hidden": "true", style: `--cv:${h}` },
+    el("span", { class: "cvi", text: ini }), el("span", { class: "cvn", text: d.sample ? "Guía" : d.draft ? "Borrador" : `${d.pages?.length || 0} pág.` }));
+}
+const LIBVIEW_KEY = "atril-libview";
+function libView() { try { return localStorage.getItem(LIBVIEW_KEY) === "list" ? "list" : "grid"; } catch { return "grid"; } }
+function applyLibView() {
+  const v = libView(); document.querySelector(".lib").dataset.view = v;
+  $$("#viewSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+}
+/* Búsqueda y filtros de la biblioteca */
+const LIBF_KEY = "atril-libfilters";
+const normTxt = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+let libQ = "";
+function libFilters() { let v = {}; try { v = JSON.parse(localStorage.getItem(LIBF_KEY) || "{}"); } catch {} return { q: libQ, date: v.date || "", size: v.size || "", sort: v.sort || "recent" }; }
+function setLibFilter(k, val) { let v = {}; try { v = JSON.parse(localStorage.getItem(LIBF_KEY) || "{}"); } catch {} v[k] = val; try { localStorage.setItem(LIBF_KEY, JSON.stringify(v)); } catch {} renderDocs(); }
 function renderDocs() {
   if (!fById(S.cwd)) S.cwd = "";
   renderFilter(); renderCrumbs(); listDropZone();
   const ul = $("#docs"); ul.replaceChildren();
-  const folders = fKids(S.cwd);
+  // búsqueda y filtros: si hay alguno activo, se busca en toda la biblioteca (todas las carpetas)
+  const LF = libFilters(), qn = normTxt(LF.q), active = !!(qn || LF.date || LF.size);
+  $("#libClear").hidden = !active && LF.sort === "recent";
+  const folders = active ? (qn ? FOLDERS.filter(f => normTxt(f.name).includes(qn)) : []) : fKids(S.cwd);
   for (const f of folders) ul.append(folderRow(f));
-  const list = [...S.docs].filter(d => docFolder(d) === S.cwd).sort((a, b) => (b.added || 0) - (a.added || 0))
+  const now = Date.now(), y0 = new Date(new Date().getFullYear(), 0, 1).getTime(), MB = 1024 * 1024;
+  const sizeOf = (d) => d.size || 0;
+  const cmp = { recent: (a, b) => (b.added || 0) - (a.added || 0), old: (a, b) => (a.added || 0) - (b.added || 0), name: (a, b) => (a.name || "").localeCompare(b.name || "", "es", { numeric: true }), big: (a, b) => sizeOf(b) - sizeOf(a), small: (a, b) => sizeOf(a) - sizeOf(b) }[LF.sort] || ((a, b) => (b.added || 0) - (a.added || 0));
+  const list = [...S.docs].filter(d => active ? !d.sample || !qn || normTxt(d.name).includes(qn) : docFolder(d) === S.cwd)
+    .filter(d => !qn || normTxt(d.name).includes(qn))
+    .filter(d => !LF.date || (LF.date === "7" ? now - (d.added || 0) <= 7 * 864e5 : LF.date === "30" ? now - (d.added || 0) <= 30 * 864e5 : LF.date === "year" ? (d.added || 0) >= y0 : (d.added || 0) < y0))
+    .filter(d => !LF.size || (LF.size === "s" ? sizeOf(d) < MB : LF.size === "m" ? sizeOf(d) >= MB && sizeOf(d) <= 10 * MB : sizeOf(d) > 10 * MB))
+    .sort(cmp)
     .filter(d => S.filter === "todos" || (S.filter === "leidos") === isDone(d));
+  if (active && !list.length && !folders.length) { ul.append(el("li", { class: "nodocs", text: "No hay documentos que coincidan con la búsqueda o los filtros." })); return; }
   if (!list.length && !folders.length) ul.append(el("li", { class: "nodocs", text: S.cwd && S.filter === "todos" ? "Esta carpeta está vacía. Agrega PDF y elígela como destino, o arrastra aquí libros y carpetas con el mouse." : S.filter === "leidos" ? "Aún no has terminado ningún documento aquí." : S.filter === "pendientes" ? "No tienes documentos pendientes aquí." : "Tu biblioteca está vacía." }));
   else if (!list.length && S.filter !== "todos" && S.cwd) ul.append(el("li", { class: "nodocs", text: S.filter === "leidos" ? "Ningún libro leído directamente en esta carpeta." : "Ningún libro pendiente directamente en esta carpeta." }));
   for (const d of list) {
@@ -1803,6 +1920,7 @@ function renderDocs() {
       (() => { try { return DS.on && !d.sample && !d.draft && d.hasFile && !(d.gid || (d.gparts?.length && d.gparts.every(Boolean))) ? el("span", { class: "tag nodrive", text: d.gerr ? "No se pudo subir a Drive" : "Pendiente de subir a Drive", title: d.gerrInfo || "" }) : null; } catch { return null; } })());
     const meter = el("div", { class: "meter" + (done ? " done" : ""), role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Avance de lectura" }, el("i", { style: `width:${pct}%` }));
     const li = el("li", { class: "doc" + (done ? " is-done" : ""), "aria-current": String(S.doc?.id === d.id), tabindex: "0" },
+      coverOf(d),
       chk,
       el("div", { class: "meta" }, el("div", { class: "name", text: d.name, title: d.name }), sub, meter),
       d.sample ? el("span") : el("div", { class: "rowact" }, d.gid ? (() => { const b = el("button", { type: "button", text: "Ver en Drive", title: "Abrir el archivo en Google Drive" }); b.addEventListener("click", () => window.open(driveUrl(d.gid), "_blank", "noopener")); return b; })() : null, mv, del));
@@ -5067,6 +5185,35 @@ function speakAnswer(text, btn) {
   speechSynthesis.cancel(); setTimeout(next, 90);
 }
 
+$$("#viewSeg button").forEach(b => b.addEventListener("click", () => { try { localStorage.setItem(LIBVIEW_KEY, b.dataset.v); } catch {} applyLibView(); }));
+applyLibView();
+{ const LF = libFilters(); $("#libDate").value = LF.date; $("#libSize").value = LF.size; $("#libSort").value = LF.sort; }
+let libQT; $("#libQ").addEventListener("input", (e) => { clearTimeout(libQT); libQT = setTimeout(() => { libQ = e.target.value; renderDocs(); }, 120); });
+$("#libDate").addEventListener("change", (e) => setLibFilter("date", e.target.value));
+$("#libSize").addEventListener("change", (e) => setLibFilter("size", e.target.value));
+$("#libSort").addEventListener("change", (e) => setLibFilter("sort", e.target.value));
+$("#libClear").addEventListener("click", () => { libQ = ""; $("#libQ").value = ""; for (const [id, k, v] of [["libDate", "date", ""], ["libSize", "size", ""], ["libSort", "sort", "recent"]]) { $("#" + id).value = v; } try { localStorage.removeItem(LIBF_KEY); } catch {} renderDocs(); });
+/* Biblioteca: las acciones menos usadas van en «⋯ Más» */
+(() => {
+  const btn = $("#libMoreBtn"), menu = el("div", { id: "libMoreMenu", class: "moremenu", role: "menu", hidden: "" });
+  const nf = $("#nfSlot"); menu.append(nf);
+  for (const id of ["newPdfLib", "gpOpen", "impBtn", "expBtn", "driveBtn"]) { const b = $("#" + id); if (b) menu.append(b); }
+  const imp = $("#impFile"); if (imp) menu.append(imp);
+  document.body.append(menu);
+  const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  const open = () => {
+    menu.hidden = false; btn.setAttribute("aria-expanded", "true");
+    const r = btn.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
+    menu.style.top = (r.bottom + 6 + h < innerHeight ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
+  };
+  btn.addEventListener("click", (e) => { e.stopPropagation(); menu.hidden ? open() : close(); });
+  menu.addEventListener("click", (e) => { if (e.target.closest("button") && !e.target.closest("input")) setTimeout(close, 0); });
+  document.addEventListener("pointerdown", (e) => { if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) close(); });
+  addEventListener("resize", close);
+  // aviso en «Más» si Google Drive necesita atención
+  new MutationObserver(() => { const st = $("#driveBtn")?.dataset.st; $("#libDot").hidden = st !== "err"; }).observe($("#driveBtn"), { attributes: true, attributeFilter: ["data-st"] });
+})();
 /* ---------- Arranque ---------- */
 (async () => {
   const saved = await idbAll();

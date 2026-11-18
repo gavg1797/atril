@@ -27,6 +27,8 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 
 - **Preguntar a tu IA:** selecciona texto (doble clic) y toca **Preguntar**, o escribe tu pregunta. Con **Copiar** o con los accesos directos a **NotebookLM, Copilot, Claude y Gemini**, Atril copia la consulta (pregunta + texto + página) y abre la IA en otra pestaña para que solo la pegues. En pantallas anchas el panel va a la derecha del documento; también puede ser una ventana flotante.
 
+- **Biblioteca:** vista en **cuadrícula** (portadas en proporción de libro con el nombre abajo) o en **lista**. Botones pequeños para **buscar** (en todas las carpetas), filtrar por **fecha** y **tamaño** y **ordenar**. Las acciones menos usadas (Carpeta, Crear PDF nuevo, Abrir desde Drive, Importar/Exportar biblioteca y Google Drive) están en **⋯ Más**.
+
 ## Privacidad
 
 - **Inicio de sesión:** para entrar hay que iniciar sesión con Google cada vez que abres Atril.
