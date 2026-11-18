@@ -26,6 +26,8 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
   - vista normal o de página completa;
   - etiquetas Por hacer (casilla), Importante, Pregunta, Idea y Definición (Ctrl+1 a Ctrl+5), con resumen de etiquetas y filtro de pendientes;
   - búsqueda en todas las secciones y páginas (Ctrl+F), con resaltado de lo encontrado;
+  - lápiz, pluma y marcador; formas (línea, flecha, rectángulo y elipse; Mayús para ángulos rectos, cuadrados y círculos); borrador de trazo completo o parcial;
+  - ecuaciones escritas en LaTeX con teclas de símbolos y vista previa (Temml, incluido en `lib/` con licencia MIT); salen también en el PDF descargado;
   - barra de herramientas compacta que se oculta con un botón, en pantalla completa o al desplazarse hacia abajo, y vuelve al subir.
 - Crear un PDF desde cero: títulos, texto, imágenes y enlaces.
 - Preguntas sobre el documento con citas de página. Las respuestas se pueden escuchar y descargar en PDF, Word o Markdown.

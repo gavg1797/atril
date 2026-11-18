@@ -1224,6 +1224,36 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
 .nb .nbvinfo{font-size:.68rem}
 #nb.toolshide .nbtools,#nb.toolshide .nbviewbar{display:none!important}
 #nb.toolshide #nbToolsBtn svg{transform:rotate(180deg)}
+/* Tipos de lápiz, formas, borrador parcial y ecuaciones */
+.nbopt{border:0;background:transparent;border-radius:6px;min-width:24px;height:24px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;gap:3px;font-size:.66rem;font-weight:600;color:var(--ink)}
+.nbopt svg{width:14px;height:14px}
+.nbopt:hover{background:var(--paper)}
+.nbopt[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.nbgrp[hidden]{display:none!important}
+.nbinner[data-tool="shape"]{cursor:crosshair}
+.nbeq{position:absolute;padding:4px 10px 4px 14px;border:1px solid transparent;border-radius:6px;white-space:nowrap;line-height:1.2;cursor:pointer}
+.nbinner:not(.drawing) .nbeq:hover,.nbeq.editing{border-color:#B9C4D6;background:rgba(43,71,212,.04)}
+.nbeq.editing{box-shadow:0 0 0 2px rgba(43,71,212,.35)}
+.nbeq .nbgrip{position:absolute;left:0;top:0;bottom:0;width:10px;cursor:grab;opacity:0}
+.nbeq:hover .nbgrip{opacity:1;background:repeating-linear-gradient(#B9C4D6 0 2px,transparent 2px 5px) center/3px 100% no-repeat}
+.nbeq .nbdel{display:none}
+.nbinner:not(.drawing) .nbeq:hover .nbdel{display:grid}
+.nbinner.drawing .nbeq{pointer-events:none}
+.nbeq .nbeqraw{font-family:var(--f-mono);font-size:.7em;color:#B3261E}
+.nbeqbar{display:flex;flex-direction:column;gap:6px;padding:6px 10px 8px;border-bottom:1px solid var(--line);background:var(--paper)}
+.nbeqbar[hidden]{display:none}
+.nbeqkeys{display:flex;flex-wrap:wrap;gap:3px}
+.nbeqkeys button{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:30px;height:26px;padding:0 6px;font:500 .82rem/1 Georgia,"Cambria Math",serif;color:var(--ink)}
+.nbeqkeys button:hover{border-color:var(--accent)}
+.nbeqrow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.nbeqrow textarea{flex:1 1 220px;min-width:0;font:500 .82rem/1.4 var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);resize:vertical}
+.nbeqrow textarea:focus{outline:none;border-color:var(--accent)}
+.nbeqprev{flex:1 1 200px;min-height:44px;display:flex;align-items:center;justify-content:center;background:#fff;color:#1D2321;border:1px dashed var(--line);border-radius:8px;padding:4px 8px;font-size:22px;overflow:auto}
+.nbeqact{align-items:center}
+.nbeqact select{border:1px solid var(--line);background:var(--surface);border-radius:6px;font-size:.76rem;padding:3px 5px}
+.nbeqact .btn{padding:5px 12px;font-size:.78rem}
+.nbeqerr{flex:1;font-size:.72rem;color:#B3261E}
+#nb.toolshide .nbeqbar{display:flex!important}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1420,8 +1450,23 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
         <button type="button" class="nbt" data-tool="text" title="Texto: toca donde quieras escribir"><b>T</b><span>Texto</span></button>
         <button type="button" class="nbt" data-tool="pen" title="Lápiz"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Lápiz</span></button>
         <button type="button" class="nbt" data-tool="hl" title="Resaltador"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 15l-3 5h6l1-2"/><path d="M8 14l7-10 4 3-7 10z"/></svg><span>Resaltador</span></button>
-        <button type="button" class="nbt" data-tool="eraser" title="Borrador: toca un trazo para borrarlo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 20h12M5 15l9-9 5 5-7 7H9z"/></svg><span>Borrador</span></button>
+        <button type="button" class="nbt" data-tool="shape" title="Formas: línea, flecha, rectángulo y elipse"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="11" width="9" height="9" rx="1"/><circle cx="16.5" cy="7.5" r="4.5"/></svg><span>Formas</span></button>
+        <button type="button" class="nbt" data-tool="eraser" title="Borrador: trazo completo o parcial"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 20h12M5 15l9-9 5 5-7 7H9z"/></svg><span>Borrador</span></button>
       </div>
+      <div class="nbgrp" role="group" aria-label="Tipo de lápiz" id="nbPens">
+        <button type="button" class="nbopt" data-pen="pencil" title="Lápiz: trazo fino y suave"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l3-1 11-11-2-2L5 17z"/><path d="M14 6l2 2" /></svg></button>
+        <button type="button" class="nbopt" data-pen="pen" title="Pluma: trazo firme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3l4 8-4 10-4-10z"/><circle cx="12" cy="11" r="1.3" fill="currentColor"/></svg></button>
+        <button type="button" class="nbopt" data-pen="marker" title="Marcador: trazo grueso"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7 21h10M9 17h6l1-6H8z"/><path d="M10 11V4h4v7"/></svg></button>
+      </div>
+      <div class="nbgrp" role="group" aria-label="Forma" id="nbShapes">
+        <button type="button" class="nbopt" data-shape="line" title="Línea (Mayús: ángulos de 45°)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 19L19 5"/></svg></button>
+        <button type="button" class="nbopt" data-shape="arrow" title="Flecha (Mayús: ángulos de 45°)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 19L19 5M10 5h9v9"/></svg></button>
+        <button type="button" class="nbopt" data-shape="rect" title="Rectángulo (Mayús: cuadrado)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1"/></svg></button>
+        <button type="button" class="nbopt" data-shape="ellipse" title="Elipse (Mayús: círculo)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="6.5"/></svg></button>
+      </div>
+      <div class="nbgrp" role="group" aria-label="Modo de borrador" id="nbErasers">
+        <button type="button" class="nbopt" data-erase="stroke" title="Borrar el trazo completo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 17c4-8 8 4 16-6"/><path d="M14 20l6-6" stroke-width="2.6"/></svg><span>Trazo</span></button>
+        <button type="button" class="nbopt" data-erase="point" title="Borrar solo la parte que tocas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="6" stroke-dasharray="3 2.5"/></svg><span>Parcial</span></button>      </div>
       <div class="nbgrp nbfmt" role="group" aria-label="Formato de texto" id="nbFmt">
         <select id="nbStyle" class="nbsel" aria-label="Estilo del párrafo" title="Estilo: normal, títulos o cita"><option value="0">Normal</option><option value="1">Título 1</option><option value="2">Título 2</option><option value="3">Título 3</option><option value="q">Cita</option></select>
         <select id="nbFont" class="nbsel" aria-label="Fuente" title="Fuente"><option value="">Predeterminada</option><option value="arial">Arial</option><option value="times">Times New Roman</option><option value="georgia">Georgia</option><option value="verdana">Verdana</option><option value="courier">Courier New</option></select>
@@ -1442,6 +1487,7 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbgrp">
         <button type="button" class="nbt" id="nbImg" title="Insertar imagen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg><span>Imagen</span></button>
         <input type="file" id="nbFile" accept="image/*" multiple hidden>
+        <button type="button" class="nbt" id="nbEqBtn" title="Insertar ecuación (escrita en LaTeX)"><b style="font-family:Georgia,serif;font-style:italic">∑</b><span>Ecuación</span></button>
       </div>
       <div class="nbgrp">
         <button type="button" class="nbt" id="nbUndo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -1454,6 +1500,19 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <div class="nbgrp">
         <select id="nbBg" aria-label="Fondo de la página" title="Fondo de la página"><option value="lines">Rayado</option><option value="grid">Cuadrícula</option><option value="plain">Liso</option></select>
         <button type="button" class="nbt" id="nbExport" title="Descargar el cuaderno en PDF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>PDF</span></button>
+      </div>
+    </div>
+    <div class="nbeqbar" id="nbEqBar" hidden>
+      <div class="nbeqkeys" id="nbEqKeys" role="group" aria-label="Símbolos"></div>
+      <div class="nbeqrow">
+        <textarea id="nbEqTex" rows="2" spellcheck="false" aria-label="Ecuación en LaTeX" placeholder="Ej.: x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}"></textarea>
+        <div class="nbeqprev" id="nbEqPrev" aria-live="polite"></div>
+      </div>
+      <div class="nbeqrow nbeqact">
+        <select id="nbEqSize" aria-label="Tamaño de la ecuación"><option value="18">Pequeña</option><option value="24">Normal</option><option value="32">Grande</option><option value="44">Muy grande</option></select>
+        <span class="nbeqerr" id="nbEqErr"></span>
+        <button class="btn" id="nbEqDel" type="button">Eliminar</button>
+        <button class="btn primary" id="nbEqOk" type="button">Listo</button>
       </div>
     </div>
     <div class="nblinkbar" id="nbLinkBar" hidden>
@@ -3129,9 +3188,9 @@ const NB_COLORS = [["#1D2321", "Negro"], ["#2B47D4", "Azul"], ["#D9363E", "Rojo"
 const HL_COLORS = [["#FFD400", "Amarillo"], ["#5FD068", "Verde"], ["#FF7EB6", "Rosa"], ["#7CB8FF", "Azul"], ["#FFA94D", "Naranja"], ["#C9A7FF", "Lila"]];
 const NBWIN = document.documentElement.classList.contains("nbwin");
 const NBWIN_ID = NBWIN ? decodeURIComponent(location.hash.slice(4)) : "";
-const NB = { open: false, tool: "text", color: { pen: "#1D2321", hl: "#FFD400" }, size: 4, k: 1, hist: [], fut: [], saveT: null, own: null, nav: null, full: false };
-try { const v = JSON.parse(localStorage.getItem("atril-nb") || "{}"); if (typeof v.nav === "boolean") NB.nav = v.nav; if (v.tool) NB.tool = v.tool; if (v.color) NB.color = { ...NB.color, ...v.color }; if (v.size) NB.size = v.size; if (v.w) document.documentElement.style.setProperty("--nbw", v.w + "px"); } catch {}
-const nbPrefs = () => { try { localStorage.setItem("atril-nb", JSON.stringify({ tool: NB.tool, color: NB.color, size: NB.size, w: NB.w, z: NB.z, nav: NB.nav ?? undefined })); } catch {} };
+const NB = { open: false, tool: "text", color: { pen: "#1D2321", hl: "#FFD400" }, size: 4, k: 1, hist: [], fut: [], saveT: null, own: null, nav: null, full: false, pen: "pen", shape: "line", erase: "stroke" };
+try { const v = JSON.parse(localStorage.getItem("atril-nb") || "{}"); if (typeof v.nav === "boolean") NB.nav = v.nav; if (v.pen) NB.pen = v.pen; if (v.shape) NB.shape = v.shape; if (v.erase) NB.erase = v.erase; if (v.tool) NB.tool = v.tool; if (v.color) NB.color = { ...NB.color, ...v.color }; if (v.size) NB.size = v.size; if (v.w) document.documentElement.style.setProperty("--nbw", v.w + "px"); } catch {}
+const nbPrefs = () => { try { localStorage.setItem("atril-nb", JSON.stringify({ tool: NB.tool, color: NB.color, size: NB.size, w: NB.w, z: NB.z, nav: NB.nav ?? undefined, pen: NB.pen, shape: NB.shape, erase: NB.erase })); } catch {} };
 const uid = () => Math.random().toString(36).slice(2, 9);
 const SEC_COLORS = ["#2F6FD6", "#D9622B", "#1F8A4C", "#8E44AD", "#C0392B", "#0E8A9A", "#B7950B", "#C2185B"];
 /* documento cuyo cuaderno se muestra: el del PDF abierto o un cuaderno independiente (NB.own) */
@@ -3186,7 +3245,11 @@ function renderNb() {
   $$(".nbt[data-tool]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.tool === NB.tool)));
   renderNbColors();
   $$(".nbsz").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.sz === NB.size)));
-  $("#nbSizes").hidden = !(NB.tool === "pen");
+  $("#nbSizes").hidden = !(NB.tool === "pen" || NB.tool === "shape");
+  $("#nbPens").hidden = NB.tool !== "pen"; $("#nbShapes").hidden = NB.tool !== "shape"; $("#nbErasers").hidden = NB.tool !== "eraser";
+  $$("#nbPens [data-pen]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.pen === NB.pen)));
+  $$("#nbShapes [data-shape]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.shape === NB.shape)));
+  $$("#nbErasers [data-erase]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.erase === NB.erase)));
   $("#nbFmt").hidden = NB.tool !== "text";
   $("#nbBg").value = nbPage().bg || "lines";
   if (!$("#nbViewBar").hidden) renderNbViewBar();
@@ -3202,7 +3265,7 @@ $("#nbAddPage").addEventListener("click", () => { const b = nbBook(); b.pages.pu
 function renderNbColors() {
   const box = $("#nbColors"); box.replaceChildren();
   const isHl = NB.tool === "hl", list = isHl ? HL_COLORS : NB_COLORS, cur = isHl ? NB.color.hl : NB.color.pen;
-  box.hidden = !(NB.tool === "pen" || NB.tool === "hl" || NB.tool === "text");
+  box.hidden = !(NB.tool === "pen" || NB.tool === "hl" || NB.tool === "text" || NB.tool === "shape");
   for (const [c, name] of list) {
     const b = el("button", { type: "button", class: "nbcol", style: `--c:${c}`, "aria-label": name, title: name, "aria-pressed": String(c === cur) });
     b.addEventListener("click", () => { if (isHl) NB.color.hl = c; else NB.color.pen = c; nbPrefs(); renderNbColors(); const ed = document.activeElement?.closest?.(".nbtxt"); if (ed && NB.tool === "text") { const it = nbPage().items.find(x => x.id === ed.dataset.id); if (it) { nbSnap(); it.color = c; ed.style.color = c; nbSave(); } } });
@@ -3549,7 +3612,7 @@ addEventListener("keydown", (e) => {
 });
 /* ---------- Panel lateral: búsqueda y resumen de etiquetas ---------- */
 NB.side = null;
-function nbItemText(it) { return it.type === "text" ? (it.text || "") : ""; }
+function nbItemText(it) { return it.type === "text" ? (it.text || "") : it.type === "eq" ? (it.tex || "") : ""; }
 function nbSnippet(text, qn) {
   const t = text.replace(/\s+/g, " ").trim(); if (!qn) return document.createTextNode(t.length > 140 ? t.slice(0, 140) + "…" : t);
   const nt = normTxt(t), at = nt.indexOf(qn); if (at < 0) return document.createTextNode(t.slice(0, 140));
@@ -3695,9 +3758,12 @@ function strokePath(pts) {
   for (let i = 1; i < pts.length - 1; i++) { const [x1, y1] = pts[i], [x2, y2] = pts[i + 1]; d += ` Q${x1} ${y1} ${(x1 + x2) / 2} ${(y1 + y2) / 2}`; }
   const l = pts[pts.length - 1]; return d + ` L${l[0]} ${l[1]}`;
 }
+const polyPath = (pts) => pts.length ? "M" + pts.map(([x, y]) => `${x} ${y}`).join(" L") : "";
+const stPath = (st, pts = st.pts) => st.shape ? polyPath(pts) : strokePath(pts);
 function svgStroke(st) {
   const ns = "http://www.w3.org/2000/svg", p = document.createElementNS(ns, "path");
-  p.setAttribute("d", strokePath(st.pts)); p.setAttribute("fill", "none"); p.setAttribute("stroke", st.color);
+  p.setAttribute("d", stPath(st));
+  if (st.op) p.setAttribute("stroke-opacity", String(st.op)); p.setAttribute("fill", "none"); p.setAttribute("stroke", st.color);
   p.setAttribute("stroke-width", st.size); p.setAttribute("stroke-linecap", st.tool === "hl" ? "butt" : "round"); p.setAttribute("stroke-linejoin", "round");
   if (st.tool === "hl") { p.setAttribute("stroke-opacity", "0.38"); p.style.mixBlendMode = "multiply"; }
   p.dataset.id = st.id; return p;
@@ -3707,7 +3773,8 @@ function renderNbPage() {
   const pg = nbPage();
   $("#nbBgLayer").className = "nbbg bg-" + (pg.bg || "lines");
   const items = $("#nbItems"); items.replaceChildren();
-  for (const it of pg.items) items.append(it.type === "img" ? nbImgNode(it) : nbTextNode(it));
+  for (const it of pg.items) items.append(it.type === "img" ? nbImgNode(it) : it.type === "eq" ? nbEqNode(it) : nbTextNode(it));
+  if (NB.eq && !pg.items.includes(NB.eq)) closeEqBar(true); else if (NB.eq) document.querySelector(`.nbeq[data-id="${NB.eq.id}"]`)?.classList.add("editing");
   const svg = $("#nbInk"); svg.replaceChildren(); for (const st of pg.strokes) svg.append(svgStroke(st));
   $("#nbInner").classList.toggle("drawing", NB.tool !== "text");
   $("#nbInner").dataset.tool = NB.tool;
@@ -3878,27 +3945,184 @@ $("#nbInner").addEventListener("pointerdown", (e) => {
   if (NB.tool === "eraser") { nbSnap(); nbEraseAt(p0); curStroke = { erasing: true }; return; }
   nbSnap();
   const isHl = NB.tool === "hl";
-  curStroke = { id: uid(), tool: NB.tool, color: isHl ? NB.color.hl : NB.color.pen, size: isHl ? 18 : NB.size, pts: [p0] };
+  if (NB.tool === "shape") curStroke = { id: uid(), tool: "shape", shape: NB.shape, color: NB.color.pen, size: NB.size, a: [p0, p0], pts: [p0] };
+  else if (isHl) curStroke = { id: uid(), tool: "hl", color: NB.color.hl, size: 18, pts: [p0] };
+  else { const k = PEN_KINDS[NB.pen] || PEN_KINDS.pen; curStroke = { id: uid(), tool: "pen", kind: NB.pen, color: NB.color.pen, size: Math.max(1, Math.round(NB.size * k.w * 10) / 10), pts: [p0] }; if (k.op < 1) curStroke.op = k.op; }
   curStroke.node = svgStroke(curStroke); $("#nbInk").append(curStroke.node);
 });
 $("#nbInner").addEventListener("pointermove", (e) => {
   if (!curStroke) return;
   const p = nbPoint(e);
   if (curStroke.erasing) { nbEraseAt(p); return; }
+  if (curStroke.shape) { curStroke.a[1] = e.shiftKey ? nbConstrain(curStroke.shape, curStroke.a[0], p) : p; curStroke.pts = shapePts(curStroke.shape, curStroke.a[0], curStroke.a[1], curStroke.size); curStroke.node.setAttribute("d", polyPath(curStroke.pts)); return; }
   const l = curStroke.pts[curStroke.pts.length - 1]; if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 1.5) return;
   curStroke.pts.push(p); curStroke.node.setAttribute("d", strokePath(curStroke.pts));
 });
 const endStroke = () => {
   if (!curStroke) return;
-  if (!curStroke.erasing && curStroke.pts.length) { const { node, ...st } = curStroke; nbPage().strokes.push(st); $("#nbHint").hidden = true; }
+  if (curStroke.shape && Math.hypot(curStroke.a[1][0] - curStroke.a[0][0], curStroke.a[1][1] - curStroke.a[0][1]) < 4) { curStroke.node.remove(); curStroke = null; NB.hist.pop(); nbUndoUI(); return; }
+  if (!curStroke.erasing && curStroke.pts.length) { const { node, a, ...st } = curStroke; nbPage().strokes.push(st); $("#nbHint").hidden = true; }
   curStroke = null; nbSave(); nbScale();
 };
 $("#nbInner").addEventListener("pointerup", endStroke);
 $("#nbInner").addEventListener("pointercancel", endStroke);
 function nbEraseAt([x, y]) {
-  const pg = nbPage(), r = 14; const before = pg.strokes.length;
-  pg.strokes = pg.strokes.filter(st => !st.pts.some(([a, b]) => Math.abs(a - x) < r + st.size / 2 && Math.abs(b - y) < r + st.size / 2));
-  if (pg.strokes.length !== before) { const svg = $("#nbInk"); svg.replaceChildren(); for (const st of pg.strokes) svg.append(svgStroke(st)); }
+  const pg = nbPage(), r = NB.erase === "point" ? 9 : 14; const before = pg.strokes.length;
+  const hit = (st, [a, b]) => Math.abs(a - x) < r + st.size / 2 && Math.abs(b - y) < r + st.size / 2;
+  let changed = false;
+  if (NB.erase === "point") {
+    // borrador parcial: quita solo los puntos tocados y deja el resto del trazo en pedazos
+    const out = [];
+    for (const st of pg.strokes) {
+      const pts = st.shape || st.pts.length < 3 ? st.pts : densify(st.pts, 4);
+      if (!pts.some(p => hit(st, p))) { out.push(st); continue; }
+      changed = true; let run = [];
+      const flush = () => { if (run.length >= 2) out.push({ ...st, id: uid(), pts: run }); run = []; };
+      for (const p of pts) { if (hit(st, p)) flush(); else run.push(p); }
+      flush();
+    }
+    pg.strokes = out;
+  } else pg.strokes = pg.strokes.filter(st => !st.pts.some(p => hit(st, p)));
+  if (changed || pg.strokes.length !== before) { const svg = $("#nbInk"); svg.replaceChildren(); for (const st of pg.strokes) svg.append(svgStroke(st)); }
+}
+
+/* ---------- Tipos de lápiz y formas ---------- */
+const PEN_KINDS = { pencil: { w: 0.7, op: 0.78 }, pen: { w: 1, op: 1 }, marker: { w: 2.4, op: 0.9 } };
+function densify(pts, step) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], d = Math.hypot(x1 - x0, y1 - y0), n = Math.floor(d / step);
+    for (let k = 1; k < n; k++) out.push([Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n)]);
+    out.push(pts[i]);
+  }
+  return out;
+}
+function nbConstrain(shape, [x0, y0], [x, y]) {
+  const dx = x - x0, dy = y - y0;
+  if (shape === "rect" || shape === "ellipse") { const m = Math.max(Math.abs(dx), Math.abs(dy)); return [x0 + Math.sign(dx || 1) * m, y0 + Math.sign(dy || 1) * m]; }
+  const ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), len = Math.hypot(dx, dy);
+  return [Math.round(x0 + Math.cos(ang) * len), Math.round(y0 + Math.sin(ang) * len)];
+}
+function shapePts(shape, [x0, y0], [x1, y1], size) {
+  const R = (v) => Math.round(v * 10) / 10;
+  if (shape === "rect") return densify([[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]], 8);
+  if (shape === "ellipse") {
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = Math.abs(x1 - x0) / 2, ry = Math.abs(y1 - y0) / 2, n = Math.max(24, Math.min(120, Math.round((rx + ry) / 3)));
+    const out = []; for (let i = 0; i <= n; i++) { const t = i / n * Math.PI * 2; out.push([R(cx + rx * Math.cos(t)), R(cy + ry * Math.sin(t))]); } return out;
+  }
+  const line = densify([[x0, y0], [x1, y1]], 8);
+  if (shape !== "arrow") return line;
+  const ang = Math.atan2(y1 - y0, x1 - x0), L = Math.min(Math.hypot(x1 - x0, y1 - y0) * 0.45, 12 + size * 2.5);
+  const w1 = [R(x1 - L * Math.cos(ang - 0.45)), R(y1 - L * Math.sin(ang - 0.45))], w2 = [R(x1 - L * Math.cos(ang + 0.45)), R(y1 - L * Math.sin(ang + 0.45))];
+  return [...line, w1, [x1, y1], w2];
+}
+$$("#nbPens [data-pen]").forEach(b => b.addEventListener("click", () => { NB.pen = b.dataset.pen; if (NB.pen === "marker" && NB.size < 4) NB.size = 4; nbPrefs(); renderNb(); }));
+$$("#nbShapes [data-shape]").forEach(b => b.addEventListener("click", () => { NB.shape = b.dataset.shape; nbPrefs(); renderNb(); }));
+$$("#nbErasers [data-erase]").forEach(b => b.addEventListener("click", () => { NB.erase = b.dataset.erase; nbPrefs(); renderNb(); }));
+
+/* ---------- Ecuaciones (LaTeX con Temml, se dibujan con MathML) ---------- */
+let temmlP = null;
+const loadTemml = () => temmlP ??= new Promise((res, rej) => {
+  if (window.temml) { res(window.temml); return; }
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "lib/temml.css"; document.head.append(l);
+  const sc = document.createElement("script"); sc.src = "lib/temml.min.js";
+  sc.onload = () => res(window.temml); sc.onerror = () => { temmlP = null; rej(new Error("No se pudo cargar el editor de ecuaciones.")); };
+  document.head.append(sc);
+});
+function nbTexRender(tex, target) {
+  const t = String(tex || "").trim();
+  if (!t) { target.replaceChildren(el("span", { class: "nbeqraw", style: "color:#7A8582", text: "Escribe la ecuación" })); return null; }
+  try { window.temml.render("\\displaystyle " + t, target, { throwOnError: true }); return null; }
+  catch (e) { target.replaceChildren(el("span", { class: "nbeqraw", text: t })); return String(e.message || e).replace(/^Temml parse error:\s*/i, ""); }
+}
+function nbEqMeasure(it, n) { requestAnimationFrame(() => { if (n.isConnected && NB.k) { it.w = Math.round(n.offsetWidth); it.h = Math.round(n.offsetHeight); } }); }
+function nbEqNode(it) {
+  const body = el("div", { class: "nbeqbody" });
+  const n = el("div", { class: "nbeq", "data-id": it.id, style: `left:${it.x}px;top:${it.y}px;font-size:${it.fs || 24}px;color:${it.color || "#1D2321"}`, title: "Toca para editar la ecuación" },
+    el("div", { class: "nbgrip", title: "Arrastra para mover" }), body,
+    el("button", { type: "button", class: "nbdel", title: "Eliminar ecuación", "aria-label": "Eliminar ecuación", text: "✕" }));
+  if (window.temml) { nbTexRender(it.tex, body); nbEqMeasure(it, n); }
+  else { body.append(el("span", { class: "nbeqraw", text: it.tex || "" })); loadTemml().then(() => { if (body.isConnected) { nbTexRender(it.tex, body); nbEqMeasure(it, n); } }).catch(() => {}); }
+  n.querySelector(".nbdel").addEventListener("click", (e) => { e.stopPropagation(); if (NB.eq === it) closeEqBar(true); nbRemoveItem(it); });
+  n.querySelector(".nbdel").addEventListener("pointerdown", (e) => e.stopPropagation());
+  nbDraggable(n.querySelector(".nbgrip"), it, n, "move");
+  n.addEventListener("click", (e) => { if (NB.tool !== "text" || e.target.closest(".nbdel,.nbgrip")) return; openEqBar(it); });
+  return n;
+}
+const EQ_KEYS = [["a⁄b", "\\frac{□}{□}"], ["√", "\\sqrt{□}"], ["ⁿ√", "\\sqrt[□]{□}"], ["xⁿ", "^{□}"], ["xₙ", "_{□}"], ["( )", "\\left( □ \\right)"], ["∑", "\\sum_{i=1}^{n} □"], ["∫", "\\int_{a}^{b} □ \\, dx"], ["lím", "\\lim_{x \\to □}"], ["π", "\\pi"], ["θ", "\\theta"], ["α", "\\alpha"], ["β", "\\beta"], ["Δ", "\\Delta"], ["±", "\\pm"], ["×", "\\times"], ["÷", "\\div"], ["·", "\\cdot"], ["≤", "\\le"], ["≥", "\\ge"], ["≠", "\\neq"], ["≈", "\\approx"], ["∞", "\\infty"], ["→", "\\rightarrow"], ["%", "\\%"], ["$", "\\$"], ["matriz", "\\begin{pmatrix} □ & b \\\\ c & d \\end{pmatrix}"], ["texto", "\\text{□}"]];
+NB.eq = null;
+(() => {
+  const box = $("#nbEqKeys");
+  for (const [lab, tex] of EQ_KEYS) {
+    const b = el("button", { type: "button", title: tex.replace(/□/g, "…"), text: lab });
+    b.addEventListener("pointerdown", (e) => e.preventDefault());
+    b.addEventListener("click", () => {
+      const ta = $("#nbEqTex"), a = ta.selectionStart, z = ta.selectionEnd, sel = ta.value.slice(a, z);
+      let ins = tex, caret;
+      const first = ins.indexOf("□");
+      if (sel && first >= 0) ins = ins.replace("□", sel);
+      caret = ins.indexOf("□"); ins = ins.replace(/□/g, "");
+      if (caret < 0) caret = ins.length;
+      const pre = ta.value.slice(0, a), sp = pre && !/\s$/.test(pre) && /^\\[a-z]/i.test(ins) ? " " : "";
+      ta.value = pre + sp + ins + ta.value.slice(z); ta.focus(); ta.selectionStart = ta.selectionEnd = a + sp.length + caret;
+      ta.dispatchEvent(new Event("input"));
+    });
+    box.append(b);
+  }
+})();
+let eqSnapped = false;
+function eqPreview() {
+  const it = NB.eq; if (!it) return;
+  const prev = $("#nbEqPrev"), err = window.temml ? nbTexRender(it.tex, prev) : null;
+  $("#nbEqErr").textContent = err ? "Revisa la ecuación: " + err.slice(0, 90) : "";
+  const n = document.querySelector(`.nbeq[data-id="${it.id}"]`);
+  if (n && window.temml) { n.style.fontSize = (it.fs || 24) + "px"; nbTexRender(it.tex, n.querySelector(".nbeqbody")); nbEqMeasure(it, n); }
+}
+async function openEqBar(it) {
+  if (NB.eq && NB.eq !== it) closeEqBar(true);
+  NB.eq = it; eqSnapped = false;
+  if (isNarrow() && !NB.toolsMan) { NB.toolsAuto = true; nbToolsUI(); }
+  $("#nbEqBar").hidden = false; $("#nbEqTex").value = it.tex || ""; $("#nbEqSize").value = String(it.fs || 24);
+  $$(".nbeq.editing").forEach(x => x.classList.remove("editing")); document.querySelector(`.nbeq[data-id="${it.id}"]`)?.classList.add("editing");
+  $("#nbEqTex").focus();
+  try { await loadTemml(); } catch (e) { $("#nbEqErr").textContent = e.message; return; }
+  eqPreview();
+}
+function closeEqBar(silent) {
+  const it = NB.eq; NB.eq = null; $("#nbEqBar").hidden = true; if (NB.toolsAuto && !NB.full) { NB.toolsAuto = false; nbToolsUI(); } $$(".nbeq.editing").forEach(x => x.classList.remove("editing"));
+  if (!it || silent) return;
+  if (!(it.tex || "").trim()) { const pg = nbPage(); pg.items = pg.items.filter(x => x !== it); renderNbPage(); }
+  nbSave();
+}
+$("#nbEqTex").addEventListener("input", (e) => { const it = NB.eq; if (!it) return; if (!eqSnapped) { nbSnap(); eqSnapped = true; } it.tex = e.target.value; nbSave(); eqPreview(); });
+$("#nbEqTex").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); closeEqBar(); } if (e.key === "Escape") { e.stopPropagation(); closeEqBar(); } });
+$("#nbEqSize").addEventListener("change", (e) => { const it = NB.eq; if (!it) return; nbSnap(); it.fs = +e.target.value; nbSave(); eqPreview(); });
+$("#nbEqOk").addEventListener("click", () => closeEqBar());
+$("#nbEqDel").addEventListener("click", () => { const it = NB.eq; closeEqBar(true); if (it) nbRemoveItem(it); });
+$("#nbEqBtn").addEventListener("click", () => {
+  if (NB.tool !== "text") { NB.tool = "text"; nbPrefs(); renderNb(); }
+  const v = $("#nbView"), k = NB.k || 1;
+  nbSnap();
+  const it = { id: uid(), type: "eq", x: Math.max(0, Math.round((v.scrollLeft + 30) / k)), y: Math.max(0, Math.round((v.scrollTop + v.clientHeight * 0.3) / k)), tex: "", fs: 24, color: NB.color.pen };
+  nbPage().items.push(it); renderNbPage(); openEqBar(it);
+});
+/* dibuja una ecuación en un lienzo (para descargar en PDF); si el navegador no lo permite, devuelve null */
+async function nbEqCanvas(it, sc) {
+  try {
+    await loadTemml();
+    const host = el("div", { style: `position:fixed;left:-9999px;top:0;font-size:${it.fs || 24}px;color:${it.color || "#1D2321"};white-space:nowrap` });
+    document.body.append(host); const err = nbTexRender(it.tex, host); const m = host.querySelector("math");
+    const w = Math.ceil(host.offsetWidth) + 4, h = Math.ceil(host.offsetHeight) + 4; host.remove();
+    if (err || !m) return null;
+    const xml = new XMLSerializer().serializeToString(m);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:${it.fs || 24}px;color:${it.color || "#1D2321"};font-family:'Cambria Math','STIX Two Math','Latin Modern Math',math;white-space:nowrap;padding:2px">${xml}</div></foreignObject></svg>`;
+    const im = await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
+    if (!im) return null;
+    const c = document.createElement("canvas"); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
+    const g = c.getContext("2d"); g.scale(sc, sc); g.drawImage(im, 0, 0, w, h);
+    g.getImageData(0, 0, 1, 1);   // falla si el navegador marcó el lienzo como no exportable
+    return { c, w, h };
+  } catch { return null; }
 }
 /* imágenes: botón, pegar o arrastrar */
 $("#nbImg").addEventListener("click", () => $("#nbFile").click());
@@ -3945,7 +4169,7 @@ function nbAddText(text, extra = {}) {
   nbSave(); renderNbPage();
   requestAnimationFrame(() => { const n = document.querySelector(`.nbtxt[data-id="${pg.items[pg.items.length - 1].id}"]`); n?.scrollIntoView({ block: "nearest", behavior: "smooth" }); });
 }
-function nbTextHeight(it) { const n = document.querySelector(`.nbtxt[data-id="${it.id}"]`); if (n) return n.offsetHeight; const lines = (it.text || "").split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length * 9.5 / it.w)), 0); return lines * 27 + 20; }
+function nbTextHeight(it) { if (it.type === "eq") return it.h || 60; const n = document.querySelector(`.nbtxt[data-id="${it.id}"]`); if (n) return n.offsetHeight; const lines = (it.text || "").split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length * 9.5 / it.w)), 0); return lines * 27 + 20; }
 $("#selNb").addEventListener("click", () => {
   const segs = lastSegs, q = quote;
   const text = q?.text || lastSelText || getSelection().toString().trim(); if (!text) return;
@@ -3983,6 +4207,7 @@ async function nbRenderCanvas(pg, opt = {}) {
   if (pg.bg !== "plain") { ctx.strokeStyle = pg.bg === "grid" ? "#E3E8EE" : "#DDE6F0"; ctx.lineWidth = 1; for (let y = 64; y < y0 + H; y += 32) { if (y < y0) continue; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(NBW, y); ctx.stroke(); } if (pg.bg === "grid") for (let x = 32; x < NBW; x += 32) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + H); ctx.stroke(); } }
   for (const it of pg.items) {
     if (it.type === "img") { const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = it.src; }); if (im) ctx.drawImage(im, it.x, it.y, it.w, it.h); continue; }
+    if (it.type === "eq") { const r = await nbEqCanvas(it, 3); if (r) ctx.drawImage(r.c, it.x + 14, it.y + 4, r.w, r.h); else { ctx.font = `${Math.round((it.fs || 24) * 0.7)}px monospace`; ctx.fillStyle = it.color || "#1D2321"; ctx.fillText(it.tex || "", it.x + 14, it.y + (it.fs || 24)); } continue; }
     let y = it.y + 8;
     if (it.tag) { ctx.font = "600 13px Figtree, system-ui, sans-serif"; ctx.fillStyle = "#6B7774"; ctx.fillText(it.tag.toUpperCase(), it.x + 10, y + 12); y += 20; }
     const basePx = HPX[it.h] || it.fs || DEF_PX, baseFam = NB_FONTS[it.font || ""][1];
@@ -4013,7 +4238,7 @@ async function nbRenderCanvas(pg, opt = {}) {
       y += h;
     }
   }
-  for (const st of pg.strokes) { ctx.save(); ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = st.tool === "hl" ? "butt" : "round"; ctx.lineJoin = "round"; if (st.tool === "hl") { ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = "multiply"; } ctx.stroke(new Path2D(strokePath(st.pts))); ctx.restore(); }
+  for (const st of pg.strokes) { ctx.save(); ctx.strokeStyle = st.color; ctx.lineWidth = st.size; ctx.lineCap = st.tool === "hl" ? "butt" : "round"; ctx.lineJoin = "round"; if (st.tool === "hl") { ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = "multiply"; } if (st.op) ctx.globalAlpha = st.op; ctx.stroke(new Path2D(stPath(st))); ctx.restore(); }
   return c;
 }
 /* Descarga del cuaderno con tamaño a elegir */
@@ -4357,6 +4582,10 @@ async function buildVectorPdf(book, title) {
     const Y = (py, k) => H - (py - k * P.h) * PT;
     if (pg.bg === "lines" || pg.bg === "grid") for (const page of pages) { const c = rgb(0.87, 0.9, 0.94); for (let y = 64; y < P.h; y += 32) page.drawLine({ start: { x: 0, y: H - y * PT }, end: { x: P.w * PT, y: H - y * PT }, thickness: 0.6, color: c }); if (pg.bg === "grid") for (let x = 32; x < P.w; x += 32) page.drawLine({ start: { x: x * PT, y: 0 }, end: { x: x * PT, y: H }, thickness: 0.6, color: c }); }
     for (const it of pg.items) {
+      if (it.type === "eq") {
+        try { const r = await nbEqCanvas(it, 3); if (r) { const img = await pdf.embedPng(unb64x(r.c.toDataURL("image/png").split(",")[1])); const k = at(it.y); pages[k].drawImage(img, { x: (it.x + 14) * PT, y: Y(it.y + 4 + r.h, k), width: r.w * PT, height: r.h * PT }); } } catch (e) { console.warn("ecuación", e); }
+        continue;
+      }
       if (it.type === "img") {
         try {
           const b64s = it.src.split(",")[1], bytes = unb64x(b64s);
@@ -4407,8 +4636,8 @@ async function buildVectorPdf(book, title) {
       const groups = {}; for (const [x, py] of st.pts) (groups[at(py)] ??= []).push([x, py]);
       for (const [kS, pts] of Object.entries(groups)) {
         const k = +kS, local = pts.map(([x, py]) => [x, py - k * P.h]);
-        const d = strokePath(local);
-        pages[k].drawSvgPath(d, { x: 0, y: H, scale: PT, borderColor: hexRgb(st.color), borderWidth: st.size, borderOpacity: st.tool === "hl" ? 0.38 : 1, borderLineCap: st.tool === "hl" ? PDFLib.LineCapStyle?.Butt : PDFLib.LineCapStyle?.Round });
+        const d = stPath(st, local);
+        pages[k].drawSvgPath(d, { x: 0, y: H, scale: PT, borderColor: hexRgb(st.color), borderWidth: st.size, borderOpacity: st.tool === "hl" ? 0.38 : (st.op || 1), borderLineCap: st.tool === "hl" ? PDFLib.LineCapStyle?.Butt : PDFLib.LineCapStyle?.Round });
       }
     }
   }
