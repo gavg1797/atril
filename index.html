@@ -1855,7 +1855,8 @@ async function removeDoc(id) {
   S.docs = S.docs.filter(d => d.id !== id); delete S.posByDoc[id]; delete S.bm[id]; delete S.pct[id]; delete S.done[id]; savePrefs();
   await idbDel(id);
   if (S.doc?.id === id) openDoc(S.docs[0].id);
-  renderDocs(); toast(inDrive ? "Documento eliminado. Su copia en Google Drive pasó a la papelera de Drive." : "Documento eliminado de este dispositivo.");
+  renderDocs(); toast(inDrive ? "Documento eliminado. Su copia en Google Drive pasó a la papelera de Drive." : "Documento eliminado.");
+  try { scheduleSync(600); } catch {}
 }
 async function addFiles(files) {
   const pdfs = [...files].filter(f => f.type === "application/pdf" || /\.pdf$/i.test(f.name));
@@ -2089,7 +2090,55 @@ async function gdFolder(title, parentId) {
   if (r?.mimeType && r.mimeType !== GFOLDER) { try { await gd("trash_file", { fileId: idOf(r) }); } catch {} r = await gd("create_file", { title, parentId, mimeType: GFOLDER }); }
   return r;
 }
+/* Una sola biblioteca por cuenta: se buscan todos los «atril-biblioteca.json» que Atril puede ver (pueden estar en
+   carpetas distintas si un dispositivo creó otra carpeta) y se combinan en la principal (la que tiene más libros). */
+let unifiedOnce = false;
+async function readManifest(fileId) {
+  const dl = await gd("download_file_content", { fileId });
+  const m = JSON.parse(new TextDecoder().decode(b64ToU8(dl?.content || "")));
+  return m?.app === "Atril" ? m : null;
+}
+function mergeManifests(ms) {
+  const deleted = new Set(ms.flatMap(m => m.deleted || []));
+  const fmap = new Map(), dmap = new Map();
+  for (const m of ms) {
+    for (const f of m.folders || []) { if (!f?.id || deleted.has(f.id)) continue; const ex = fmap.get(f.id); if (!ex || (f.upd || 0) > (ex.upd || 0)) fmap.set(f.id, ex && !f.gid && ex.gid ? { ...f, gid: ex.gid } : f); }
+    for (const d of m.docs || []) {
+      if (!d?.id || deleted.has(d.id)) continue;
+      const ex = dmap.get(d.id); if (!ex) { dmap.set(d.id, d); continue; }
+      const newer = (d.updatedAt || 0) > (ex.updatedAt || 0) ? d : ex, other = newer === d ? ex : d, out = { ...newer };
+      if (!out.gid && other.gid) out.gid = other.gid;
+      if (!out.gparts && other.gparts) { out.gparts = other.gparts; out.split = other.split; }
+      const pa = ex.prog || {}, pb = d.prog || {};
+      out.prog = { pct: Math.max(pa.pct || 0, pb.pct || 0), done: !!(pa.done || pb.done), pos: (newer.prog || {}).pos || (other.prog || {}).pos || null,
+        bm: [pa.bm, pb.bm].filter(Boolean).sort((x, y) => (y.at || 0) - (x.at || 0))[0] || null };
+      dmap.set(d.id, out);
+    }
+  }
+  return { app: "Atril", v: 2, folders: [...fmap.values()], docs: [...dmap.values()], deleted: [...deleted].slice(-2000) };
+}
+async function unifyLibraries() {
+  const r = await gd("search_files", { query: `title = '${q(MAN_TITLE)}' and trashed = false`, excludeContentSnippets: true, pageSize: 50 });
+  const loaded = [];
+  for (const f of r?.files || []) { const par = (f.parents || [])[0]; if (!par) continue; try { const m = await readManifest(f.id); if (m) loaded.push({ f, m, par }); } catch (e) { if (STOP_CODES.includes(e?.code)) throw e; } }
+  if (!loaded.length) return null;
+  // principal: la carpeta con más libros (a igualdad, la que se guardó más recientemente)
+  loaded.sort((a, b) => (b.m.docs?.length || 0) - (a.m.docs?.length || 0) || (b.m.saved || 0) - (a.m.saved || 0));
+  const main = loaded[0];
+  if (loaded.length > 1) {
+    const merged = mergeManifests(loaded.map(x => x.m));
+    const text = JSON.stringify({ ...merged, saved: Date.now() });
+    await gd("update_content", { fileId: main.f.id, data: new TextEncoder().encode(text), type: "application/json" });
+    for (const x of loaded.slice(1)) { try { await gd("trash_file", { fileId: x.f.id }); } catch {} }   // queda en la papelera de Drive (30 días)
+    REMOTE = null; DS.lastRemote = 0; DS.manHash = "";
+    toast(`Biblioteca unificada: se combinaron ${loaded.length} copias de tu biblioteca en Google Drive en una sola.`);
+  }
+  if (DS.root !== main.par || DS.manId !== main.f.id) { DS.root = main.par; DS.manId = main.f.id; REMOTE = null; DS.lastRemote = 0; DS.manHash = ""; }
+  saveDS();
+  return DS.root;
+}
 async function ensureRoot() {
+  if (!unifiedOnce) { unifiedOnce = true; const root = await unifyLibraries(); if (root) return root; }
   if (DS.root) return DS.root;
   const r = await gd("search_files", { query: `title = '${q(ROOT_TITLE)}' and mimeType = '${GFOLDER}' and owner = 'me' and trashed = false`, excludeContentSnippets: true, pageSize: 10 });
   const list = r?.files || []; let f = list[0];
@@ -2178,6 +2227,20 @@ async function syncParts(d, par) {
 }
 let REMOTE = null; const failedSession = new Set();
 const delSet = () => new Set(DS.deleted || []);
+/* Lo que se borró en otro dispositivo también se borra aquí (sin volver a mandarlo a la papelera de Drive) */
+function applyRemoteDeletes(ids) {
+  const mine = delSet(), news = ids.filter(id => id && !mine.has(id)); if (!news.length) return 0;
+  DS.deleted = [...(DS.deleted || []), ...news].slice(-2000); saveDS();
+  let n = 0;
+  for (const id of news) {
+    const d = S.docs.find(x => x.id === id);
+    if (d) { if (S.doc?.id === id) stop(); S.docs = S.docs.filter(x => x.id !== id); delete S.posByDoc[id]; delete S.bm[id]; delete S.pct[id]; delete S.done[id]; idbDel(id).catch?.(() => {}); n++; }
+    const f = fById(id);
+    if (f) { const up = f.parent || ""; for (const c of FOLDERS) if (c.parent === id) c.parent = up; for (const x of S.docs) if (x.folder === id) { if (up) x.folder = up; else delete x.folder; } FOLDERS = FOLDERS.filter(x => x.id !== id); n++; }
+  }
+  if (n) { saveFolders(true); savePrefs(); if (S.doc && !S.docs.includes(S.doc)) openDoc((S.docs[0] || SAMPLE).id); renderDocs(); }
+  return n;
+}
 function buildManifest() {
   const folders = FOLDERS.map(({ id, name, parent, added, upd, gid }) => ({ id, name, parent, added, upd, gid }));
   const dels = delSet();
@@ -2186,7 +2249,8 @@ function buildManifest() {
     draft: d.draft || undefined, src: d.draft ? d.src : undefined, marks: d.marks || [], notebook: d.notebook || null, chat: (d.chat || []).filter(m => !m.example),
     prog: { pct: S.pct[d.id] || 0, done: !!S.done[d.id], pos: S.posByDoc[d.id] || null, bm: S.bm[d.id] || null } }));
   if (REMOTE) for (const rd of REMOTE.docs || []) if (rd?.id && !dels.has(rd.id) && !S.docs.some(d => d.id === rd.id)) docs.push(rd);
-  return { app: "Atril", v: 2, folders, docs };
+  const deleted = [...new Set([...(DS.deleted || []), ...((REMOTE && REMOTE.deleted) || [])])].slice(-2000);
+  return { app: "Atril", v: 2, folders, docs, deleted };
 }
 async function writeManifest() {
   const man = buildManifest(), body = JSON.stringify(man);
@@ -2208,10 +2272,12 @@ async function drivePull(force, live) {
   const missingOf = (m) => (m?.docs || []).filter(rd => rd?.id && !dels.has(rd.id) && !S.docs.some(d => d.id === rd.id) && (force || !failedSession.has(rd.id)));
   // atajo: si el manifiesto no cambió desde la última vez, no hace falta descargarlo
   if (!force && !live && REMOTE && files.length === 1 && files[0].id === DS.manId && !missingOf(REMOTE).length && liveVer && (await manVersion()) === liveVer) return { found: true, added: 0, updated: 0 };
-  let best = null, bestId = null;
-  for (const f of files) { try { const dl = await gd("download_file_content", { fileId: f.id }); const m = JSON.parse(new TextDecoder().decode(b64ToU8(dl?.content || ""))); if (m?.app === "Atril" && (!best || (m.saved || 0) > (best.saved || 0))) { best = m; bestId = f.id; } } catch (e) { if (e?.code !== "tool_error" && !(e instanceof SyntaxError)) throw e; } }
+  let best = null, bestId = null; const all = [];
+  for (const f of files) { try { const m = await readManifest(f.id); if (m) { all.push(m); if (!best || (m.saved || 0) > (best.saved || 0)) { best = m; bestId = f.id; } } } catch (e) { if (e?.code !== "tool_error" && !(e instanceof SyntaxError)) throw e; } }
+  if (all.length > 1) { best = { ...mergeManifests(all), saved: Date.now() }; DS.manHash = ""; }   // se combinan, no se descarta ninguna
   for (const f of files) if (f.id !== bestId) { try { await gd("trash_file", { fileId: f.id }); } catch {} }
   if (!best) return { found: false };
+  applyRemoteDeletes(best.deleted || []);
   DS.manId = bestId; REMOTE = best;
   if (!force && (best.saved || 0) <= (DS.lastRemote || 0) && !missingOf(best).length) { saveDS(); return { found: true, added: 0, updated: 0 }; }
   let added = 0, updated = 0, failed = [], fchg = 0;
