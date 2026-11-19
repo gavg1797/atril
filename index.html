@@ -1321,6 +1321,8 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
 /* ---------- Lápiz sobre el PDF ---------- */
 .pbox .ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2;mix-blend-mode:multiply}
 body.inking .pbox .ink{pointer-events:auto;touch-action:none;cursor:crosshair}
+body.inking #readerScroll{touch-action:none}
+body.inking.ink-move .pbox .ink{cursor:grab}
 body.inking.ink-eraser .pbox .ink{cursor:cell}
 body.inking .pbox .tl{pointer-events:none;user-select:none;-webkit-user-select:none}
 body.inking #selBar,body.inking #markPop{display:none!important}
@@ -1675,6 +1677,7 @@ body.tv .inkbar{display:none!important}
     <button type="button" data-itool="pen" title="Lápiz: escribe o dibuja sobre la página"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Lápiz</span></button>
     <button type="button" data-itool="hl" title="Resaltador: pinta encima del texto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 15l-3 5h6l1-2"/><path d="M8 14l7-10 4 3-7 10z"/></svg><span>Resaltador</span></button>
     <button type="button" data-itool="eraser" title="Borrador: toca o arrastra sobre un trazo para borrarlo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 20h12M5 15l9-9 5 5-7 7H9z"/></svg><span>Borrador</span></button>
+    <button type="button" data-itool="move" title="Mover: desplaza el documento con un dedo o el mouse, sin dibujar. Con dos dedos siempre se mueve y se hace zoom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Mover</span></button>
   </div>
   <div class="ig" role="group" aria-label="Color" id="inkColors"></div>
   <div class="ig" role="group" aria-label="Grosor" id="inkSizes">
@@ -5773,7 +5776,7 @@ const INK_COLORS = {
 };
 const INK_SIZES = { pen: [1.2, 2.2, 3.8], hl: [9, 14, 20] };
 const INK = { on: false, tool: "pen", color: { pen: INK_COLORS.pen[0], hl: INK_COLORS.hl[0] }, size: { pen: 1, hl: 1 }, hist: [], fut: [], cur: null, saveT: 0 };
-try { const v = JSON.parse(localStorage.getItem("atril-ink") || "{}"); if (["pen", "hl", "eraser"].includes(v.tool)) INK.tool = v.tool; if (v.color) Object.assign(INK.color, v.color); if (v.size) Object.assign(INK.size, v.size); } catch {}
+try { const v = JSON.parse(localStorage.getItem("atril-ink") || "{}"); if (["pen", "hl", "eraser", "move"].includes(v.tool)) INK.tool = v.tool; if (v.color) Object.assign(INK.color, v.color); if (v.size) Object.assign(INK.size, v.size); } catch {}
 const inkPrefs = () => { try { localStorage.setItem("atril-ink", JSON.stringify({ tool: INK.tool, color: INK.color, size: INK.size })); } catch {} };
 function inkStrokes(pi, make) { const d = S.doc; if (!d) return []; if (make) { d.ink ??= {}; return d.ink[pi] ??= []; } return d.ink?.[pi] || []; }
 function inkCount(d = S.doc) { return Object.values(d?.ink || {}).reduce((n, a) => n + (a?.length || 0), 0); }
@@ -5817,10 +5820,11 @@ function renderInkBar() {
   const bar = $("#inkBar"); bar.hidden = !INK.on;
   document.body.classList.toggle("inking", INK.on);
   document.body.classList.toggle("ink-eraser", INK.on && INK.tool === "eraser");
+  document.body.classList.toggle("ink-move", INK.on && INK.tool === "move");
   $$(".inkbtn").forEach(b => { b.classList.toggle("on", INK.on); b.setAttribute("aria-pressed", String(INK.on)); });
   if (!INK.on) return;
   $$("#inkBar [data-itool]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.itool === INK.tool)));
-  const t = INK.tool === "eraser" ? null : INK.tool;
+  const t = INK.tool === "eraser" || INK.tool === "move" ? null : INK.tool;
   $("#inkColors").hidden = $("#inkSizes").hidden = !t;
   if (t) {
     $("#inkColors").replaceChildren(...INK_COLORS[t].map(c => { const b = el("button", { type: "button", class: "icol", style: `--c:${c}`, "aria-label": "Color " + c, "aria-pressed": String(INK.color[t] === c) }); b.addEventListener("click", () => { INK.color[t] = c; inkPrefs(); renderInkBar(); }); return b; }));
@@ -5837,13 +5841,13 @@ function setInk(on) {
   if (INK.on) { try { getSelection().removeAllRanges(); } catch {} hideSelBar(true); hideMarkPop(); }
   if (!INK.on && INK.cur) inkEnd();
   renderInkBar();
-  if (INK.on && !localStorage.getItem("atril-ink-tip")) { try { localStorage.setItem("atril-ink-tip", "1"); } catch {} toast(fingerScrolls() ? "Escribe con tu lápiz digital; con el dedo mueves la página." : "Escribe o dibuja sobre la página. Con dos dedos mueves la página."); }
+  if (INK.on && !localStorage.getItem("atril-ink-tip")) { try { localStorage.setItem("atril-ink-tip", "1"); } catch {} toast(fingerScrolls() ? "Escribe con tu lápiz digital; con el dedo mueves la página." : "Escribe o dibuja sobre la página. Con dos dedos mueves la página y haces zoom."); }
 }
 $$(".inkbtn").forEach(b => b.addEventListener("click", () => setInk(!INK.on)));
 window.__inkOff = () => { if (INK.on) setInk(false); };
 $("#inkDone").addEventListener("click", () => setInk(false));
 $$("#inkBar [data-itool]").forEach(b => b.addEventListener("click", () => { INK.tool = b.dataset.itool; inkPrefs(); renderInkBar(); }));
-$$("#inkSizes .isz").forEach(b => b.addEventListener("click", () => { if (INK.tool === "eraser") return; INK.size[INK.tool] = +b.dataset.isz; inkPrefs(); renderInkBar(); }));
+$$("#inkSizes .isz").forEach(b => b.addEventListener("click", () => { if (!INK_SIZES[INK.tool]) return; INK.size[INK.tool] = +b.dataset.isz; inkPrefs(); renderInkBar(); }));
 $("#inkUndo").addEventListener("click", () => inkUndoRedo(INK.hist, INK.fut));
 $("#inkRedo").addEventListener("click", () => inkUndoRedo(INK.fut, INK.hist));
 $("#inkFinger").addEventListener("click", () => { NB.fingerDraw = !NB.fingerDraw; nbPrefs(); renderInkBar(); toast(NB.fingerDraw ? "El dedo también dibuja. Con dos dedos mueves la página." : "El dedo mueve la página; dibuja con el lápiz digital."); });
@@ -5859,7 +5863,8 @@ addEventListener("keydown", (e) => {
   else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); inkUndoRedo(INK.fut, INK.hist); }
 }, true);
 
-/* dibujo con puntero: lápiz digital, mouse o dedo */
+/* dibujo con puntero: lápiz digital, mouse o dedo.
+ * Con dos dedos (celular y tablet) se mueve el documento y se hace zoom al pellizcar, aunque el lápiz esté activo. */
 const inkTouches = new Map();
 function inkPoint(e, c) { const r = c.rect; return [Math.round((e.clientX - r.left) / r.width * c.W * 10) / 10, Math.round((e.clientY - r.top) / r.height * c.H * 10) / 10]; }
 function inkEraseAt(c, [x, y]) {
@@ -5868,20 +5873,28 @@ function inkEraseAt(c, [x, y]) {
   if (keep.length !== arr.length) { if (!c.snapped) { inkSnap(c.pi); c.snapped = true; } S.doc.ink[c.pi] = keep; renderInk(c.pi); c.changed = true; }
 }
 function inkPanStart(e) { const sc = $("#readerScroll"); return { pan: true, pid: e.pointerId, sx: e.clientX, sy: e.clientY, sl: sc.scrollLeft, st: sc.scrollTop }; }
+// cancela el trazo que se estaba haciendo (al poner el segundo dedo no debe quedar una raya)
+function inkAbort() {
+  const c = INK.cur; INK.cur = null; if (!c || c.pan) return;
+  if (c.raf) cancelAnimationFrame(c.raf);
+  c.node?.remove();
+  if (c.erasing && c.changed) { const h = INK.hist.pop(); if (h && h.doc === S.doc?.id) { S.doc.ink[h.pi] = h.strokes; renderInk(h.pi); } inkUndoUI(); }
+}
+const inReader = (t) => !!t?.closest?.("#readerScroll");
 document.addEventListener("pointerdown", (e) => {
-  const svg = e.target.closest?.(".pbox .ink"); if (!INK.on || !svg) return;
+  if (!INK.on || !inReader(e.target)) return;
   if (e.button > 0 && !(e.pointerType === "pen" && e.button === 5)) return;
   e.preventDefault(); e.stopPropagation();
-  if (e.pointerType === "touch") inkTouches.set(e.pointerId, [e.clientX, e.clientY]);
-  if (e.pointerType === "pen" && !NB.penSeen) { NB.penSeen = true; nbPrefs(); renderInkBar(); }
-  // segundo dedo: deja de dibujar y mueve la página
-  if (e.pointerType === "touch" && inkTouches.size > 1) {
-    if (INK.cur && !INK.cur.pan) { INK.cur.node?.remove(); if (INK.cur.snapped && INK.cur.changed) inkUndoRedo(INK.hist, []); }
-    INK.cur = inkPanStart(e); return;
+  if (e.pointerType === "touch") {
+    inkTouches.set(e.pointerId, 1);
+    if (inkTouches.size > 1 || INK.gest) { inkAbort(); return; }   // dos dedos: lo maneja el gesto de mover/zoom
   }
+  if (e.pointerType === "pen" && !NB.penSeen) { NB.penSeen = true; nbPrefs(); renderInkBar(); }
   if (INK.cur) return;   // la palma u otro dedo mientras se dibuja
+  const svg = e.target.closest?.(".pbox .ink");
+  // fuera de una página, con la herramienta Mover o con el dedo cuando se usa lápiz digital: mueve el documento
+  if (!svg || INK.tool === "move" || (e.pointerType === "touch" && fingerScrolls())) { INK.cur = inkPanStart(e); return; }
   try { svg.setPointerCapture(e.pointerId); } catch {}
-  if (e.pointerType === "touch" && fingerScrolls()) { INK.cur = inkPanStart(e); return; }
   const pi = +svg.dataset.pi, pg = S.doc.pages[pi];
   const c = { pi, pid: e.pointerId, svg, rect: svg.getBoundingClientRect(), W: pg.W, H: pg.H };
   const p0 = inkPoint(e, c);
@@ -5894,8 +5907,7 @@ document.addEventListener("pointerdown", (e) => {
   INK.cur = c;
 }, true);
 document.addEventListener("pointermove", (e) => {
-  if (inkTouches.has(e.pointerId)) inkTouches.set(e.pointerId, [e.clientX, e.clientY]);
-  const c = INK.cur; if (!c || e.pointerId !== c.pid) return;
+  const c = INK.cur; if (!c || e.pointerId !== c.pid || INK.gest) return;
   e.preventDefault();
   if (c.pan) { const sc = $("#readerScroll"); sc.scrollLeft = c.sl - (e.clientX - c.sx); sc.scrollTop = c.st - (e.clientY - c.sy); return; }
   const evs = (typeof e.getCoalescedEvents === "function" && e.getCoalescedEvents()) || []; const list = evs.length ? evs : [e];
@@ -5921,10 +5933,48 @@ function inkEnd(e) {
   inkSnap(c.pi); inkStrokes(c.pi, true).push(st);
   c.node.setAttribute("d", stPath(st)); inkSave();
 }
-document.addEventListener("pointerup", (e) => { if (INK.on && (INK.cur || e.target.closest?.(".pbox .ink"))) e.stopPropagation(); inkEnd(e); }, true);
-document.addEventListener("pointercancel", inkEnd, true);
+document.addEventListener("pointerup", (e) => { if (INK.on && (INK.cur || inReader(e.target))) e.stopPropagation(); inkEnd(e); }, true);
+document.addEventListener("pointercancel", (e) => { if (e.pointerType === "touch") inkTouches.delete(e.pointerId); if (INK.cur && e.pointerId === INK.cur.pid) inkAbort(); }, true);
 // mientras se dibuja, tocar la página no mueve la lectura ni abre menús
-for (const ev of ["click", "dblclick", "contextmenu", "mouseup", "touchend"]) document.addEventListener(ev, (e) => { if (INK.on && e.target.closest?.(".pbox .ink")) { if (ev !== "touchend") e.preventDefault(); e.stopPropagation(); } }, true);
+for (const ev of ["click", "dblclick", "contextmenu", "mouseup"]) document.addEventListener(ev, (e) => { if (INK.on && e.target.closest?.(".pbox .ink")) { e.preventDefault(); e.stopPropagation(); } }, true);
+
+/* dos dedos con el lápiz activo: mover el documento y pellizcar para hacer zoom, a la vez */
+function inkGestPoint(ts) { const a = ts[0], b = ts[1]; return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2, d: Math.max(1, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)) }; }
+function inkGestBase(ts) { const sc = $("#readerScroll"), p = inkGestPoint(ts); INK.gest = { x: p.x, y: p.y, d: p.d, sl: sc.scrollLeft, st: sc.scrollTop, z: ZOOMS[S.zoomI] ?? 1 }; }
+document.addEventListener("touchstart", (e) => {
+  if (!INK.on || !inReader(e.target)) return;
+  e.stopPropagation();
+  if (e.touches.length >= 2) { e.preventDefault(); inkAbort(); inkGestBase(e.touches); }
+}, { capture: true, passive: false });
+document.addEventListener("touchmove", (e) => {
+  if (!INK.on || !inReader(e.target)) return;
+  e.stopPropagation(); e.preventDefault();
+  const g = INK.gest; if (!g || e.touches.length < 2) return;
+  const sc = $("#readerScroll"), p = inkGestPoint(e.touches);
+  // zoom: el punto entre los dedos queda en su lugar
+  const target = g.z * p.d / g.d;
+  let best = S.zoomI; ZOOMS.forEach((z, i) => { if (Math.abs(z - target) < Math.abs(ZOOMS[best] - target)) best = i; });
+  if (best !== S.zoomI && Math.abs(p.d / g.d - 1) > 0.08) {
+    const r = sc.getBoundingClientRect(), ox = p.x - r.left, oy = p.y - r.top;
+    const cx = sc.scrollLeft + ox, cy = sc.scrollTop + oy, f = ZOOMS[best] / (ZOOMS[S.zoomI] ?? 1);
+    S.zoomI = best; applyZoom(); savePrefs();
+    sc.scrollLeft = Math.max(0, cx * f - ox); sc.scrollTop = Math.max(0, cy * f - oy);
+    inkGestBase(e.touches);
+    requestAnimationFrame(() => { for (const x of $$(".sheet.img")) { const rr = x.getBoundingClientRect(), b = sc.getBoundingClientRect(); if (rr.bottom > b.top - 900 && rr.top < b.bottom + 900) drawPage(+x.dataset.pi); } });
+    return;
+  }
+  // mover: sigue el punto medio de los dos dedos
+  sc.scrollLeft = g.sl - (p.x - g.x); sc.scrollTop = g.st - (p.y - g.y);
+}, { capture: true, passive: false });
+const inkTouchEnd = (e) => {
+  if (!INK.on) return;
+  if (inReader(e.target)) e.stopPropagation();
+  if (e.touches.length >= 2) inkGestBase(e.touches);   // quedan dos dedos: sigue el gesto desde aquí
+  else if (INK.gest) { INK.gest = null; if (!e.touches.length) inkTouches.clear(); }
+  if (!e.touches.length) inkTouches.clear();
+};
+document.addEventListener("touchend", inkTouchEnd, true);
+document.addEventListener("touchcancel", inkTouchEnd, true);
 
 /* trazos dentro del PDF descargado: se dibujan en la página con la misma rotación y recorte que en pantalla */
 async function inkToPdf(pages, pjs, d) {
