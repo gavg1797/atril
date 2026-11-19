@@ -15,6 +15,7 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
 - Marcas de resaltado, subrayado (3 tipos) y tachado, con barra movible. El PDF se descarga con tus marcas.
 - Avance en porcentaje, estado leído o pendiente, y reinicio del avance.
 - Carpetas y subcarpetas en la biblioteca.
+- Lápiz sobre el PDF (botón ✏️): escribe, dibuja o resalta a mano encima de las páginas, con lápiz digital (con presión), mouse o dedo. Colores, tres grosores, borrador, deshacer/rehacer y borrar la página. Con lápiz digital el dedo mueve la página; con el dedo, dos dedos la mueven. Los trazos se guardan con el libro en Google Drive y salen en «Descargar PDF».
 - Cuaderno estilo OneNote con lienzo infinito o tamaño de hoja (A4, A3, carta…):
   - texto con negrita, cursiva y subrayado, fuentes y tamaños;
   - dibujo e imágenes;
@@ -96,7 +97,7 @@ La API de Google Drive y el inicio de sesión de Google **no cuestan nada** y no
 Sin internet, Atril abre desde la copia guardada en el dispositivo. Pide tu PIN y funcionan:
 
 - la lectura en voz alta;
-- las marcas y el cuaderno;
+- las marcas, los trazos del lápiz y el cuaderno;
 - preparar y copiar preguntas.
 
 Los cambios que hagas sin internet se suben a Drive la próxima vez que inicies sesión con conexión.

@@ -1318,6 +1318,27 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
 /* al dibujar, el lápiz no desplaza la página (evita trazos cortados) */
 .nbinner.drawing{touch-action:none;-webkit-user-select:none;user-select:none}
 #nbView:has(.nbinner.drawing){overscroll-behavior:contain}
+/* ---------- Lápiz sobre el PDF ---------- */
+.pbox .ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2;mix-blend-mode:multiply}
+body.inking .pbox .ink{pointer-events:auto;touch-action:none;cursor:crosshair}
+body.inking.ink-eraser .pbox .ink{cursor:cell}
+body.inking .pbox .tl{pointer-events:none;user-select:none;-webkit-user-select:none}
+body.inking #selBar,body.inking #markPop{display:none!important}
+.inkbtn.on,.mp.inkbtn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.inkbar{position:fixed;z-index:74;left:0;right:0;margin:0 auto;width:fit-content;top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 16px);padding:6px 8px;border-radius:14px;background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.22)}
+.inkbar[hidden]{display:none!important}
+.inkbar .ig{display:flex;align-items:center;gap:3px;padding:0 4px;border-right:1px solid var(--line)}
+.inkbar .ig:last-child{border-right:0}
+.inkbar button{border:0;background:transparent;color:inherit;border-radius:9px;min-width:34px;height:34px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:.78rem;font-weight:600}
+.inkbar button:hover{background:var(--bg)}
+.inkbar button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.inkbar button:disabled{opacity:.35}
+.inkbar .icol{min-width:26px;width:26px;height:26px;padding:0;border-radius:50%;background:var(--c)!important;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--line)}
+.inkbar .icol[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--ink)}
+.inkbar .isz i{display:block;border-radius:50%;background:currentColor}
+.inkbar .idone{background:var(--accent)!important;color:var(--accent-ink)!important;padding:0 12px}
+@media (max-width:560px){.inkbar{top:calc(6px + env(safe-area-inset-top,0px));gap:2px;padding:5px}.inkbar button span{display:none}.inkbar .ig{padding:0 2px}.inkbar button{min-width:32px;height:32px;padding:0 5px}}
+body.tv .inkbar{display:none!important}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
@@ -1381,6 +1402,7 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
       <button class="btn morebtn" id="moreBtn" type="button" aria-haspopup="menu" aria-expanded="false" title="Más opciones"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>Más</span></button>
       <button class="btn newpdf" id="newPdfBtn" type="button" title="Crear un documento PDF desde cero"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg><span>Crear PDF</span></button>
       <button class="btn newpdf" id="editDocBtn" type="button" hidden title="Volver a editar este documento creado en Atril"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/></svg><span>Editar documento</span></button>
+      <button class="btn inkbtn" id="inkBtn2" type="button" aria-pressed="false" title="Escribe, dibuja o resalta a mano sobre las páginas del PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Lápiz</span></button>
       <button class="btn nbbtn" id="nbBtn" type="button" aria-pressed="false" aria-controls="nb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/></svg><span>Agregar cuaderno</span></button>
       <button class="btn splitbtn" id="splitBtn" type="button" title="PDF y cuaderno lado a lado en pantalla completa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg><span>Dividir secciones</span></button>
       <button class="btn pdffullm" id="pdfFullMenu" type="button" title="Ver el PDF en pantalla completa con el mini reproductor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Pantalla completa</span></button>
@@ -1429,6 +1451,7 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
           <button type="button" class="mp" id="mpNext" aria-label="Párrafo siguiente"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
         </div>
         <button type="button" class="mp audiobtn" id="audioBtn" aria-label="Opciones de audio: voz, idioma y velocidad" aria-expanded="false" aria-controls="player" title="Audio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12"/></svg></button>
+        <button type="button" class="mp inkbtn" id="inkBtn" aria-pressed="false" aria-label="Lápiz: escribir sobre el PDF" title="Lápiz: escribe, dibuja o resalta sobre las páginas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
         <button type="button" class="mp askopen" id="askBtn" aria-label="Preguntar" aria-expanded="false" aria-controls="askPanel" title="Preguntar sobre el PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5"/><circle cx="12" cy="15.5" r=".4" fill="currentColor"/></svg><span>Preguntar</span></button>
       </div>
       <div class="rightgrp">
@@ -1646,6 +1669,26 @@ html.nbwin .top,html.nbwin .tabs{visibility:hidden}
   <button type="button" class="askbtn" id="selAsk" title="El texto ya está en el cuadro de pregunta"><svg class="askico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Preguntar</span></button>
   <button type="button" class="seldock" id="selDock" title="Anclar la barra: izquierda, derecha, arriba o abajo" aria-label="Anclar barra" aria-haspopup="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v8"/></svg></button>
   <button type="button" class="selpin" id="selPin" hidden title="Soltar: volver a la barra que aparece junto a la selección" aria-label="Soltar barra">✕</button>
+</div>
+<div class="inkbar" id="inkBar" hidden role="toolbar" aria-label="Lápiz sobre el PDF">
+  <div class="ig" role="group" aria-label="Herramienta">
+    <button type="button" data-itool="pen" title="Lápiz: escribe o dibuja sobre la página"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Lápiz</span></button>
+    <button type="button" data-itool="hl" title="Resaltador: pinta encima del texto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 15l-3 5h6l1-2"/><path d="M8 14l7-10 4 3-7 10z"/></svg><span>Resaltador</span></button>
+    <button type="button" data-itool="eraser" title="Borrador: toca o arrastra sobre un trazo para borrarlo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 20h12M5 15l9-9 5 5-7 7H9z"/></svg><span>Borrador</span></button>
+  </div>
+  <div class="ig" role="group" aria-label="Color" id="inkColors"></div>
+  <div class="ig" role="group" aria-label="Grosor" id="inkSizes">
+    <button type="button" class="isz" data-isz="0" title="Fino" aria-label="Fino"><i style="width:4px;height:4px"></i></button>
+    <button type="button" class="isz" data-isz="1" title="Medio" aria-label="Medio"><i style="width:7px;height:7px"></i></button>
+    <button type="button" class="isz" data-isz="2" title="Grueso" aria-label="Grueso"><i style="width:11px;height:11px"></i></button>
+  </div>
+  <div class="ig">
+    <button type="button" id="inkUndo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button type="button" id="inkRedo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+    <button type="button" id="inkFinger" title="Con lápiz digital: el dedo mueve la página. Toca para que el dedo también dibuje" aria-label="Dibujar con el dedo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11V5a2 2 0 0 1 4 0v5"/><path d="M13 10V8a2 2 0 0 1 4 0v4"/><path d="M17 11a2 2 0 0 1 4 0v3a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.3 14a1.8 1.8 0 0 1 3-2L9 14"/></svg><span>Dedo</span></button>
+    <button type="button" id="inkClear" title="Borrar todos los trazos de la página que estás viendo" aria-label="Borrar trazos de esta página"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  </div>
+  <div class="ig"><button type="button" class="idone" id="inkDone" title="Terminar de dibujar (Esc)">Listo</button></div>
 </div>
 <div class="markpop" id="markPop" hidden><span id="markPopLabel"></span><button type="button" class="btn" id="markPopDel">Quitar marca</button></div>
 <div class="modal" id="castModal" hidden role="dialog" aria-modal="true" aria-labelledby="castTitle">
@@ -2650,7 +2693,7 @@ function buildManifest() {
   const dels = delSet();
   if (REMOTE) for (const rf of REMOTE.folders || []) if (rf?.id && !dels.has(rf.id) && !fById(rf.id)) folders.push(rf);
   const docs = S.docs.filter(d => !d.sample).map(d => ({ id: d.id, name: d.name, lang: d.lang, added: d.added, updatedAt: d.updatedAt || 0, folder: docFolder(d) || undefined, gid: d.gid || undefined, linked: d.linked || undefined, split: d.split || undefined, gparts: d.gparts ? d.gparts.map(x => x ? { gid: x.gid, from: x.from, to: x.to } : null) : undefined,
-    draft: d.draft || undefined, nbonly: d.nbonly || undefined, src: d.draft ? d.src : undefined, marks: d.marks || [], notebook: d.notebook || null, chat: (d.chat || []).filter(m => !m.example),
+    draft: d.draft || undefined, nbonly: d.nbonly || undefined, src: d.draft ? d.src : undefined, marks: d.marks || [], ink: d.ink && Object.keys(d.ink).length ? d.ink : undefined, notebook: d.notebook || null, chat: (d.chat || []).filter(m => !m.example),
     prog: { pct: S.pct[d.id] || 0, done: !!S.done[d.id], pos: S.posByDoc[d.id] || null, bm: S.bm[d.id] || null } }));
   if (REMOTE) for (const rd of REMOTE.docs || []) if (rd?.id && !dels.has(rd.id) && !S.docs.some(d => d.id === rd.id)) docs.push(rd);
   const deleted = [...new Set([...(DS.deleted || []), ...((REMOTE && REMOTE.deleted) || [])])].slice(-2000);
@@ -2699,7 +2742,7 @@ async function drivePull(force, live) {
     if (rd.prog) { if ((rd.prog.pct || 0) > (S.pct[rd.id] || 0)) S.pct[rd.id] = rd.prog.pct; if (rd.prog.done) S.done[rd.id] = true; if (rd.prog.pos && (!S.posByDoc[rd.id] || (rd.updatedAt || 0) > (local?.updatedAt || 0))) S.posByDoc[rd.id] = rd.prog.pos; if (rd.prog.bm && (rd.prog.bm.at || 0) > (S.bm[rd.id]?.at || 0)) S.bm[rd.id] = rd.prog.bm; }
     if (!local) {
       if (!force && failedSession.has(rd.id)) continue;
-      let doc = { id: rd.id, name: rd.name, lang: rd.lang || "es", added: rd.added || Date.now(), pages: [], chat: rd.chat || [], tr: {}, marks: rd.marks || [], notebook: rd.notebook || undefined, updatedAt: rd.updatedAt || 0 };
+      let doc = { id: rd.id, name: rd.name, lang: rd.lang || "es", added: rd.added || Date.now(), pages: [], chat: rd.chat || [], tr: {}, marks: rd.marks || [], ink: rd.ink || undefined, notebook: rd.notebook || undefined, updatedAt: rd.updatedAt || 0 };
       if (rd.folder) doc.folder = rd.folder;
       if (rd.linked) doc.linked = true;
       if (rd.draft) { doc.draft = true; doc.src = rd.src; }
@@ -2726,7 +2769,8 @@ async function drivePull(force, live) {
       }
       S.docs.push(doc); await quietPut(doc); added++; if (doc.nbonly) nbBroadcast(doc);
     } else if ((rd.updatedAt || 0) > (local.updatedAt || 0)) {
-      Object.assign(local, { name: rd.name, marks: rd.marks || local.marks, chat: rd.chat || local.chat, updatedAt: rd.updatedAt });
+      Object.assign(local, { name: rd.name, marks: rd.marks || local.marks, ink: rd.ink || local.ink, chat: rd.chat || local.chat, updatedAt: rd.updatedAt });
+      if (S.doc === local) requestAnimationFrame(() => renderInkAll());
       if (rd.notebook) { local.notebook = rd.notebook; nbBroadcast(local); }
       if (rd.draft && rd.src) local.src = rd.src;
       if (rd.folder) local.folder = rd.folder; else delete local.folder;
@@ -3068,7 +3112,7 @@ function freePage(pi) {
 let rsT; addEventListener("resize", () => { clearTimeout(rsT); rsT = setTimeout(() => { if (!pageMode()) return; $$(".pbox").forEach(b => { const r = b.getBoundingClientRect(), sb = $("#readerScroll").getBoundingClientRect(); if (r.bottom > sb.top - 900 && r.top < sb.bottom + 900) drawPage(+b.closest(".sheet").dataset.pi); }); highlight(); }, 250); });
 
 function openDoc(id) {
-  stop();
+  stop(); window.__inkOff?.();
   let d = S.docs.find(x => x.id === id) || S.docs[0];
   if (d.draft || d.nbonly) d = S.docs.find(x => !x.draft && !x.nbonly) || SAMPLE;
   if (S.doc) S.posByDoc[S.doc.id] = S.pos;
@@ -4900,7 +4944,7 @@ $("#expGo").addEventListener("click", async () => {
       const d = S.docs.find(x => x.id === id); const buf = await fileGet(id); if (!d || !buf) continue;
       const file = `pdf/${id}.pdf`; zip.file(file, buf, { compression: "STORE" });
       docs.push({ id, name: d.name, lang: d.lang, added: d.added, updatedAt: d.updatedAt || 0, file, folder: docFolder(d) || undefined,
-        marks: inc.marks ? d.marks || [] : undefined, notebook: inc.nb ? d.notebook || null : undefined,
+        marks: inc.marks ? d.marks || [] : undefined, ink: inc.marks && d.ink ? d.ink : undefined, notebook: inc.nb ? d.notebook || null : undefined,
         chat: inc.chat ? (d.chat || []).filter(m => !m.example) : undefined, tr: inc.tr ? d.tr || {} : undefined,
         prog: inc.prog ? { pct: S.pct[id] || 0, done: !!S.done[id], pos: S.posByDoc[id] || null, bm: S.bm[id] || null } : undefined });
     }
@@ -4956,6 +5000,7 @@ async function importLib(file) {
       if (newer || !local) {
         if (it.folder && fById(it.folder)) doc.folder = it.folder; else if (!local) delete doc.folder;
         if (it.marks) doc.marks = it.marks;
+        if (it.ink) doc.ink = it.ink;
         if (it.notebook !== undefined && it.notebook) doc.notebook = it.notebook;
         if (it.chat) doc.chat = it.chat;
         if (it.tr) doc.tr = { ...(doc.tr || {}), ...it.tr };
@@ -5147,7 +5192,7 @@ $("#edSave").addEventListener("click", async () => {
     const bytes = await buildVectorPdf(book, title);
     const { pages, bytes: stored } = await extractPdf(new Blob([bytes], { type: "application/pdf" }), () => {});
     const hadMarks = (d.marks || []).length && !d.draft;
-    Object.assign(d, { name: title, pages, draft: false, lang: detectLang(pages.map(p => p.paras.join(" ")).join(" ")), marks: [], tr: {} });
+    Object.assign(d, { name: title, pages, draft: false, lang: detectLang(pages.map(p => p.paras.join(" ")).join(" ")), marks: [], ink: undefined, tr: {} });
     d.hasFile = await filePut(d.id, stored);
     segCache.clear();
     await idbPut(d);
@@ -5220,11 +5265,11 @@ function renderPage(pi) {
   if (pageMode()) {
     const sec = el("section", { class: "sheet img", id: "pg-" + pi, "data-pi": pi }, head);
     if (trActive() && !viewParas(pi)) sec.append(pendingBar(pi));
-    const pbox = el("div", { class: "pbox", style: `aspect-ratio:${pg.W} / ${pg.H}` }, el("canvas", { "aria-label": `Página ${pi + 1}`, role: "img" }), el("div", { class: "mk" }), el("div", { class: "hl" }), buildTextLayer(pi));
+    const pbox = el("div", { class: "pbox", style: `aspect-ratio:${pg.W} / ${pg.H}` }, el("canvas", { "aria-label": `Página ${pi + 1}`, role: "img" }), el("div", { class: "mk" }), el("div", { class: "hl" }), buildTextLayer(pi), inkLayer(pi));
     if (!pg.paras.length) sec.append(el("p", { class: "empty-page", text: "Esta página no tiene texto que se pueda leer en voz alta." }));
     sec.append(pbox);
     pbox.addEventListener("click", (e) => pageClick(e, pi, pbox));
-    requestAnimationFrame(() => renderMarks(pi));
+    requestAnimationFrame(() => { renderMarks(pi); renderInk(pi); });
     io.observe(sec);
     return sec;
   }
@@ -5662,7 +5707,7 @@ function showMarkPop(id, cx, cy) {
   pop.style.top = (cy + h + 16 > innerHeight ? cy - h - 12 : cy + 12) + "px";
 }
 function renderMarkCount() {
-  const n = (S.doc?.marks || []).length, b = $("#dlBtn");
+  const n = (S.doc?.marks || []).length + inkCount(), b = $("#dlBtn");
   b.hidden = !canPage();
   $("#dlCount").textContent = n ? String(n) : "";
   $("#dlCount").hidden = !n;
@@ -5704,17 +5749,198 @@ async function downloadMarked() {
         pages[pi].node.addAnnot(ctx.register(annot));
       }
     }
+    await inkToPdf(pages, pjs, d);
     const out = await lib.save();
     const dl = await window.claude?.use?.("downloads");
     if (!dl) { toast("Este navegador no permite descargar archivos."); return; }
     await dl.save({ filename: `${d.name} - marcado.pdf`, data: out });
-    toast("PDF descargado con tus marcas.");
+    toast(inkCount(d) ? "PDF descargado con tus marcas y trazos." : "PDF descargado con tus marcas.");
   } catch (e) {
     if (e?.code === "declined") {}
     else if (e?.message === "no-file") toast("No se encontró el PDF original en este dispositivo. Súbelo de nuevo.");
     else if (e?.code === "rate_limited") toast("Ya hay una descarga esperando confirmación.");
     else { console.error(e); toast("No se pudo preparar el PDF. Si está protegido con contraseña, no se puede modificar."); }
   } finally { btn.disabled = false; label.textContent = old; }
+}
+
+/* ---------- Lápiz sobre el PDF: escribir y dibujar encima de las páginas ----------
+ * Los trazos se guardan en d.ink = { "<página>": [trazo, …] }, en las unidades de la página
+ * (las mismas de d.pages[pi].W/H), así que siguen en su lugar con cualquier zoom o tamaño de pantalla.
+ * Viajan con el documento a Google Drive y al exportar la biblioteca, y salen en «Descargar PDF». */
+const INK_COLORS = {
+  pen: ["#1D2321", "#E5484D", "#2B47D4", "#1E9E3A", "#8E4EC6"],
+  hl: ["#FFD400", "#5FD068", "#FF7EB6", "#7CB8FF"],
+};
+const INK_SIZES = { pen: [1.2, 2.2, 3.8], hl: [9, 14, 20] };
+const INK = { on: false, tool: "pen", color: { pen: INK_COLORS.pen[0], hl: INK_COLORS.hl[0] }, size: { pen: 1, hl: 1 }, hist: [], fut: [], cur: null, saveT: 0 };
+try { const v = JSON.parse(localStorage.getItem("atril-ink") || "{}"); if (["pen", "hl", "eraser"].includes(v.tool)) INK.tool = v.tool; if (v.color) Object.assign(INK.color, v.color); if (v.size) Object.assign(INK.size, v.size); } catch {}
+const inkPrefs = () => { try { localStorage.setItem("atril-ink", JSON.stringify({ tool: INK.tool, color: INK.color, size: INK.size })); } catch {} };
+function inkStrokes(pi, make) { const d = S.doc; if (!d) return []; if (make) { d.ink ??= {}; return d.ink[pi] ??= []; } return d.ink?.[pi] || []; }
+function inkCount(d = S.doc) { return Object.values(d?.ink || {}).reduce((n, a) => n + (a?.length || 0), 0); }
+const fingerScrolls = () => NB.penSeen && !NB.fingerDraw;
+
+function inkLayer(pi) {
+  const pg = S.doc.pages[pi], ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("class", "ink"); svg.setAttribute("viewBox", `0 0 ${pg.W} ${pg.H}`); svg.setAttribute("preserveAspectRatio", "none");
+  svg.dataset.pi = pi; svg.setAttribute("aria-hidden", "true");
+  return svg;
+}
+function renderInk(pi) {
+  const svg = document.querySelector(`#pg-${pi} .ink`); if (!svg) return;
+  svg.replaceChildren(...inkStrokes(pi).map(svgStroke));
+}
+function renderInkAll() { if (!S.doc || !pageMode()) return; for (const s of $$("#sheets .ink")) renderInk(+s.dataset.pi); }
+function inkSave() {
+  const d = S.doc; clearTimeout(INK.saveT);
+  for (const k of Object.keys(d.ink || {})) if (!d.ink[k]?.length) delete d.ink[k];
+  INK.saveT = setTimeout(() => idbPut(d), 500);
+  renderMarkCount(); inkUndoUI();
+}
+function inkSnap(pi) { INK.hist.push({ doc: S.doc.id, pi, strokes: inkStrokes(pi).map(s => ({ ...s, pts: s.pts })) }); if (INK.hist.length > 100) INK.hist.shift(); INK.fut = []; }
+function inkUndoRedo(from, to) {
+  const h = from.pop(); if (!h) return;
+  if (h.doc !== S.doc?.id) { from.length = 0; inkUndoUI(); return; }
+  to.push({ doc: h.doc, pi: h.pi, strokes: inkStrokes(h.pi).slice() });
+  S.doc.ink ??= {}; S.doc.ink[h.pi] = h.strokes; renderInk(h.pi); inkSave();
+}
+function inkUndoUI() {
+  $("#inkUndo").disabled = !INK.hist.some(h => h.doc === S.doc?.id);
+  $("#inkRedo").disabled = !INK.fut.some(h => h.doc === S.doc?.id);
+  $("#inkClear").disabled = !inkStrokes(visiblePage()).length;
+}
+function visiblePage() {
+  const sc = $("#readerScroll"), r = sc.getBoundingClientRect(), mid = r.top + r.height * 0.4; let best = S.pos?.pi || 0, bd = Infinity;
+  for (const s of $$("#sheets .sheet")) { const b = s.getBoundingClientRect(), dd = mid < b.top ? b.top - mid : mid > b.bottom ? mid - b.bottom : 0; if (dd < bd) { bd = dd; best = +s.dataset.pi; } }
+  return best;
+}
+function renderInkBar() {
+  const bar = $("#inkBar"); bar.hidden = !INK.on;
+  document.body.classList.toggle("inking", INK.on);
+  document.body.classList.toggle("ink-eraser", INK.on && INK.tool === "eraser");
+  $$(".inkbtn").forEach(b => { b.classList.toggle("on", INK.on); b.setAttribute("aria-pressed", String(INK.on)); });
+  if (!INK.on) return;
+  $$("#inkBar [data-itool]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.itool === INK.tool)));
+  const t = INK.tool === "eraser" ? null : INK.tool;
+  $("#inkColors").hidden = $("#inkSizes").hidden = !t;
+  if (t) {
+    $("#inkColors").replaceChildren(...INK_COLORS[t].map(c => { const b = el("button", { type: "button", class: "icol", style: `--c:${c}`, "aria-label": "Color " + c, "aria-pressed": String(INK.color[t] === c) }); b.addEventListener("click", () => { INK.color[t] = c; inkPrefs(); renderInkBar(); }); return b; }));
+    $$("#inkSizes .isz").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.isz === INK.size[t])));
+  }
+  const f = $("#inkFinger"); f.hidden = !NB.penSeen; f.setAttribute("aria-pressed", String(!!NB.fingerDraw));
+  inkUndoUI();
+}
+function setInk(on) {
+  if (on && !S.doc) return;
+  if (on && !canPage()) { toast("El lápiz funciona en documentos con su PDF original. Este solo tiene el texto."); return; }
+  INK.on = !!on;
+  if (INK.on && S.mode !== "page") { S.mode = "page"; savePrefs(); renderModeUI(); renderReader(); requestAnimationFrame(() => scrollToPos(false)); toast("El lápiz se usa sobre la página original."); }
+  if (INK.on) { try { getSelection().removeAllRanges(); } catch {} hideSelBar(true); hideMarkPop(); }
+  if (!INK.on && INK.cur) inkEnd();
+  renderInkBar();
+  if (INK.on && !localStorage.getItem("atril-ink-tip")) { try { localStorage.setItem("atril-ink-tip", "1"); } catch {} toast(fingerScrolls() ? "Escribe con tu lápiz digital; con el dedo mueves la página." : "Escribe o dibuja sobre la página. Con dos dedos mueves la página."); }
+}
+$$(".inkbtn").forEach(b => b.addEventListener("click", () => setInk(!INK.on)));
+window.__inkOff = () => { if (INK.on) setInk(false); };
+$("#inkDone").addEventListener("click", () => setInk(false));
+$$("#inkBar [data-itool]").forEach(b => b.addEventListener("click", () => { INK.tool = b.dataset.itool; inkPrefs(); renderInkBar(); }));
+$$("#inkSizes .isz").forEach(b => b.addEventListener("click", () => { if (INK.tool === "eraser") return; INK.size[INK.tool] = +b.dataset.isz; inkPrefs(); renderInkBar(); }));
+$("#inkUndo").addEventListener("click", () => inkUndoRedo(INK.hist, INK.fut));
+$("#inkRedo").addEventListener("click", () => inkUndoRedo(INK.fut, INK.hist));
+$("#inkFinger").addEventListener("click", () => { NB.fingerDraw = !NB.fingerDraw; nbPrefs(); renderInkBar(); toast(NB.fingerDraw ? "El dedo también dibuja. Con dos dedos mueves la página." : "El dedo mueve la página; dibuja con el lápiz digital."); });
+$("#inkClear").addEventListener("click", () => {
+  const pi = visiblePage(); if (!inkStrokes(pi).length) return;
+  inkSnap(pi); S.doc.ink[pi] = []; renderInk(pi); inkSave();
+  toast(`Trazos de la página ${pi + 1} borrados. Toca Deshacer si fue un error.`);
+});
+addEventListener("keydown", (e) => {
+  if (!INK.on || e.target.closest?.("input,textarea,[contenteditable]")) return;
+  if (e.key === "Escape") { e.preventDefault(); setInk(false); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); inkUndoRedo(INK.hist, INK.fut); }
+  else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); inkUndoRedo(INK.fut, INK.hist); }
+}, true);
+
+/* dibujo con puntero: lápiz digital, mouse o dedo */
+const inkTouches = new Map();
+function inkPoint(e, c) { const r = c.rect; return [Math.round((e.clientX - r.left) / r.width * c.W * 10) / 10, Math.round((e.clientY - r.top) / r.height * c.H * 10) / 10]; }
+function inkEraseAt(c, [x, y]) {
+  const arr = inkStrokes(c.pi), rad = Math.max(4, c.W * 0.012);
+  const keep = arr.filter(st => { const pts = st.pts.length > 2 ? densify(st.pts, 2) : st.pts; return !pts.some(([a, b]) => Math.abs(a - x) < rad + st.size / 2 && Math.abs(b - y) < rad + st.size / 2); });
+  if (keep.length !== arr.length) { if (!c.snapped) { inkSnap(c.pi); c.snapped = true; } S.doc.ink[c.pi] = keep; renderInk(c.pi); c.changed = true; }
+}
+function inkPanStart(e) { const sc = $("#readerScroll"); return { pan: true, pid: e.pointerId, sx: e.clientX, sy: e.clientY, sl: sc.scrollLeft, st: sc.scrollTop }; }
+document.addEventListener("pointerdown", (e) => {
+  const svg = e.target.closest?.(".pbox .ink"); if (!INK.on || !svg) return;
+  if (e.button > 0 && !(e.pointerType === "pen" && e.button === 5)) return;
+  e.preventDefault(); e.stopPropagation();
+  if (e.pointerType === "touch") inkTouches.set(e.pointerId, [e.clientX, e.clientY]);
+  if (e.pointerType === "pen" && !NB.penSeen) { NB.penSeen = true; nbPrefs(); renderInkBar(); }
+  // segundo dedo: deja de dibujar y mueve la página
+  if (e.pointerType === "touch" && inkTouches.size > 1) {
+    if (INK.cur && !INK.cur.pan) { INK.cur.node?.remove(); if (INK.cur.snapped && INK.cur.changed) inkUndoRedo(INK.hist, []); }
+    INK.cur = inkPanStart(e); return;
+  }
+  if (INK.cur) return;   // la palma u otro dedo mientras se dibuja
+  try { svg.setPointerCapture(e.pointerId); } catch {}
+  if (e.pointerType === "touch" && fingerScrolls()) { INK.cur = inkPanStart(e); return; }
+  const pi = +svg.dataset.pi, pg = S.doc.pages[pi];
+  const c = { pi, pid: e.pointerId, svg, rect: svg.getBoundingClientRect(), W: pg.W, H: pg.H };
+  const p0 = inkPoint(e, c);
+  const penErase = e.pointerType === "pen" && (e.button === 5 || (e.buttons & 32));
+  if (INK.tool === "eraser" || penErase) { c.erasing = true; INK.cur = c; inkEraseAt(c, p0); return; }
+  const t = INK.tool;
+  c.st = { id: uid(), tool: t, color: INK.color[t], size: INK_SIZES[t][INK.size[t]] ?? INK_SIZES[t][1], pts: [p0] };
+  if (t === "pen" && e.pointerType === "pen") { c.st.pr = 1; p0.push(nbPress(e)); }
+  c.node = svgStroke(c.st); svg.append(c.node);
+  INK.cur = c;
+}, true);
+document.addEventListener("pointermove", (e) => {
+  if (inkTouches.has(e.pointerId)) inkTouches.set(e.pointerId, [e.clientX, e.clientY]);
+  const c = INK.cur; if (!c || e.pointerId !== c.pid) return;
+  e.preventDefault();
+  if (c.pan) { const sc = $("#readerScroll"); sc.scrollLeft = c.sl - (e.clientX - c.sx); sc.scrollTop = c.st - (e.clientY - c.sy); return; }
+  const evs = (typeof e.getCoalescedEvents === "function" && e.getCoalescedEvents()) || []; const list = evs.length ? evs : [e];
+  if (c.erasing) { for (const ev of list) inkEraseAt(c, inkPoint(ev, c)); return; }
+  let added = false;
+  for (const ev of list) {
+    const q = inkPoint(ev, c), l = c.st.pts[c.st.pts.length - 1];
+    if (Math.hypot(q[0] - l[0], q[1] - l[1]) < 0.35) { if (c.st.pr) l[2] = Math.max(l[2], nbPress(ev)); continue; }
+    if (c.st.pr) q.push(nbPress(ev));
+    c.st.pts.push(q); added = true;
+  }
+  if (added && !c.raf) c.raf = requestAnimationFrame(() => { c.raf = 0; if (INK.cur === c) c.node.setAttribute("d", stPath(c.st)); });
+}, { capture: true, passive: false });
+function inkEnd(e) {
+  if (e && e.pointerType === "touch") inkTouches.delete(e.pointerId);
+  const c = INK.cur; if (!c || (e && e.pointerId !== c.pid)) return;
+  INK.cur = null;
+  if (c.pan) return;
+  if (c.raf) cancelAnimationFrame(c.raf);
+  if (c.erasing) { if (c.changed) inkSave(); return; }
+  const st = c.st;
+  if (st.tool === "pen" && st.pts.length > 4 && !st.pr) st.pts = smoothPts(st.pts, 1);
+  inkSnap(c.pi); inkStrokes(c.pi, true).push(st);
+  c.node.setAttribute("d", stPath(st)); inkSave();
+}
+document.addEventListener("pointerup", (e) => { if (INK.on && (INK.cur || e.target.closest?.(".pbox .ink"))) e.stopPropagation(); inkEnd(e); }, true);
+document.addEventListener("pointercancel", inkEnd, true);
+// mientras se dibuja, tocar la página no mueve la lectura ni abre menús
+for (const ev of ["click", "dblclick", "contextmenu", "mouseup", "touchend"]) document.addEventListener(ev, (e) => { if (INK.on && e.target.closest?.(".pbox .ink")) { if (ev !== "touchend") e.preventDefault(); e.stopPropagation(); } }, true);
+
+/* trazos dentro del PDF descargado: se dibujan en la página con la misma rotación y recorte que en pantalla */
+async function inkToPdf(pages, pjs, d) {
+  const hexRgbInk = (h) => { const n = parseInt(String(h).replace("#", ""), 16); return PDFLib.rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255); };
+  for (const [piS, arr] of Object.entries(d.ink || {})) {
+    const pi = +piS; if (!arr?.length || !pages[pi]) continue;
+    const vp = (await pjs.getPage(pi + 1)).getViewport({ scale: 1 });
+    const o = vp.convertToPdfPoint(0, 0), ex = vp.convertToPdfPoint(1, 0);
+    const rot = Math.round(Math.atan2(ex[1] - o[1], ex[0] - o[0]) * 180 / Math.PI);
+    const pos = { x: o[0], y: o[1], scale: 1, rotate: PDFLib.degrees(rot) };
+    for (const st of arr) {
+      const dPath = stPath(st); if (!dPath) continue;
+      if (st.pr) { pages[pi].drawSvgPath(dPath, { ...pos, color: hexRgbInk(st.color), opacity: st.op || 1, borderWidth: 0 }); continue; }
+      pages[pi].drawSvgPath(dPath, { ...pos, borderColor: hexRgbInk(st.color), borderWidth: st.size, borderOpacity: st.tool === "hl" ? 0.38 : 1, borderLineCap: st.tool === "hl" ? PDFLib.LineCapStyle?.Butt : PDFLib.LineCapStyle?.Round });
+    }
+  }
 }
 
 function highlight() {
