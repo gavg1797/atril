@@ -5,7 +5,7 @@
  *   la primera vez y después se sirven desde aquí: tienen versión fija, así que nunca cambian.
  * - No se guardan aquí Google (inicio de sesión, Drive).
  */
-const APP = "atril-app-v44", LIBS = "atril-libs-v2";
+const APP = "atril-app-v45", LIBS = "atril-libs-v2";
 const SHELL = ["./", "index.html", "platform.js", "platform.css", "config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "privacidad.html", "guia.js", "web.js", "lib/readability-0.6.0.js", "lib/temml.min.js", "lib/temml.css", "lib/Temml.woff2",
   "lib/pdfjs-4.10.38/cargar.js", "lib/pdfjs-4.10.38/pdf.min.js", "lib/pdfjs-4.10.38/pdf.worker.min.js",
   "lib/pdf-lib-1.17.1.min.js", "lib/jszip-3.10.1.min.js", "lib/docx-8.5.0.umd.js"];
