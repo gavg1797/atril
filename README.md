@@ -35,6 +35,10 @@ Atril lee tus PDF en voz alta en español e inglés y te deja marcarlos, tomar n
   - color de página, fondo claro u oscuro y lector inmersivo (texto grande, tipo de letra, espaciado, fondo y lectura en voz alta con la palabra resaltada);
   - barra de herramientas compacta que se oculta con un botón, en pantalla completa o al desplazarse hacia abajo, y vuelve al subir.
 - Crear un PDF desde cero: títulos, texto, imágenes y enlaces.
+- **Abrir sitio web** (en «⋯ Más»): convierte cualquier página web en un PDF de tu biblioteca, con títulos, párrafos, listas, citas, tablas, enlaces e imágenes, sin anuncios ni menús. Luego la escuchas, la marcas, escribes encima con el lápiz, la descargas o la cambias con «Editar». Se guarda en Google Drive como los demás libros.
+  - En la computadora: arrastra el botón **Enviar a Atril** a la barra de marcadores (una sola vez) y tócalo en cualquier página. Si antes seleccionas una parte del texto, solo se envía esa parte.
+  - En el celular, o si una página no deja enviar su contenido: copia la página y pégala en «Abrir sitio web».
+  - Es gratis y privado: la página va directo de tu navegador a Atril, sin servidores intermedios.
 - Preguntas sobre el documento con citas de página. Las respuestas se pueden escuchar y descargar en PDF, Word o Markdown.
 - Traducción de la lectura entre español e inglés.
 - Exportar e importar la biblioteca en un .zip, con contraseña opcional.
@@ -120,6 +124,7 @@ Luego abre http://localhost:8000. Recuerda agregar ese origen en el paso 4 de Go
 | `platform.js` | Inicio de sesión con Google, API de Google Drive y descargas. |
 | `platform.css` | Pantalla de acceso y ajustes. |
 | `config.js` | ID de cliente de Google y clave del selector de Drive. |
+| `web.js` | «Abrir sitio web»: el marcador «Enviar a Atril», limpieza de la página y paso a PDF. |
 | `privacidad.html` | Política de privacidad (la pide la pantalla de consentimiento de Google). |
 | `sw.js`, `manifest.webmanifest` | Permiten instalar Atril como app en el celular o la computadora. |
-| `lib/` | Librerías alojadas aquí mismo para no depender de servidores externos: pdf.js 4.10.38 (lector de PDF), pdf-lib, JSZip, docx y Temml. |
+| `lib/` | Librerías alojadas aquí mismo para no depender de servidores externos: pdf.js 4.10.38 (lector de PDF), pdf-lib, JSZip, docx, Temml y Readability 0.6.0 de Mozilla (limpia las páginas web; licencia Apache 2.0). |

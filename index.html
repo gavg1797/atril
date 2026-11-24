@@ -1341,10 +1341,23 @@ body.inking #selBar,body.inking #markPop{display:none!important}
 .inkbar .idone{background:var(--accent)!important;color:var(--accent-ink)!important;padding:0 12px}
 @media (max-width:560px){.inkbar{top:calc(6px + env(safe-area-inset-top,0px));gap:2px;padding:5px}.inkbar button span{display:none}.inkbar .ig{padding:0 2px}.inkbar button{min-width:32px;height:32px;padding:0 5px}}
 body.tv .inkbar{display:none!important}
+/* Sitios web → PDF (web.js) */
+.webbanner{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:10001;width:min(620px,calc(100% - 24px));background:var(--paper,#fff);color:var(--ink,#1D2321);border:1px solid rgba(0,0,0,.12);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:.92rem;line-height:1.45}
+.webbanner[hidden]{display:none}
+.webbanner .btn{align-self:flex-end}
+.webh{margin:4px 0 0;font-size:.95rem}
+.webSteps li{margin:4px 0}
+.webbm{cursor:grab;display:inline-flex;margin:4px 0;text-decoration:none}
+.webpastewrap{display:flex;flex-direction:column;gap:8px}
+.webin{font:inherit;padding:8px 10px;border:1px solid rgba(0,0,0,.18);border-radius:8px;background:transparent;color:inherit}
+.webpaste{min-height:64px;max-height:120px;overflow:auto;padding:10px;border:2px dashed rgba(43,71,212,.45);border-radius:10px;font-size:.9rem;outline:none}
+.webpaste:empty::before{content:attr(data-ph);color:var(--muted,#6B7572)}
+.webpaste:focus{border-color:var(--accent,#2B47D4)}
 </style>
 <script src="config.js"></script>
 <script src="guia.js"></script>
 <script src="platform.js"></script>
+<script src="web.js"></script>
 </head>
 <body>
 <header class="top">
@@ -1384,6 +1397,7 @@ body.tv .inkbar{display:none!important}
     <div class="libio">
       <button class="btn" id="expBtn" type="button" title="Guardar tus libros, marcas, avance y cuaderno en un archivo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Exportar biblioteca</button>
       <button class="btn newlib" id="newPdfLib" type="button" title="Crear un documento PDF desde cero"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg>Crear PDF nuevo</button>
+      <button class="btn newlib" id="webLib" type="button" title="Convertir una página web en un PDF que puedes escuchar, subrayar y editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Abrir sitio web</button>
       <button class="btn newlib" id="newNbLib" type="button" title="Crear un cuaderno independiente, con secciones y páginas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M3 7h3M3 12h3M3 17h3M10 8h5"/></svg>Nuevo cuaderno</button>
       <button class="btn" id="gpOpen" type="button" title="Agregar un PDF que ya tienes en Google Drive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.75 4.75 0 0 1-.5 9.5z"/><path d="M12 16v-5M9.5 13.5 12 16l2.5-2.5"/></svg>Abrir desde Drive</button>
       <button class="btn" id="impBtn" type="button" title="Abrir un archivo de biblioteca exportado desde otro dispositivo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Importar biblioteca</button>
@@ -5184,11 +5198,12 @@ async function buildVectorPdf(book, title) {
   return await pdf.save();
 }
 function unb64x(str) { const bin = atob(str), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return u8; }
-$("#edSave").addEventListener("click", async () => {
-  const t = NB.target; if (!t) return;
+$("#edSave").addEventListener("click", () => edSaveNow());
+async function edSaveNow(okMsg) {
+  const t = NB.target; if (!t) return false;
   const d = t.doc, book = t.doc.src;
-  if (!book.pages.some(p => p.items.length || p.strokes.length)) { toast("El documento está vacío. Escribe algo o agrega una imagen."); return; }
-  if (!window.PDFLib) { toast("El generador de PDF no cargó. Revisa tu conexión."); return; }
+  if (!book.pages.some(p => p.items.length || p.strokes.length)) { toast("El documento está vacío. Escribe algo o agrega una imagen."); return false; }
+  if (!window.PDFLib) { toast("El generador de PDF no cargó. Revisa tu conexión."); return false; }
   const btn = $("#edSave"), lab = btn.lastChild, old = lab.textContent; btn.disabled = true; lab.textContent = "Creando PDF…";
   try {
     document.activeElement?.blur?.();
@@ -5202,10 +5217,60 @@ $("#edSave").addEventListener("click", async () => {
     await idbPut(d);
     closeEditor(true);
     renderDocs(); openDoc(d.id); if (isNarrow()) setTab("read");
-    toast(hadMarks ? `«${title}» guardado como PDF. Las marcas anteriores se quitaron porque el contenido cambió.` : `«${title}» guardado como PDF en tu biblioteca.`);
-  } catch (e) { console.error(e); toast("No se pudo crear el PDF. Vuelve a intentarlo."); }
+    toast(okMsg || (hadMarks ? `«${title}» guardado como PDF. Las marcas anteriores se quitaron porque el contenido cambió.` : `«${title}» guardado como PDF en tu biblioteca.`));
+    return true;
+  } catch (e) { console.error(e); toast("No se pudo crear el PDF. Vuelve a intentarlo."); return false; }
   finally { btn.disabled = false; lab.textContent = old; }
-});
+}
+
+/* ---------- Sitios web → PDF editable (la página llega desde web.js) ---------- */
+$("#webLib").addEventListener("click", () => window.AtrilWeb?.open());
+const raf = () => new Promise(r => requestAnimationFrame(() => r()));
+async function importWeb(art) {
+  if (!window.PDFLib) { toast("El generador de PDF no cargó. Revisa tu conexión y recarga la página."); return; }
+  if (NB.target) closeEditor(true);
+  try { stop(); } catch {}
+  const book = edBlank(), pg = book.pages[0], P = nbPaper(pg) || { w: mm2px(210), h: mm2px(297) };
+  const X = 40, W = P.w - 80, name = (art.title || "Página web").replace(/\s+/g, " ").trim().slice(0, 80);
+  const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const plainOf = (html) => { const tp = document.createElement("template"); tp.innerHTML = String(html).replace(/<br\s*\/?>/gi, "\n"); return tp.content.textContent; };
+  const add = (it) => { if (it.html) it.text = plainOf(it.html); pg.items.push({ id: uid(), type: "text", x: X, y: 0, w: W, color: "#1D2321", ...it }); };
+  add({ h: 1, html: esc(name) });
+  const when = new Date().toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+  const href = safeHref(art.url);
+  const src = [art.byline && esc(art.byline), href ? `<a href="${esc(href)}">${esc(art.site || href)}</a>` : esc(art.site || ""), "guardado el " + when].filter(Boolean).join(" · ");
+  add({ html: `<span style="font-size:14px">${src}</span>`, color: "#55605C" });
+  for (const b of art.blocks || []) {
+    if (b.k === "img") { const w = Math.min(W - 20, b.w), hh = Math.round(w * b.h / b.w); pg.items.push({ id: uid(), type: "img", x: X + 10 + Math.round((W - 20 - w) / 2), y: 0, w, h: hh, src: b.data }); continue; }
+    if (b.k === "h") { add({ h: b.lvl, html: b.html }); continue; }
+    if (b.k === "cap") { add({ html: `<i><span style="font-size:15px">${b.html}</span></i>`, color: "#55605C" }); continue; }
+    if (b.k === "pre") { add({ html: `<span style="font-family:Courier New;font-size:15px">${esc(b.text).replace(/\n/g, "<br>")}</span>`, quote: b.quote || undefined }); continue; }
+    const ind = Math.min(4, Math.max(0, (b.depth || 0) - (b.k === "li" ? 1 : 0))) * 26;
+    add({ html: (b.k === "li" ? b.mark + "\u00a0" : "") + b.html, x: X + ind + (b.k === "li" ? 18 : 0), w: W - ind - (b.k === "li" ? 18 : 0), quote: b.quote || undefined });
+  }
+  const text = pg.items.map(it => it.text || "").join(" ");
+  const doc = { id: "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, draft: true, lang: art.lang === "en" || art.lang === "es" ? art.lang : detectLang(text), added: Date.now(), pages: [], chat: [], tr: {}, marks: [], src: book };
+  if (href) doc.web = href;
+  if (fById(S.cwd)) doc.folder = S.cwd;
+  S.docs.push(doc); await idbPut(doc); renderDocs();
+  openEditor(doc);
+  try { await document.fonts?.ready; } catch {}
+  await raf(); await raf();
+  /* acomoda los bloques uno debajo de otro, sin cortar un párrafo entre dos hojas */
+  let y = 36, prev = null;
+  for (const it of pg.items) {
+    const hh = it.type === "img" ? it.h : nbTextHeight(it);
+    if (prev && (it.h && it.type !== "img")) y += 14;
+    const end = (Math.floor(y / P.h) + 1) * P.h;
+    if (y + hh > end - 36 && hh < P.h - 100) y = end + 40;
+    it.y = y; y += hh + (it.type === "img" ? 12 : 2); prev = it;
+  }
+  renderNbPage(); await idbPut(doc);
+  await raf();
+  const ok = await edSaveNow(`«${name}» guardada como PDF. Puedes escucharla, subrayarla, escribir encima o tocar «Editar» para cambiarla.`);
+  if (!ok) toast("La página quedó como borrador en tu biblioteca. Tócala para revisarla y guardarla como PDF.");
+}
+window.__atrilToast = toast;
 
 /* Transmitir y Modo TV */
 function detectDev() { const u = navigator.userAgent; if (/iPhone|iPad|iPod/i.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) return "ios"; if (/Android/i.test(u)) return "android"; return "pc"; }
@@ -6826,6 +6891,8 @@ $("#libClear").addEventListener("click", () => { libQ = ""; $("#libQ").value = "
     return;
   }
   openDoc(prefs.last && S.docs.some(d => d.id === prefs.last) ? prefs.last : (saved.sort((a, b) => b.added - a.added)[0]?.id || "ejemplo"));
+  window.__atrilWebImport = (art) => importWeb(art).catch(e => { console.error(e); toast("No se pudo guardar la página web."); });
+  { const webArt = window.AtrilWeb?.take?.(); if (webArt) setTimeout(() => window.__atrilWebImport(webArt), 300); }
   if (!hasTTS) { $("#ttsNote").hidden = false; status("Sin voz en esta app: abre Atril en Chrome o Safari (instrucciones arriba)."); }
 })();
 (async () => {
