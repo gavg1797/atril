@@ -6859,7 +6859,7 @@ $("#libClear").addEventListener("click", () => { libQ = ""; $("#libQ").value = "
 (() => {
   const btn = $("#libMoreBtn"), menu = el("div", { id: "libMoreMenu", class: "moremenu", role: "menu", hidden: "" });
   const nf = $("#nfSlot"); menu.append(nf);
-  for (const id of ["newPdfLib", "newNbLib", "gpOpen", "impBtn", "expBtn", "driveBtn"]) { const b = $("#" + id); if (b) menu.append(b); }
+  for (const id of ["newPdfLib", "webLib", "newNbLib", "gpOpen", "impBtn", "expBtn", "driveBtn"]) { const b = $("#" + id); if (b) menu.append(b); }
   const imp = $("#impFile"); if (imp) menu.append(imp);
   document.body.append(menu);
   const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
